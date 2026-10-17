@@ -331,6 +331,14 @@ function write(account, data) {
   drive('patch', DRIVE_UP + '/' + f.id + '?uploadType=media', JSON.stringify(data), 'application/json');
 }
 
+// DIAGNOSTYKA: pokazuje, jakie uprawnienia Google faktycznie dał skryptowi (bez samego tokenu).
+function sprawdzUprawnienia() {
+  var r = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?access_token=' +
+    encodeURIComponent(ScriptApp.getOAuthToken()), { muteHttpExceptions: true });
+  var info = JSON.parse(r.getContentText());
+  Logger.log('Przyznane uprawnienia:\n' + String(info.scope || info.error_description || '?').split(' ').join('\n'));
+}
+
 // JEDNORAZOWO po aktualizacji: wybierz w edytorze i kliknij „Uruchom".
 // Google poprosi o zgodę na Dysk (tylko pliki tworzone przez ten skrypt),
 // a funkcja przeniesie stare dane kont z Właściwości skryptu do plików.
