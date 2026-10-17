@@ -1588,6 +1588,48 @@ function progStep(e){
   if(/przysiad|martwy|RDL|suwnic|nóg|łydk|wspięcia|wypady|hack/i.test(e.n)) return 5;
   return 2.5;
 }
+/* ---- ciężary startowe dopasowane do użytkownika ----
+   Plan jest pisany pod mężczyznę ~100 kg. Siła rośnie wolniej niż masa (≈ masa^0,67),
+   kobiety: ~55% góry i ~70% dołu ciała w porównaniu z mężczyzną tej samej wagi, 55+ lat: −10%.
+   Działa tylko, dopóki nie ma historii — potem pola biorą ostatni prawdziwy ciężar. */
+const PLAN_REF_KG=100;
+const isLowerEx=e=>/przysiad|martwy|RDL|suwnic|nóg|łydk|wspięcia|wypady|hack/i.test(e.n);
+function strengthFactor(e){
+  const p=S.profile||{};
+  if(!(p.weight>=35)) return 1;
+  let f=Math.pow(p.weight/PLAN_REF_KG,0.67);
+  if(p.sex==='f') f*=isLowerEx(e)?0.7:0.55;
+  if(p.age>=55) f*=0.9;
+  // ±7% od profilu, pod który pisano plan — zostaw liczby z planu
+  return (f>0.93&&f<1.07)?1:f;
+}
+function roundLoad(e, kg){
+  const t=e.n+' '+(e.start||'');
+  let step=2.5, min=2.5;
+  // kolejność ma znaczenie: „/rękę” w starcie > maszyna > „hantl” w nazwie (np. „Przysiad z hantlami / Hack” = Hack)
+  if(/\/rękę|\/stronę/i.test(e.start||'')){ step=kg<10?1:2; min=1; }
+  else if(/kettlebell/i.test(t)){ step=4; min=4; }
+  else if(/suwnic|hack|maszyn|siedząc/i.test(t)){ step=5; min=5; }
+  else if(/hantl/i.test(t)){ step=kg<10?1:2; min=1; }
+  else if(/przysiad ze sztangą|ławka płaska|w opadzie|żołnierskie|martwy|RDL/i.test(t)){ min=20; }   // pusta sztanga
+  else if(/sztang/i.test(t)){ min=10; }   // gryf łamany / lżejsza sztanga
+  else if(/wyciąg|drążk|bramie|allahy/i.test(t)){ min=5; }
+  return Math.max(min, Math.round(kg/step)*step);
+}
+function scaledStart(e){
+  if(!(e.w>0)) return e.w||0;
+  const f=strengthFactor(e);
+  return f===1 ? e.w : roundLoad(e, e.w*f);
+}
+function startLabel(e){
+  if(!e.start) return '';
+  const f=strengthFactor(e);
+  if(f===1 || !(e.w>0)) return e.start;
+  const kg=scaledStart(e);
+  // podmień liczbę planu na dopasowaną, zostaw dopiski typu „/rękę”, „(Hack)”
+  return e.start.replace(/\d+(?:[.,]\d+)?(?=\s*kg)/, String(kg).replace('.',','))+' · dopasowane do Ciebie';
+}
+
 // zwraca {kg: ciężar do wpisania w pola, hint: tekst podpowiedzi}
 function progressionFor(e, iso, targetR, phase3){
   const prev=prevSession(e.n, iso);
@@ -1649,7 +1691,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
     const exDone=!!(L.ex[key] && L.ex[key].done);
     const sets=(L.ex[key]&&L.ex[key].sets)||{};
     // zalecane wartości (prefill). Faza 3: ciężar −10%, powtórzenia +3
-    let recW = e.w||0, recR = e.rp||0;
+    let recW = scaledStart(e), recR = e.rp||0;
     if(w.phase3){ recW = Math.round((recW*0.9)*2)/2; recR = recR+3; }
     // z historii: ostatni faktyczny ciężar zamiast sztywnego startu z planu
     const prog=progressionFor(e, iso, recR, !!w.phase3);
@@ -1677,7 +1719,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
         <span class="scheme">${e.s}×${e.r}</span>
       </div>
       ${prog?`<div class="ex-sub" style="color:${prog.up?'var(--amber)':'var(--ink-dim)'}">${prog.up?'⬆ ':''}${prog.hint}</div>`
-            :(e.start?`<div class="ex-sub">Start: ${e.start}</div>`:'')}
+            :(e.start?`<div class="ex-sub">Start: ${startLabel(e)}</div>`:'')}
       <div class="sets">${setsHtml}</div>
       <div class="ex-check" data-done="${key}">
         <span class="mini ${exDone?'on':''}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
