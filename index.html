@@ -485,6 +485,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <label class="md-lab" style="margin-top:18px">Oczekujące zaproszenia</label>
         <div id="admInvites"></div>
         <button class="btn ghost" id="admRefresh" style="width:100%;margin-top:14px;font-size:13px;padding:10px">Odśwież listę</button>
+        <button class="btn ghost" id="admRotate" style="width:100%;margin-top:8px;font-size:13px;padding:10px;color:var(--red)">Zmień mój token administratora</button>
+        <div id="admRotateOut" style="display:none;margin-top:10px"></div>
       </div>
     </div>
     <details class="panel" style="margin-top:10px">
@@ -2804,7 +2806,11 @@ async function loadAdmin(){
   const me=(CLOUD.account||'').toLowerCase();
   document.getElementById('admUsers').innerHTML=
     `<div class="settings-row" style="padding:10px 0"><div class="l"><div class="t">${esc(me||'—')} <span style="color:var(--amber);font-size:12px">administrator (Ty)</span></div><div class="s">Twój token = SECRET ze skryptu</div></div></div>`+
-    (users.length?users.map(u=>`<div class="settings-row" style="padding:10px 0;flex-wrap:wrap;gap:8px">
+    (users.length?users.map(u=>u.legacy?`<div class="settings-row" style="padding:10px 0;flex-wrap:wrap;gap:8px">
+      <div class="l" style="min-width:150px"><div class="t">${esc(u.account)} <span style="color:var(--amber);font-size:12px">stare konto</span></div>
+        <div class="s">używa Twojego tokenu administratora · dane: ${u.kb} KB</div></div>
+      <button class="btn" data-adm="adminReset" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">Wyślij własny link</button></div>`
+    :`<div class="settings-row" style="padding:10px 0;flex-wrap:wrap;gap:8px">
       <div class="l" style="min-width:150px"><div class="t">${esc(u.account)} ${u.disabled?'<span style="color:var(--red);font-size:12px">zablokowane</span>':u.pending?'<span style="color:var(--ink-faint);font-size:12px">czeka na nowy link</span>':''}</div>
         <div class="s">ostatnio: ${esc(fmtDate(u.lastSeen))} · dane: ${u.kb} KB</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -2820,7 +2826,7 @@ async function loadAdmin(){
   document.querySelectorAll('[data-adm]').forEach(b=>b.onclick=async()=>{
     const a=b.dataset.adm, t=b.dataset.t;
     if(a==='adminDelete' && prompt('Usunąć konto „'+t+'” razem z danymi? Plik trafi do kosza Dysku (30 dni na odzyskanie).\nWpisz nazwę konta, aby potwierdzić:')!==t) return;
-    if(a==='adminReset' && !confirm('Wygenerować nowy link dla „'+t+'”? Obecny token przestanie działać od razu (dane zostają).')) return;
+    if(a==='adminReset' && !confirm('Wygenerować link dla „'+t+'”? Dostanie własny token; jego dotychczasowy token przestanie działać (dane zostają).')) return;
     const r=await adminCall(a,{target:t}); if(!r) return;
     if(a==='adminReset') showInviteLink(r.code, r.account, r.expires, 'Nowy link logowania');
     loadAdmin();
@@ -2834,6 +2840,17 @@ document.getElementById('admInviteBtn').onclick=async()=>{
   el.value=''; showInviteLink(r.code, r.account, r.expires, 'Zaproszenie gotowe'); loadAdmin();
 };
 document.getElementById('admRefresh').onclick=loadAdmin;
+document.getElementById('admRotate').onclick=async()=>{
+  if(!confirm('Wygenerować nowy token administratora?\n\nStary przestanie działać od razu — także dla każdego, kto go znał. To urządzenie przełączy się samo; na pozostałych swoich urządzeniach wkleisz nowy token.')) return;
+  const r=await adminCall('adminRotateSecret'); if(!r) return;
+  CLOUD.token=r.token; saveCloud(); cloudToken.value=r.token; refreshCloudUI();
+  const box=document.getElementById('admRotateOut'); box.style.display='block';
+  box.innerHTML=`<div style="border:1px solid var(--amber);border-radius:12px;padding:12px">
+    <div style="font-size:13px;margin-bottom:6px"><b>Nowy token administratora</b> — to urządzenie już go używa. Skopiuj na swoje pozostałe urządzenia (Więcej → Synchronizacja → Token) i zapisz w menedżerze haseł. Nie wysyłaj go nikomu.</div>
+    <input class="md-in" readonly value="${esc(r.token)}" style="font-size:12px" onclick="this.select()">
+    <button class="btn" id="admRotCopy" style="width:100%;margin-top:8px;font-size:13px;padding:10px">Kopiuj token</button></div>`;
+  document.getElementById('admRotCopy').onclick=async()=>{ try{ await navigator.clipboard.writeText(r.token); document.getElementById('admRotCopy').textContent='Skopiowano ✓'; }catch(e){ box.querySelector('input').select(); } };
+};
 
 // reminders UI
 ['workout','meal','water','weight'].forEach(k=>{

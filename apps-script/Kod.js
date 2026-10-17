@@ -41,8 +41,7 @@ function ustawSecret() {
   Logger.log('Gotowe. SECRET zapisany (40 znaków). Skopiuj go z: Ustawienia projektu → Właściwości skryptu.');
 }
 
-// Hasło synchronizacji — z Właściwości skryptu. Bez niego każde żądanie jest odrzucane.
-var SECRET = prop('SECRET');
+// Hasło administratora (SECRET) czytamy przy każdym żądaniu — patrz auth(); bez niego każde żądanie jest odrzucane.
 
 // Klucz API z Claude Platform (do szacowania kalorii z opisu posiłku).
 // Brak właściwości = funkcja wyłączona. Klucz NIE trafia do aplikacji ani przeglądarki.
@@ -85,7 +84,7 @@ function accountTaken(acc) { return !!(getJSON('user_' + acc) || dataFile(acc, f
 function auth(req) {
   var account = cleanAccount(req.account), token = (req.token || '').toString();
   if (!token) return null;
-  if (sameStr(token, SECRET)) return { admin: true, account: account };
+  if (sameStr(token, prop('SECRET'))) return { admin: true, account: account };
   if (!account) return null;
   var u = getJSON('user_' + account);
   if (!u || u.disabled || !u.h || !sameStr(sha(token), u.h)) return null;
@@ -119,7 +118,7 @@ function redeem(req) {
     var acc = cleanAccount(inv.account || req.account);
     if (!ACCOUNT_RE.test(acc)) return { ok: false, error: ACCOUNT_RULE };
     var u = getJSON('user_' + acc);
-    if (inv.reset) { if (!u) return { ok: false, error: 'To konto już nie istnieje' }; }
+    if (inv.reset) { if (!u && !dataFile(acc, false)) return { ok: false, error: 'To konto już nie istnieje' }; }
     else if (accountTaken(acc)) return { ok: false, error: 'Ta nazwa konta jest zajęta — wybierz inną' };
     var token = randToken(40);
     u = u || { created: Date.now() };
@@ -145,6 +144,13 @@ function adminAction(req) {
       }
     });
     users.forEach(function (u) { var f = dataFile(u.account, false); u.kb = f ? Math.round(f.size / 1024) : 0; });
+    // konta sprzed zaproszeń: mają plik z danymi, ale nie mają własnego tokenu (używały SECRET)
+    var known = {}; users.forEach(function (u) { known[u.account] = 1; });
+    var me = cleanAccount(req.account);
+    listDataFiles().forEach(function (f) {
+      var acc = f.name.replace(/\.json$/, '');
+      if (!known[acc] && acc !== me) users.push({ account: acc, created: 0, lastSeen: 0, disabled: false, legacy: true, kb: Math.round(f.size / 1024) });
+    });
     return { ok: true, users: users, invites: invites };
   }
   if (a === 'adminInvite') {
@@ -155,11 +161,19 @@ function adminAction(req) {
     setJSON('inv_' + code, { account: acc, created: now, expires: exp });
     return { ok: true, code: code, account: acc, expires: exp };
   }
+  if (a === 'adminRotateSecret') {
+    // nowy token administratora; stary przestaje działać od razu (wszystkie urządzenia admina muszą dostać nowy)
+    var ns = randToken(40);
+    PROPS.setProperty('SECRET', ns);
+    return { ok: true, token: ns };
+  }
   if (a === 'adminRevokeInvite') {
     PROPS.deleteProperty('inv_' + (req.code || '').toString().replace(/[^a-zA-Z0-9]/g, ''));
     return { ok: true };
   }
   var target = cleanAccount(req.target), u = getJSON('user_' + target);
+  // stare konto (tylko plik danych) — wolno mu wysłać link, który nada własny token
+  if (!u && a === 'adminReset' && ACCOUNT_RE.test(target) && dataFile(target, false)) u = { created: Date.now() };
   if (!u) return { ok: false, error: 'Nie ma takiego konta' };
   if (a === 'adminDisable' || a === 'adminEnable') {
     u.disabled = (a === 'adminDisable'); setJSON('user_' + target, u);
@@ -185,7 +199,7 @@ function adminAction(req) {
 function doPost(e) {
   try {
     var req = JSON.parse(e.postData.contents || '{}');
-    if (!SECRET) {
+    if (!prop('SECRET')) {
       // same nazwy (bez wartości, bez danych kont) — żeby było widać, co skrypt faktycznie ma
       var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv)_/.test(k); });
       return out({ ok: false, error: 'Brak SECRET we Właściwościach skryptu. Widzę: ' +
@@ -311,6 +325,11 @@ function dataFile(account, create) {
   var f = JSON.parse(drive('post', DRIVE + '?fields=id',
     JSON.stringify({ name: account + '.json', parents: [folder], mimeType: 'application/json' })));
   return { id: f.id, size: 0 };
+}
+function listDataFiles() {
+  var q = "'" + dataFolder() + "' in parents and trashed = false";
+  var r = JSON.parse(drive('get', DRIVE + '?pageSize=1000&fields=files(name,size)&q=' + encodeURIComponent(q)));
+  return (r.files || []).map(function (f) { return { name: f.name, size: +f.size || 0 }; });
 }
 function trashFile(f) { drive('patch', DRIVE + '/' + f.id, JSON.stringify({ trashed: true })); }
 function read(account) {
