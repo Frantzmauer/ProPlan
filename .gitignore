@@ -11,3 +11,6 @@ zelazo-*.json
 
 # clasp — token logowania Google (nigdy do repo)
 .clasprc.json
+
+# Claude Code (lokalne)
+.claude/

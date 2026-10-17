@@ -2189,15 +2189,29 @@ function drawChart(ws, canvasId){
     return;
   }
   const pad={l:36,r:12,t:16,b:22};
-  const xs=ws.map((_,i)=>i), ys=ws.map(p=>p.w);
+  // oś X = czas: kropki stoją w swoich dniach, przerwa 5 dni wygląda jak 5 dni
+  const DAY=86400000;
+  const ts=ws.map(p=>parseISO(p.d).getTime()), ys=ws.map(p=>p.w);
+  const t0=ts[0], span=Math.max(ts[ts.length-1]-t0, DAY);
   const minY=Math.min(...ys)-0.5, maxY=Math.max(...ys)+0.5;
-  const X=i=>pad.l+(W-pad.l-pad.r)*(i/(ws.length-1));
+  const X=i=>pad.l+(W-pad.l-pad.r)*((ts[i]-t0)/span);
+  const XT=t=>pad.l+(W-pad.l-pad.r)*((t-t0)/span);
   const Y=v=>pad.t+(H-pad.t-pad.b)*(1-(v-minY)/(maxY-minY));
   // grid
   ctx.strokeStyle='#2a3138';ctx.lineWidth=1;ctx.fillStyle='#5f6a72';ctx.font='10px Inter';ctx.textAlign='right';
   for(let g=0;g<=3;g++){const v=minY+(maxY-minY)*g/3;const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillText(v.toFixed(1),pad.l-6,y+3)}
-  // smoothed trend line (EMA)
-  const ema=[];let prev=ys[0];const k=0.4;ys.forEach(v=>{prev=k*v+(1-k)*prev;ema.push(prev)});
+  // daty pod osią: co 1/2/4… tygodnie, tak by zmieściło się ~5 etykiet
+  const days=span/DAY, stepW=[1,2,4,8,13].find(s=>days/(7*s)<=5)||26;
+  const lab=t=>{const d=new Date(t);return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0');};
+  ctx.textAlign='center';
+  for(let t=t0; t<=t0+span+1; t+=stepW*7*DAY){
+    const x=XT(t);
+    ctx.strokeStyle='#22282e';ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,H-pad.b);ctx.stroke();
+    ctx.fillText(lab(t),Math.min(Math.max(x,pad.l+14),W-pad.r-14),H-6);
+  }
+  // wygładzony trend (EMA w czasie: dłuższa przerwa = nowy pomiar waży więcej)
+  const ema=[];let prev=ys[0];const tau=4*DAY;
+  ys.forEach((v,i)=>{const a=i?1-Math.exp(-(ts[i]-ts[i-1])/tau):1; prev=a*v+(1-a)*prev; ema.push(prev);});
   ctx.strokeStyle='#5fa8d3';ctx.lineWidth=2.5;ctx.beginPath();ema.forEach((v,i)=>{i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v))});ctx.stroke();
   // raw dots
   ctx.fillStyle='#ff7a1a';ws.forEach((p,i)=>{ctx.beginPath();ctx.arc(X(i),Y(p.w),3,0,7);ctx.fill()});
