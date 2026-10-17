@@ -77,10 +77,10 @@ a{color:var(--steel)}
 .add-kcal{display:flex;gap:8px}
 .add-kcal input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:16px;padding:12px 14px;font-family:var(--font-disp);font-weight:600}
 .add-kcal input:focus{outline:none;border-color:var(--amber)}
-#mealDialog,#guideDialog,#joinDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;padding:0}
-#mealDialog.show,#guideDialog.show,#joinDialog.show{display:flex}
-#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:slideUp .28s cubic-bezier(.2,.8,.2,1)}
-@media(min-width:620px){#mealDialog,#guideDialog,#joinDialog{align-items:center}#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card{border-radius:18px}}
+#mealDialog,#guideDialog,#joinDialog,#profileDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;padding:0}
+#mealDialog.show,#guideDialog.show,#joinDialog.show,#profileDialog.show{display:flex}
+#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card,#profileDialog .md-card{max-height:92vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:slideUp .28s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:620px){#mealDialog,#guideDialog,#joinDialog,#profileDialog{align-items:center}#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card,#profileDialog .md-card{border-radius:18px}}
 .show-btn{background:var(--panel2);border:1px solid var(--line);color:var(--steel);font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:7px;font-family:var(--font-body);white-space:nowrap}
 .show-btn:active{transform:scale(.95)}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
@@ -602,7 +602,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           <div style="font-size:14.5px">Dzienny cel</div>
           <div style="font-family:var(--font-disp);font-size:32px;font-weight:700;color:var(--amber)"><span id="kcalVal">2500</span> <span style="font-size:16px;color:var(--ink-dim)">kcal</span></div>
         </div>
-        <input type="range" id="kcalSlider" min="2000" max="3200" step="100" value="2500" style="width:100%">
+        <input type="range" id="kcalSlider" min="1500" max="3200" step="100" value="2500" style="width:100%">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-faint);margin-top:2px">
           <span>2000</span><span>szybciej ← → wolniej</span><span>3200</span>
         </div>
@@ -665,6 +665,28 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- pierwszy start nowego konta: obowiązkowy profil -->
+<div id="profileDialog">
+  <div class="md-card">
+    <div class="md-title">Twój profil</div>
+    <div style="font-size:14px;line-height:1.55;color:var(--ink-dim)">Z tych danych liczymy Twoje zapotrzebowanie i cel kalorii. Widzisz je tylko Ty.</div>
+    <label class="md-lab">Imię</label>
+    <input type="text" class="md-in" id="obName" placeholder="np. Tomek" autocomplete="off">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label class="md-lab">Płeć</label><select class="md-in" id="obSex"><option value="m">Mężczyzna</option><option value="f">Kobieta</option></select></div>
+      <div><label class="md-lab">Wiek</label><input type="number" inputmode="numeric" class="md-in" id="obAge" placeholder="lata"></div>
+      <div><label class="md-lab">Wzrost (cm)</label><input type="number" inputmode="numeric" class="md-in" id="obHeight" placeholder="cm"></div>
+      <div><label class="md-lab">Waga (kg)</label><input type="number" inputmode="decimal" step="0.1" class="md-in" id="obWeight" placeholder="kg"></div>
+    </div>
+    <label class="md-lab">Aktywność</label>
+    <select class="md-in" id="obAct"><option value="1.2">Siedzący tryb</option><option value="1.375">Lekka (1–2 treningi)</option><option value="1.465" selected>Umiarkowana (3–4)</option><option value="1.55">Aktywna (5)</option><option value="1.725">Bardzo aktywna (6–7)</option></select>
+    <label class="md-lab">Cel</label>
+    <select class="md-in" id="obGoal"><option value="-500" selected>Redukcja (chudnięcie)</option><option value="0">Utrzymanie wagi</option><option value="300">Budowa masy</option></select>
+    <div class="md-hint" id="obCalc">Uzupełnij dane, a policzymy kalorie.</div>
+    <div class="md-btns"><button class="btn" id="obSave" style="flex:1">Zapisz i zaczynam</button></div>
+  </div>
+</div>
+
 <!-- okno dodawania własnego posiłku -->
 <div id="mealDialog">
   <div class="md-card">
@@ -712,7 +734,7 @@ const MACRO_BASE = {kcal:2600, p:190, c:250, f:90};
 function macroGoalFor(kcal){
   const r=kcal/MACRO_BASE.kcal;
   // białko trzymamy wysoko (nie tnijmy go proporcjonalnie tak mocno) — min 180 g
-  return {kcal, p:Math.max(180,Math.round(MACRO_BASE.p*Math.max(r,0.92)/5)*5), c:Math.round(MACRO_BASE.c*r/5)*5, f:Math.round(MACRO_BASE.f*r/5)*5};
+  return {kcal, p:Math.max(protFloor(),Math.round(MACRO_BASE.p*r/5)*5), c:Math.round(MACRO_BASE.c*r/5)*5, f:Math.round(MACRO_BASE.f*r/5)*5};
 }
 
 // 7-dniowy jadłospis. Każdy posiłek ma 3 warianty (v). m:[kcal, białko, węgle, tłuszcz].
@@ -1717,7 +1739,11 @@ function variantIndex(L, mealIdx, wk){
 /* ============================================================
    SKALOWANIE POSIŁKÓW DO CELU KALORYCZNEGO (z ochroną białka)
    ============================================================ */
-const PROT_FLOOR = 180; // g białka — poniżej tego nie schodzimy skalując
+// g białka — poniżej tego nie schodzimy skalując: ~2 g/kg masy ciała, maks. 180 g (plan pisany pod 100+ kg)
+function protFloor(){
+  const w=S&&S.profile&&S.profile.weight;
+  return (w>=35) ? Math.max(100, Math.min(180, Math.round(2*w/5)*5)) : 180;
+}
 
 // suma bazowych kalorii i białka dnia dla aktywnych wariantów (z gramatur składników)
 function dayBase(dow, L, wk){
@@ -1731,7 +1757,7 @@ function dayBase(dow, L, wk){
 // współczynniki skalowania: białko chronione, węgle/tłuszcz absorbują różnicę
 function scaleFactors(goalKcal, base){
   if(!base.kcal) return {fProt:1,fCF:1};
-  const targetProt = Math.max(Math.min(base.p, PROT_FLOOR), goalKcal>=base.kcal ? base.p : Math.min(base.p, PROT_FLOOR));
+  const targetProt = Math.max(Math.min(base.p, protFloor()), goalKcal>=base.kcal ? base.p : Math.min(base.p, protFloor()));
   const fProt = base.p ? targetProt/base.p : 1;
   const protKcal = base.p*4*fProt;
   const restBaseKcal = base.kcal - base.p*4;
@@ -2641,22 +2667,64 @@ if(INVITE){
       if(!sameAccount && hasData && confirm('Na tym urządzeniu są już dane innej osoby. Zacząć od zera na koncie „'+j.account+'”? (Zalecane. Anuluj = przenieś obecne dane na nowe konto.)')){
         localStorage.removeItem(LS); S=load();
       }
-      if(!sameAccount){ S.profile.name=j.account; S._settingsM=Date.now(); localStorage.setItem(LS,JSON.stringify(S)); }
+      // nowe konto: żadnych cudzych domyślnych danych — profil wypełnia sam zaproszony
+      if(!sameAccount){ S.profile={name:'',weight:0,height:0,age:0,sex:'m',activity:1.465,needsSetup:true}; S._settingsM=Date.now(); localStorage.setItem(LS,JSON.stringify(S)); }
       CLOUD={url:INVITE.url, token:j.token, account:j.account, on:true, lastSync:0, lastError:''};
       saveCloud();
       cloudUrl.value=CLOUD.url; cloudToken.value=CLOUD.token; cloudAccount.value=CLOUD.account;
       closeJoin();
       await cloudPull({silent:true}); cloudPush();
       refreshAllViews(); refreshCloudUI(); loadProfileUI();
-      alert(sameAccount
-        ? '✅ Połączono ponownie. Twoje dane są bezpieczne.'
-        : '✅ Witaj, '+j.account+'! Konto gotowe, synchronizacja włączona.\n\nUzupełnij teraz profil (Więcej → Profil): wagę, wzrost i wiek — od nich zależą kalorie.\nNa drugim urządzeniu otwórz Więcej → Synchronizacja i wpisz ten sam token i konto.');
+      if(sameAccount) alert('✅ Połączono ponownie. Twoje dane są bezpieczne.');
+      else openProfileSetup();
     }catch(e){
       msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Nie udało się dołączyć: '+e.message;
     }
     btn.disabled=false; btn.textContent='Dołącz';
   };
 }
+
+// ---- pierwszy start nowego konta: profil jest obowiązkowy (nie da się go pominąć) ----
+function obValues(){
+  const g=id=>document.getElementById(id);
+  return {name:g('obName').value.trim(), sex:g('obSex').value, age:parseInt(g('obAge').value),
+    height:parseFloat(g('obHeight').value), weight:parseFloat(String(g('obWeight').value).replace(',','.')),
+    activity:parseFloat(g('obAct').value)||1.465, goal:parseInt(g('obGoal').value)||0};
+}
+function obValid(v){ return v.age>=14&&v.age<=95 && v.height>=120&&v.height<=230 && v.weight>=35&&v.weight<=300; }
+function obCalc(){
+  const v=obValues(), el=document.getElementById('obCalc');
+  if(!obValid(v)){ el.textContent='Uzupełnij wiek, wzrost i wagę, a policzymy kalorie.'; return null; }
+  const maint=Math.round((10*v.weight+6.25*v.height-5*v.age+(v.sex==='f'?-161:5))*v.activity);
+  const goal=Math.min(3200,Math.max(1500,Math.round((maint+v.goal)/100)*100));
+  el.innerHTML=`Utrzymanie ok. <b>${maint} kcal</b> · Twój cel: <b style="color:var(--amber)">${goal} kcal/dzień</b> (zmienisz w Więcej → Cel kalorii).`;
+  return {v,goal};
+}
+function openProfileSetup(){
+  ['obName','obSex','obAge','obHeight','obWeight','obAct','obGoal'].forEach(id=>{
+    const el=document.getElementById(id); el.oninput=obCalc; el.onchange=obCalc;
+  });
+  obCalc();
+  document.getElementById('profileDialog').classList.add('show');
+  setTimeout(()=>document.getElementById('obName').focus(),50);
+}
+document.getElementById('obSave').onclick=()=>{
+  const r=obCalc();
+  if(!r){ const v=obValues(); document.getElementById(!(v.age>=14&&v.age<=95)?'obAge':!(v.height>=120&&v.height<=230)?'obHeight':'obWeight').focus(); return; }
+  const {v,goal}=r;
+  S.profile={name:v.name, weight:v.weight, height:v.height, age:v.age, sex:v.sex, activity:v.activity};
+  S.kcalGoal=goal;
+  const today=todayISO();
+  S.weights=(S.weights||[]).filter(w=>w.d!==today); S.weights.push({d:today,w:v.weight});
+  S._settingsM=Date.now();
+  save();
+  document.getElementById('profileDialog').classList.remove('show');
+  loadProfileUI(); applyName(); kcalSlider.value=goal; updateKcalHint();
+  renderToday(); renderWeight();
+  alert('✅ Gotowe'+(v.name?', '+v.name:'')+'! Twój plan startuje '+parseISO(S.startDate).toLocaleDateString('pl-PL')+'.\n\nNa drugim urządzeniu: Więcej → Synchronizacja → wpisz to samo konto i token (znajdziesz je tutaj, w tej samej sekcji).');
+};
+// profil niedokończony (np. zamknięta karta w trakcie) — wróć do niego przy następnym starcie
+if(S.profile && S.profile.needsSetup && !INVITE) openProfileSetup();
 
 // ---- panel administratora (widoczny tylko z tokenem administratora) ----
 async function checkAdmin(){
