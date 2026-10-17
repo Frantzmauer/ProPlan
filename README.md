@@ -6,8 +6,19 @@ z opcjonalną synchronizacją między urządzeniami przez Google Apps Script.
 | Plik | Co to jest |
 |---|---|
 | `index.html` | Aplikacja — otwórz w przeglądarce (telefon: dodaj do ekranu głównego). |
-| `ZELAZO-AppsScript.gs` | Backend synchronizacji i szacowania kalorii (Google Apps Script). |
+| `apps-script/Kod.js` | Backend synchronizacji i szacowania kalorii (Google Apps Script). |
+| `apps-script/appsscript.json` | Manifest projektu Apps Script (strefa czasowa, dostęp web app). |
+| `.clasp.json` | Powiązanie z projektem Apps Script dla `clasp` (sam identyfikator, bez sekretów). |
 | `INSTRUKCJA-synchronizacja.md` | Jak wdrożyć skrypt i połączyć urządzenia. |
+
+Aplikacja działa pod: https://frantzmauer.github.io/ProPlan/
+
+## Wdrażanie skryptu (clasp)
+
+```bash
+clasp push -f                                   # wyślij apps-script/ do projektu
+clasp create-deployment -i <ID wdrożenia FitApp> -d "opis"   # nowa wersja, ten sam URL /exec
+```
 
 ## Sekrety
 

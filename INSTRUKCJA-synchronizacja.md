@@ -9,7 +9,7 @@ bez ręcznego eksportu plików. Konfigurujesz raz, na swoim koncie Google.
 
 1. Wejdź na **script.google.com** i kliknij **Nowy projekt**.
 2. Skasuj cały domyślny kod w edytorze.
-3. Otwórz plik **ZELAZO-AppsScript.gs** (obok aplikacji), skopiuj całość i wklej do edytora.
+3. Otwórz plik **apps-script/Kod.js** z repozytorium, skopiuj całość i wklej do edytora.
 4. **Nie wpisuj haseł ani kluczy w kod.** Kliknij **Ustawienia projektu** (koło zębate) →
    **Właściwości skryptu** → **Dodaj właściwość**:
    - `SECRET` — własne, długie hasło (np. wygenerowane w menedżerze haseł).
