@@ -22,7 +22,8 @@ var PROPS = PropertiesService.getScriptProperties();
 function prop(name) {
   var all = PROPS.getProperties();
   for (var k in all) {
-    if (k.trim().toUpperCase() === name) return String(all[k]).trim();
+    // „Claude API key”, „claude-api-key ” itp. też pasują do CLAUDE_API_KEY
+    if (k.toUpperCase().replace(/[^A-Z0-9]/g, '') === name.replace(/[^A-Z0-9]/g, '')) return String(all[k]).trim().replace(/^['"]+|['"]+$/g, '');
   }
   return '';
 }
@@ -62,6 +63,11 @@ var INVITE_DAYS = 7;
 var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
 var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dziennie
 
+// same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
+function propNames() {
+  var n = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv)_/.test(k) && k !== 'DATA_FOLDER_ID'; });
+  return 'Skrypt widzi właściwości: ' + (n.length ? n.join(', ') : '(żadnych)') + '.';
+}
 function sha(s) {
   return Utilities.base64EncodeWebSafe(
     Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8));
@@ -287,7 +293,7 @@ var MEAL_SLOTS = ['Śniadanie', 'Przekąska', 'Obiad', 'Po treningu', 'Kolacja']
 var COACH_MAX_CONTEXT = 16000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
 function coachReply(req) {
-  if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie' };
+  if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
   var ctx = String(req.context || '').slice(0, COACH_MAX_CONTEXT);
   var hist = Array.isArray(req.messages) ? req.messages.slice(-COACH_MAX_TURNS) : [];
   var messages = [];
@@ -404,7 +410,7 @@ function cleanProposal(p, names) {
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----
 function estimateMeal(desc) {
-  if (!CLAUDE_API_KEY) return { ok: false, error: 'Brak klucza API w skrypcie' };
+  if (!CLAUDE_API_KEY) return { ok: false, error: 'Brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
   if (!desc) return { ok: false, error: 'Pusty opis' };
   var prompt =
     'Oszacuj wartości odżywcze posiłku opisanego przez użytkownika. ' +
