@@ -274,7 +274,12 @@ var COACH_SYSTEM = [
   '- Nie jesteś lekarzem. Ból w klatce piersiowej, duszność, omdlenia, ostry ból stawu, objawy kontuzji → przerwij trening i skontaktuj się z lekarzem lub fizjoterapeutą (przy ostrych objawach: 112).',
   '- Suplementy: tylko te z mocnymi dowodami (kreatyna monohydrat, witamina D przy niedoborze, białko w proszku, omega-3, kofeina), z dawkami i zastrzeżeniem, by przy chorobach przewlekłych, lekach lub ciąży skonsultować je z lekarzem. Nie doradzaj sterydów, SARM-ów, „spalaczy” ani leków na odchudzanie — wyjaśnij krótko ryzyko i wróć do podstaw.',
   '- Redukcja: bezpieczne tempo to ok. 0,5–1% masy ciała tygodniowo; nie schodź z kaloriami poniżej podstawowej przemiany materii bez nadzoru specjalisty. Zauważasz sygnały zaburzeń odżywiania → odpowiedz z troską i zasugeruj wsparcie specjalisty.',
-  '- Dane osobowe: widzisz tylko dane tego jednego użytkownika — nie pytaj o dane innych osób.'
+  '- Dane osobowe: widzisz tylko dane tego jednego użytkownika — nie pytaj o dane innych osób.',
+  '',
+  'Zmiany w planie:',
+  '- Gdy proponujesz KONKRETNE zmiany ciężaru, liczby serii lub powtórzeń w ćwiczeniach z planu albo zmianę dziennego celu kalorii, wywołaj dodatkowo narzędzie zaproponuj_zmiany. Użytkownik zobaczy je jako kartę z przyciskiem „Zastosuj od dziś” — nic nie zmienia się bez jego zgody.',
+  '- Używaj dokładnych nazw ćwiczeń z planu. Podawaj realne ciężary (sztanga co 2,5 kg, hantle co 1–2 kg, maszyny co 5 kg). Zmiany kalorii trzymaj w bezpiecznym zakresie (nie niżej niż szacowana podstawowa przemiana materii).',
+  '- Nie wywołuj narzędzia przy ogólnych radach ani gdy użytkownik tylko pyta o opinię — wtedy wystarczy tekst. W tekście krótko wyjaśnij, co proponujesz i dlaczego.'
 ].join('\n');
 var COACH_MAX_CONTEXT = 16000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
@@ -294,8 +299,31 @@ function coachReply(req) {
   while (messages.length && messages[0].role !== 'user') messages.shift();
   if (!messages.length || messages[messages.length - 1].role !== 'user') return { ok: false, error: 'Brak pytania' };
 
+  // nazwy ćwiczeń z planu (z aplikacji) — narzędzie może zmieniać tylko istniejące ćwiczenia
+  var names = (Array.isArray(req.exercises) ? req.exercises : []).map(function (n) { return String(n).slice(0, 80); })
+    .filter(function (n, i, a) { return n && a.indexOf(n) === i; }).slice(0, 60);
+  var exItem = { type: 'object', additionalProperties: false, required: ['nazwa', 'ciezar_kg', 'serie', 'powtorzenia'],
+    properties: {
+      nazwa: names.length ? { type: 'string', enum: names } : { type: 'string' },
+      ciezar_kg: { type: 'number', description: 'Ciężar na serię w kg (na rękę przy hantlach); 0 = masa ciała / bez zmiany ciężaru' },
+      serie: { type: 'integer', description: 'Liczba serii (1–8)' },
+      powtorzenia: { type: 'integer', description: 'Docelowe powtórzenia na serię (przy ćwiczeniach na czas: sekundy)' }
+    } };
+  var tool = {
+    name: 'zaproponuj_zmiany',
+    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary, serie i powtórzenia w ćwiczeniach z planu oraz opcjonalnie nowy dzienny cel kalorii. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji.',
+    strict: true,
+    input_schema: { type: 'object', additionalProperties: false, required: ['podsumowanie', 'cwiczenia', 'cel_kcal'],
+      properties: {
+        podsumowanie: { type: 'string', description: 'Jedno zdanie: co się zmienia i po co' },
+        cwiczenia: { type: 'array', items: exItem, description: 'Zmienione ćwiczenia; pusta lista, jeśli zmieniasz tylko kalorie' },
+        cel_kcal: { type: 'integer', description: 'Nowy dzienny cel kcal albo 0, jeśli bez zmiany' }
+      } }
+  };
+
   var payload = {
     model: COACH_MODEL,
+    tools: [tool],
     max_tokens: 8000,
     output_config: { effort: 'low' },   // rozmowa: niski effort = szybciej i taniej, jakość wystarcza
     fallbacks: 'default',               // odmowa klasyfikatora → serwer sam ponawia na zalecanym modelu
@@ -316,11 +344,28 @@ function coachReply(req) {
   if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
   var data = JSON.parse(res.getContentText());
   if (data.stop_reason === 'refusal') return { ok: false, error: 'Trener nie może odpowiedzieć na to pytanie. Spróbuj sformułować je inaczej.' };
-  var text = '';
-  (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
+  var text = '', proposal = null;
+  (data.content || []).forEach(function (b) {
+    if (b.type === 'text') text += b.text;
+    if (b.type === 'tool_use' && b.name === 'zaproponuj_zmiany' && b.input) proposal = cleanProposal(b.input, names);
+  });
+  if (!text.trim() && proposal) text = proposal.podsumowanie;
   if (!text.trim()) return { ok: false, error: 'Trener nie zwrócił odpowiedzi — spróbuj ponownie' };
   if (data.stop_reason === 'max_tokens') text += '\n\n_(odpowiedź ucięta — dopytaj o resztę)_';
-  return { ok: true, text: text.trim() };
+  return { ok: true, text: text.trim(), proposal: proposal };
+}
+// granice bezpieczeństwa niezależnie od modelu: tylko ćwiczenia z planu, realne liczby
+function cleanProposal(p, names) {
+  var ex = (Array.isArray(p.cwiczenia) ? p.cwiczenia : []).filter(function (e) {
+    return e && (!names.length || names.indexOf(e.nazwa) >= 0);
+  }).map(function (e) {
+    return { nazwa: String(e.nazwa), ciezar_kg: Math.max(0, Math.min(400, Math.round((+e.ciezar_kg || 0) * 2) / 2)),
+      serie: Math.max(1, Math.min(8, Math.round(+e.serie || 1))), powtorzenia: Math.max(1, Math.min(120, Math.round(+e.powtorzenia || 1))) };
+  }).slice(0, 20);
+  var kcal = Math.round(+p.cel_kcal || 0);
+  kcal = kcal ? Math.max(1200, Math.min(4500, kcal)) : 0;
+  if (!ex.length && !kcal) return null;
+  return { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, cel_kcal: kcal };
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----
@@ -561,6 +606,7 @@ function mergeState(local, inc){
     out.reminders=inc.reminders||out.reminders;
     if(inc.kcalGoal) out.kcalGoal=inc.kcalGoal;
     if(inc.profile) out.profile=inc.profile;
+    if(inc.adj) out.adj=inc.adj;   // zmiany planu zaakceptowane od Trenera
     out._settingsM=is;
   }
   return out;
