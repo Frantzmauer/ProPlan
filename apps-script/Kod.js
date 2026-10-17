@@ -245,6 +245,12 @@ function mergeState(local, inc){
   (inc.weights||[]).forEach(function(w){wmap[w.d]=w.w;});
   out.weights=Object.keys(wmap).sort().map(function(d){return {d:d,w:wmap[d]};});
 
+  // obwody (po dacie): nowszy zapis tej samej daty wygrywa
+  var mmap={};
+  (local.measures||[]).forEach(function(m){mmap[m.d]=m;});
+  (inc.measures||[]).forEach(function(m){ var a=mmap[m.d]; if(!a || (m._t||0)>=(a._t||0)) mmap[m.d]=m; });
+  out.measures=Object.keys(mmap).sort().map(function(d){return JSON.parse(JSON.stringify(mmap[d]));});
+
   out.shop=JSON.parse(JSON.stringify(local.shop||{}));
   Object.keys(inc.shop||{}).forEach(function(k){ if(inc.shop[k]) out.shop[k]=true; });
 

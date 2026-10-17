@@ -353,6 +353,16 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
   </div>
   <div class="section">
+    <div class="eyebrow">Obwody (cm) · raz w tygodniu, rano, na czczo</div>
+    <div class="panel panel-pad">
+      <div id="msInputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px"></div>
+      <button class="btn" id="msSave" style="width:100%;margin-top:12px">Zapisz pomiar</button>
+      <div id="msTable" style="margin-top:14px"></div>
+      <canvas class="chart" id="msChart"></canvas>
+      <div class="empty" id="msEmpty">Zapisz pierwszy pomiar — wystarczy wpisać to, co zmierzyłeś.</div>
+    </div>
+  </div>
+  <div class="section">
     <div class="eyebrow">Konsekwencja</div>
     <div class="panel panel-pad">
       <div class="wstat">
@@ -1308,6 +1318,12 @@ function mergeState(local, inc){
   (inc.weights||[]).forEach(w=>{ wmap[w.d]=w.w; }); // wczytany nadpisuje tę samą datę
   out.weights=Object.keys(wmap).sort().map(d=>({d,w:wmap[d]}));
 
+  // --- obwody (po dacie): nowszy zapis tej samej daty wygrywa ---
+  const mmap={};
+  (local.measures||[]).forEach(m=>mmap[m.d]=m);
+  (inc.measures||[]).forEach(m=>{ const a=mmap[m.d]; if(!a || (m._t||0)>=(a._t||0)) mmap[m.d]=m; });
+  out.measures=Object.keys(mmap).sort().map(d=>Object.assign({},mmap[d]));
+
   // --- zakupy: OR ---
   // --- zakupy: nowsza zmiana wygrywa (per pozycja); stare dane bez znaczników → OR ---
   out.shop=Object.assign({},local.shop||{});
@@ -1488,6 +1504,57 @@ function renderToday(){
   updateStreak();
 }
 
+/* ---- progresja: ostatnia sesja tego samego ćwiczenia (po nazwie, także z poprzedniej fazy) ---- */
+function prevSession(exName, iso){
+  const d=parseISO(iso);
+  for(let back=1; back<=42; back++){
+    d.setDate(d.getDate()-1);
+    const p=todayISO(d), di=dayIndexFor(p);
+    if(di<1) break;
+    const w=workoutFor(weekOf(di), d.getDay());
+    if(!w || w.type!=='lift') continue;
+    const idx=w.ex.findIndex(x=>x.n.trim()===exName.trim());
+    if(idx<0) continue;
+    const r=S.log[p] && S.log[p].ex && S.log[p].ex[p+'_e'+idx];
+    if(!r || !r.sets) continue;
+    const sets=[];
+    for(let s=1; s<=w.ex[idx].s; s++){
+      const kg=parseFloat(r.sets['w'+s]), rp=parseFloat(r.sets['r'+s]);
+      if(rp>0) sets.push({kg:kg>0?kg:0, rp});
+    }
+    if(sets.length) return {iso:p, sets, phase3:!!w.phase3};
+  }
+  return null;
+}
+function progStep(e){
+  if(/kettlebell/i.test(e.n+e.start)) return 4;
+  if(/\/rękę|\/stronę|hantl/i.test(e.start+e.n)) return 2;
+  if(/przysiad|martwy|RDL|suwnic|nóg|łydk|wspięcia|wypady|hack/i.test(e.n)) return 5;
+  return 2.5;
+}
+// zwraca {kg: ciężar do wpisania w pola, hint: tekst podpowiedzi}
+function progressionFor(e, iso, targetR, phase3){
+  const prev=prevSession(e.n, iso);
+  if(!prev) return null;
+  const fmt=x=>String(Math.round(x*2)/2).replace('.',',');
+  const lastKg=Math.max(...prev.sets.map(s=>s.kg));
+  const when=prev.iso.slice(8,10)+'.'+prev.iso.slice(5,7);
+  const was=prev.sets.map(s=>(s.kg?fmt(s.kg)+'×':'')+s.rp).join(', ');
+  const allHit=prev.sets.length>=e.s && prev.sets.every(s=>s.rp>=targetR);
+  if(phase3 && !prev.phase3 && lastKg>0){
+    const kg=Math.round(lastKg*0.9*2)/2;
+    return {kg, hint:`Ostatnio (${when}): ${was}. Faza 3: start od ${fmt(kg)} kg (−10%), celuj w ${targetR} powt.`};
+  }
+  if(!lastKg){
+    return {kg:0, hint:`Ostatnio (${when}): ${was}.`+(allHit?' Pełny zakres — dodaj 1–2 powtórzenia albo obciążenie.':'')};
+  }
+  if(allHit){
+    const next=lastKg+progStep(e);
+    return {kg:lastKg, up:true, hint:`Ostatnio (${when}): ${was}. Pełny zakres ✅ — dziś spróbuj ${fmt(next)} kg (wpisz w pola).`};
+  }
+  return {kg:lastKg, hint:`Ostatnio (${when}): ${was}. Zostań przy ${fmt(lastKg)} kg i celuj w ${targetR} powt. w każdej serii.`};
+}
+
 function renderWorkout(iso, wk, dow, dayIdx, L){
   const card=document.getElementById('workoutCard');
   let w = (dayIdx>=1 && dayIdx<=168) ? workoutFor(wk,dow) : REST;
@@ -1528,6 +1595,9 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
     // zalecane wartości (prefill). Faza 3: ciężar −10%, powtórzenia +3
     let recW = e.w||0, recR = e.rp||0;
     if(w.phase3){ recW = Math.round((recW*0.9)*2)/2; recR = recR+3; }
+    // z historii: ostatni faktyczny ciężar zamiast sztywnego startu z planu
+    const prog=progressionFor(e, iso, recR, !!w.phase3);
+    if(prog && prog.kg>0) recW=prog.kg;
     const recWtxt = recW>0 ? String(recW) : '';
     let setsHtml='';
     for(let s=1;s<=e.s;s++){
@@ -1550,7 +1620,8 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
         <button class="show-btn" data-guide="${encodeURIComponent(e.n)}">Pokaż</button>
         <span class="scheme">${e.s}×${e.r}</span>
       </div>
-      ${e.start?`<div class="ex-sub">Start: ${e.start}</div>`:''}
+      ${prog?`<div class="ex-sub" style="color:${prog.up?'var(--amber)':'var(--ink-dim)'}">${prog.up?'⬆ ':''}${prog.hint}</div>`
+            :(e.start?`<div class="ex-sub">Start: ${e.start}</div>`:'')}
       <div class="sets">${setsHtml}</div>
       <div class="ex-check" data-done="${key}">
         <span class="mini ${exDone?'on':''}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
@@ -2053,9 +2124,58 @@ function renderWeight(){
   else{dEl.textContent='—';dEl.className='n'}
   drawChart(ws);
   document.getElementById('wEmpty').style.display=ws.length?'none':'block';
+  renderMeasures();
 }
-function drawChart(ws){
-  const c=document.getElementById('wChart');
+
+/* ---- obwody ciała: S.measures=[{d, waist, chest, arm, thigh, hips, _t}] ---- */
+const MEASURES=[
+  {k:'waist',l:'Pas (pępek)',down:true},
+  {k:'chest',l:'Klatka',down:false},
+  {k:'arm',l:'Ramię (napięte)',down:false},
+  {k:'thigh',l:'Udo',down:false},
+  {k:'hips',l:'Biodra',down:true},
+];
+let msChartKey='waist';
+function renderMeasures(){
+  const box=document.getElementById('msInputs'); if(!box) return;
+  if(!box.childElementCount){
+    box.innerHTML=MEASURES.map(m=>`<label style="font-size:12px;color:var(--ink-dim)">${m.l}
+      <input type="number" step="0.5" inputmode="decimal" class="md-in" id="ms_${m.k}" placeholder="cm" style="margin-top:4px"></label>`).join('');
+  }
+  const ms=(S.measures||[]).slice().sort((a,b)=>a.d<b.d?-1:1);
+  document.getElementById('msEmpty').style.display=ms.length?'none':'block';
+  const first=k=>{const x=ms.find(m=>m[k]>0);return x?x[k]:null;};
+  const last=k=>{for(let i=ms.length-1;i>=0;i--) if(ms[i][k]>0) return ms[i][k]; return null;};
+  const fmt=v=>v.toFixed(1).replace('.',',');
+  const half=S.profile&&S.profile.height?S.profile.height/2:null;
+  document.getElementById('msTable').innerHTML=ms.length?MEASURES.map(m=>{
+    const a=first(m.k), b=last(m.k); if(b===null) return '';
+    const dv=b-a, good=m.down?dv<0:dv>0;
+    const col=dv===0?'var(--ink-dim)':(good?'#5fbf7a':'var(--red)');
+    const sel=m.k===msChartKey?'border-color:var(--amber)':'';
+    return `<div data-ms="${m.k}" style="display:flex;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;${sel}">
+      <span>${m.l}${m.k==='waist'&&half?` <span style="color:var(--ink-faint);font-size:12px">cel &lt; ${fmt(half)}</span>`:''}</span>
+      <span><b>${fmt(b)}</b> <span style="color:${col};font-size:13px">${dv>0?'+':''}${fmt(dv)}</span></span></div>`;
+  }).join('')+'<div style="font-size:12px;color:var(--ink-faint)">Kliknij wiersz, żeby zobaczyć wykres. Zmiana liczona od pierwszego pomiaru.</div>':'';
+  document.querySelectorAll('[data-ms]').forEach(el=>el.onclick=()=>{msChartKey=el.dataset.ms;renderMeasures();});
+  const series=ms.filter(m=>m[msChartKey]>0).map(m=>({d:m.d,w:m[msChartKey]}));
+  const c=document.getElementById('msChart'); c.style.display=series.length?'block':'none';
+  if(series.length) drawChart(series,'msChart');
+}
+document.getElementById('msSave').onclick=()=>{
+  const iso=todayISO(); const vals={}; let any=false;
+  MEASURES.forEach(m=>{const v=parseFloat(document.getElementById('ms_'+m.k).value.replace(',','.')); if(v>=10&&v<=250){vals[m.k]=v;any=true;}});
+  if(!any){document.getElementById('ms_waist').focus();return;}
+  if(!S.measures) S.measures=[];
+  let e=S.measures.find(x=>x.d===iso);
+  if(!e){e={d:iso};S.measures.push(e);}
+  Object.assign(e,vals); e._t=Date.now();
+  MEASURES.forEach(m=>document.getElementById('ms_'+m.k).value='');
+  save(); renderMeasures();
+};
+
+function drawChart(ws, canvasId){
+  const c=document.getElementById(canvasId||'wChart');
   const dpr=window.devicePixelRatio||1;
   const W=c.clientWidth||600, H=180;
   c.width=W*dpr; c.height=H*dpr; c.getContext('2d').scale(dpr,dpr);
@@ -2065,7 +2185,7 @@ function drawChart(ws){
   if(ws.length===1){
     ctx.fillStyle='#ff7a1a';ctx.beginPath();ctx.arc(W/2,H/2,5,0,7);ctx.fill();
     ctx.fillStyle='#9aa3ab';ctx.font='13px Inter';ctx.textAlign='center';
-    ctx.fillText(ws[0].w.toFixed(1)+' kg',W/2,H/2-14);
+    ctx.fillText(ws[0].w.toFixed(1)+(canvasId==='msChart'?' cm':' kg'),W/2,H/2-14);
     return;
   }
   const pad={l:36,r:12,t:16,b:22};
