@@ -144,7 +144,7 @@ function adminAction(req) {
         invites.push({ code: k.slice(4), account: i.account || '', expires: i.expires, reset: !!i.reset });
       }
     });
-    users.forEach(function (u) { var f = dataFile(u.account, false); u.kb = f ? Math.round(f.getSize() / 1024) : 0; });
+    users.forEach(function (u) { var f = dataFile(u.account, false); u.kb = f ? Math.round(f.size / 1024) : 0; });
     return { ok: true, users: users, invites: invites };
   }
   if (a === 'adminInvite') {
@@ -175,7 +175,7 @@ function adminAction(req) {
   if (a === 'adminDelete') {
     PROPS.deleteProperty('user_' + target);
     var f = dataFile(target, false);
-    if (f) f.setTrashed(true);   // kosz Dysku — da się odzyskać przez 30 dni
+    if (f) trashFile(f);   // kosz Dysku — da się odzyskać przez 30 dni
     return { ok: true };
   }
   return { ok: false, error: 'Nieznana akcja administratora' };
@@ -278,22 +278,45 @@ function estimateMeal(desc) {
 // ---- magazyn: pliki <konto>.json w folderze na Dysku właściciela ----
 // (Właściwości skryptu mają limit 9 KB na wartość — dziennik z kilku tygodni już się nie mieści.)
 // Skrypt ma zakres drive.file: widzi WYŁĄCZNIE pliki, które sam utworzył.
+// Wbudowana usługa Dysku w Apps Script wymaga pełnego dostępu, dlatego rozmawiamy z Drive API v3 bezpośrednio.
+var DRIVE = 'https://www.googleapis.com/drive/v3/files';
+var DRIVE_UP = 'https://www.googleapis.com/upload/drive/v3/files';
+function drive(method, url, payload, contentType) {
+  var opt = { method: method, muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } };
+  if (payload !== undefined) { opt.payload = payload; opt.contentType = contentType || 'application/json'; }
+  var r = UrlFetchApp.fetch(url, opt), code = r.getResponseCode();
+  if (code === 404) return null;
+  if (code >= 300) throw new Error('Dysk ' + code + ': ' + r.getContentText().slice(0, 200));
+  return r.getContentText();
+}
 function dataFolder() {
   var id = PROPS.getProperty('DATA_FOLDER_ID');
-  if (id) { try { var f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (e) {} }
-  var folder = DriveApp.createFolder('ZELAZO — dane kont (nie usuwaj)');
-  PROPS.setProperty('DATA_FOLDER_ID', folder.getId());
-  return folder;
+  if (id) {
+    var meta = drive('get', DRIVE + '/' + id + '?fields=id,trashed');
+    if (meta && !JSON.parse(meta).trashed) return id;
+  }
+  var created = JSON.parse(drive('post', DRIVE + '?fields=id',
+    JSON.stringify({ name: 'ZELAZO — dane kont (nie usuwaj)', mimeType: 'application/vnd.google-apps.folder' })));
+  PROPS.setProperty('DATA_FOLDER_ID', created.id);
+  return created.id;
 }
+// {id, size} albo null
 function dataFile(account, create) {
-  var folder = dataFolder(), it = folder.getFilesByName(account + '.json');
-  while (it.hasNext()) { var f = it.next(); if (!f.isTrashed()) return f; }
-  return create ? folder.createFile(account + '.json', 'null', MimeType.PLAIN_TEXT) : null;
+  var folder = dataFolder();
+  var q = "name = '" + account + ".json' and '" + folder + "' in parents and trashed = false";
+  var list = JSON.parse(drive('get', DRIVE + '?fields=files(id,size)&q=' + encodeURIComponent(q)));
+  if (list.files && list.files.length) return { id: list.files[0].id, size: +list.files[0].size || 0 };
+  if (!create) return null;
+  var f = JSON.parse(drive('post', DRIVE + '?fields=id',
+    JSON.stringify({ name: account + '.json', parents: [folder], mimeType: 'application/json' })));
+  return { id: f.id, size: 0 };
 }
+function trashFile(f) { drive('patch', DRIVE + '/' + f.id, JSON.stringify({ trashed: true })); }
 function read(account) {
   var f = dataFile(account, false);
   var data = null;
-  if (f) { var txt = f.getBlob().getDataAsString('UTF-8'); data = (txt && txt !== 'null') ? JSON.parse(txt) : null; }
+  if (f) { var txt = drive('get', DRIVE + '/' + f.id + '?alt=media'); data = (txt && txt !== 'null') ? JSON.parse(txt) : null; }
   // migracja: stary zapis we Właściwościach skryptu → plik
   var old = PROPS.getProperty('acct_' + account);
   if (old) {
@@ -304,18 +327,20 @@ function read(account) {
   return data;
 }
 function write(account, data) {
-  dataFile(account, true).setContent(JSON.stringify(data));
+  var f = dataFile(account, true);
+  drive('patch', DRIVE_UP + '/' + f.id + '?uploadType=media', JSON.stringify(data), 'application/json');
 }
 
 // JEDNORAZOWO po aktualizacji: wybierz w edytorze i kliknij „Uruchom".
 // Google poprosi o zgodę na Dysk (tylko pliki tworzone przez ten skrypt),
 // a funkcja przeniesie stare dane kont z Właściwości skryptu do plików.
 function przygotujDane() {
-  var folder = dataFolder(), moved = [];
+  dataFolder();
+  var moved = [];
   PROPS.getKeys().forEach(function (k) {
     if (k.indexOf('acct_') === 0) { read(k.slice(5)); moved.push(k.slice(5)); }
   });
-  Logger.log('Gotowe. Folder danych: „' + folder.getName() + '”. Przeniesione konta: ' +
+  Logger.log('Gotowe. Folder danych: „ZELAZO — dane kont (nie usuwaj)” na Twoim Dysku. Przeniesione konta: ' +
     (moved.length ? moved.join(', ') : 'brak (nic do przeniesienia)'));
 }
 
