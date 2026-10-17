@@ -17,19 +17,34 @@
 
 var PROPS = PropertiesService.getScriptProperties();
 
+// Odczyt właściwości odporny na literówki w nazwie (wielkość liter, spacje)
+// i na spacje w wartości wklejonej z menedżera haseł.
+function prop(name) {
+  var all = PROPS.getProperties();
+  for (var k in all) {
+    if (k.trim().toUpperCase() === name) return String(all[k]).trim();
+  }
+  return '';
+}
+
 // Hasło synchronizacji — z Właściwości skryptu. Bez niego każde żądanie jest odrzucane.
-var SECRET = PROPS.getProperty('SECRET') || '';
+var SECRET = prop('SECRET');
 
 // Klucz API z Claude Platform (do szacowania kalorii z opisu posiłku).
 // Brak właściwości = funkcja wyłączona. Klucz NIE trafia do aplikacji ani przeglądarki.
-var CLAUDE_API_KEY = PROPS.getProperty('CLAUDE_API_KEY') || '';
+var CLAUDE_API_KEY = prop('CLAUDE_API_KEY');
 var CLAUDE_MODEL   = 'claude-sonnet-4-6';     // model do szacowania
 
 // ---- wejście HTTP (aplikacja wywołuje POST z text/plain) ----
 function doPost(e) {
   try {
     var req = JSON.parse(e.postData.contents || '{}');
-    if (!SECRET) return out({ ok: false, error: 'Brak SECRET we Właściwościach skryptu' });
+    if (!SECRET) {
+      // same nazwy (bez wartości, bez danych kont) — żeby było widać, co skrypt faktycznie ma
+      var names = PROPS.getKeys().filter(function (k) { return k.indexOf('acct_') !== 0; });
+      return out({ ok: false, error: 'Brak SECRET we Właściwościach skryptu. Widzę: ' +
+        (names.length ? names.join(', ') : '(brak właściwości — sprawdź, czy to ten sam projekt)') });
+    }
     if (req.token !== SECRET) return out({ ok: false, error: 'Zły token' });
     var account = (req.account || '').toString().trim().toLowerCase();
     if (!account && req.action !== 'ping') return out({ ok: false, error: 'Brak nazwy konta' });
