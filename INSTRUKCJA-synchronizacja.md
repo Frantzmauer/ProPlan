@@ -49,22 +49,26 @@ oba będą trzymać się w synchronie.
 
 ---
 
-## Jak udostępnić bratu (żeby widział tylko swoje dane)
+## Nowe osoby — zaproszenia (Ty zarządzasz kontami)
 
-Nie musisz robić nic więcej po swojej stronie. Wystarczy, że dasz bratu:
+Twój token (`SECRET`) jest tokenem **administratora**. Z nim w **Więcej → Synchronizacja**
+pojawia się sekcja **„Konta i zaproszenia”**:
 
-1. **Plik aplikacji** (`index.html`) — otworzy go u siebie.
-2. **Ten sam URL skryptu** i **ten sam token**.
-3. Instrukcję: w „Więcej → Synchronizacja w chmurze" niech wpisze **inną nazwę konta**,
-   np. `brat`.
+1. Wpisz nazwę konta (np. `tomek`) albo zostaw pustą i kliknij **Zaproś**.
+2. Wyślij tej osobie link (**Kopiuj link** / **Wyślij…**). Link działa **raz** i wygasa po **7 dniach**.
+3. Osoba otwiera link na telefonie → **Dołącz** — aplikacja sama ustawia URL, konto i **jej własny token**.
 
-Ponieważ dane są zapisywane pod nazwą konta, brat wpisując `brat` widzi wyłącznie swoje dane,
-a Ty ze swoim `marek` — swoje. Ten sam skrypt obsługuje Was obu, każdy osobno.
+Każdy zaproszony widzi **wyłącznie swoje dane** — jego token nie otwiera cudzych kont.
+Serwer przechowuje tylko skrót (SHA-256) tokenu, nigdy sam token.
 
-> Uwaga o prywatności: przy wspólnym tokenie technicznie moglibyście odczytać nawzajem swoje
-> dane, gdybyście znali swoją nazwę konta. Dla dziennika treningowego dwóch braci to bez znaczenia.
-> Jeśli chcecie pełną izolację — brat może założyć **własny** skrypt (te same kroki 1–10 na jego
-> koncie Google) i użyć swojego URL. Wtedy dane w ogóle się nie stykają.
+W panelu możesz też: **Zablokuj / Odblokuj**, **Nowy link** (gdy ktoś zgubi telefon — stary token
+przestaje działać od razu, dane zostają) i **Usuń** (plik danych trafia do kosza Dysku na 30 dni).
+
+Szacowanie kalorii przez Claude jest dostępne dla wszystkich kont i idzie z **Twojego** klucza API —
+limit to 40 szacowań na konto dziennie (`ESTIMATE_PER_DAY` w skrypcie).
+
+Dane kont leżą w folderze **„ZELAZO — dane kont (nie usuwaj)”** na Twoim Dysku Google, po jednym
+pliku `<konto>.json`. Skrypt ma dostęp **tylko do plików, które sam utworzył**.
 
 ---
 
@@ -72,10 +76,13 @@ a Ty ze swoim `marek` — swoje. Ten sam skrypt obsługuje Was obu, każdy osobn
 
 - **„Zła odpowiedź serwera"** — sprawdź, czy URL kończy się na `/exec` (a nie `/dev`),
   i czy wdrożenie ma dostęp „Wszyscy".
-- **„Zły token"** — token w aplikacji musi być identyczny jak właściwość `SECRET` w skrypcie.
+- **„Zły token"** — administrator: token musi być identyczny jak `SECRET`. Zaproszona osoba:
+  token mógł zostać zresetowany albo konto zablokowane — wygeneruj jej **Nowy link** w panelu.
 - **„Brak SECRET we Właściwościach skryptu"** — dodaj właściwość `SECRET` (krok 4).
 - **Nie działa z pliku otwartego z dysku (file://)** — niektóre przeglądarki blokują wtedy
   połączenia sieciowe. Na laptopie w Chrome zwykle działa; jeśli nie, otwórz aplikację przez
   lokalny serwer lub hosting. Na telefonie dodaj stronę do ekranu głównego.
+- **Po aktualizacji skryptu do wersji z kontami** — uruchom raz w edytorze funkcję `przygotujDane`
+  (zgoda na Dysk: tylko pliki tworzone przez skrypt).
 - **Zmieniłeś kod skryptu** — musisz zrobić **Wdróż → Zarządzaj wdrożeniami → edytuj →
   Nowa wersja**, inaczej URL serwuje starą wersję.

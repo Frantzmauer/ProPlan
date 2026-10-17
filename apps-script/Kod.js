@@ -49,35 +49,175 @@ var SECRET = prop('SECRET');
 var CLAUDE_API_KEY = prop('CLAUDE_API_KEY');
 var CLAUDE_MODEL   = 'claude-sonnet-4-6';     // model do szacowania
 
+// ============================================================
+// KONTA I ZAPROSZENIA
+// SECRET = token administratora (właściciel skryptu). Każdy zaproszony
+// dostaje WŁASNY token; serwer trzyma tylko jego skrót SHA-256.
+//   user_<konto> = {h, created, lastSeen, disabled}
+//   inv_<kod>    = {account, created, expires, reset}
+// Dane kont: pliki <konto>.json w folderze na Dysku właściciela.
+// ============================================================
+var ACCOUNT_RE = /^[a-z0-9][a-z0-9_-]{1,23}$/;
+var ACCOUNT_RULE = 'Nazwa konta: 2–24 znaki — małe litery a–z, cyfry, „-” lub „_”.';
+var INVITE_DAYS = 7;
+var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
+
+function sha(s) {
+  return Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8));
+}
+function randToken(n) {
+  return (Utilities.getUuid() + Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '').slice(0, n);
+}
+function getJSON(k) { var v = PROPS.getProperty(k); return v ? JSON.parse(v) : null; }
+function setJSON(k, o) { PROPS.setProperty(k, JSON.stringify(o)); }
+// porównanie w stałym czasie — nie zdradza, ile znaków tokenu się zgadza
+function sameStr(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  var r = 0;
+  for (var i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
+function cleanAccount(s) { return (s || '').toString().trim().toLowerCase(); }
+function accountTaken(acc) { return !!(getJSON('user_' + acc) || dataFile(acc, false)); }
+
+function auth(req) {
+  var account = cleanAccount(req.account), token = (req.token || '').toString();
+  if (!token) return null;
+  if (sameStr(token, SECRET)) return { admin: true, account: account };
+  if (!account) return null;
+  var u = getJSON('user_' + account);
+  if (!u || u.disabled || !u.h || !sameStr(sha(token), u.h)) return null;
+  return { admin: false, account: account, user: u };
+}
+function touchUser(acc, u) {
+  if (Date.now() - (u.lastSeen || 0) > 10 * 60 * 1000) { u.lastSeen = Date.now(); setJSON('user_' + acc, u); }
+}
+function rateLimit(acc) {
+  var c = CacheService.getScriptCache();
+  var k = 'rl_' + acc + '_' + Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyyMMdd');
+  var n = +(c.get(k) || 0);
+  if (n >= ESTIMATE_PER_DAY) return { ok: false, error: 'Dzienny limit szacowań wyczerpany (' + ESTIMATE_PER_DAY + ')' };
+  c.put(k, String(n + 1), 24 * 60 * 60);
+  return null;
+}
+function withLock(fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+
+// zaproszony otwiera link → wymienia jednorazowy kod na własny token
+function redeem(req) {
+  var code = (req.code || '').toString().trim();
+  if (!/^[a-zA-Z0-9]{16,64}$/.test(code)) return { ok: false, error: 'Nieprawidłowy link zaproszenia' };
+  return withLock(function () {
+    var inv = getJSON('inv_' + code);
+    if (!inv) return { ok: false, error: 'Zaproszenie nie istnieje albo zostało już użyte' };
+    if (Date.now() > inv.expires) { PROPS.deleteProperty('inv_' + code); return { ok: false, error: 'Zaproszenie wygasło — poproś o nowe' }; }
+    var acc = cleanAccount(inv.account || req.account);
+    if (!ACCOUNT_RE.test(acc)) return { ok: false, error: ACCOUNT_RULE };
+    var u = getJSON('user_' + acc);
+    if (inv.reset) { if (!u) return { ok: false, error: 'To konto już nie istnieje' }; }
+    else if (accountTaken(acc)) return { ok: false, error: 'Ta nazwa konta jest zajęta — wybierz inną' };
+    var token = randToken(40);
+    u = u || { created: Date.now() };
+    u.h = sha(token); u.disabled = false; u.lastSeen = Date.now();
+    setJSON('user_' + acc, u);
+    PROPS.deleteProperty('inv_' + code);
+    return { ok: true, account: acc, token: token };
+  });
+}
+
+function adminAction(req) {
+  var a = req.action, now = Date.now();
+  if (a === 'adminList') {
+    var users = [], invites = [], all = PROPS.getProperties();
+    Object.keys(all).forEach(function (k) {
+      if (k.indexOf('user_') === 0) {
+        var u = JSON.parse(all[k]);
+        users.push({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h });
+      } else if (k.indexOf('inv_') === 0) {
+        var i = JSON.parse(all[k]);
+        if (now > i.expires) { PROPS.deleteProperty(k); return; }
+        invites.push({ code: k.slice(4), account: i.account || '', expires: i.expires, reset: !!i.reset });
+      }
+    });
+    users.forEach(function (u) { var f = dataFile(u.account, false); u.kb = f ? Math.round(f.getSize() / 1024) : 0; });
+    return { ok: true, users: users, invites: invites };
+  }
+  if (a === 'adminInvite') {
+    var acc = cleanAccount(req.name);
+    if (acc && !ACCOUNT_RE.test(acc)) return { ok: false, error: ACCOUNT_RULE };
+    if (acc && accountTaken(acc)) return { ok: false, error: 'Ta nazwa konta jest zajęta' };
+    var code = randToken(24), exp = now + INVITE_DAYS * 864e5;
+    setJSON('inv_' + code, { account: acc, created: now, expires: exp });
+    return { ok: true, code: code, account: acc, expires: exp };
+  }
+  if (a === 'adminRevokeInvite') {
+    PROPS.deleteProperty('inv_' + (req.code || '').toString().replace(/[^a-zA-Z0-9]/g, ''));
+    return { ok: true };
+  }
+  var target = cleanAccount(req.target), u = getJSON('user_' + target);
+  if (!u) return { ok: false, error: 'Nie ma takiego konta' };
+  if (a === 'adminDisable' || a === 'adminEnable') {
+    u.disabled = (a === 'adminDisable'); setJSON('user_' + target, u);
+    return { ok: true };
+  }
+  if (a === 'adminReset') {
+    // stary token przestaje działać od razu; osoba dostaje nowy link na to samo konto (dane zostają)
+    u.h = ''; setJSON('user_' + target, u);
+    var rc = randToken(24), rexp = now + INVITE_DAYS * 864e5;
+    setJSON('inv_' + rc, { account: target, created: now, expires: rexp, reset: true });
+    return { ok: true, code: rc, account: target, expires: rexp };
+  }
+  if (a === 'adminDelete') {
+    PROPS.deleteProperty('user_' + target);
+    var f = dataFile(target, false);
+    if (f) f.setTrashed(true);   // kosz Dysku — da się odzyskać przez 30 dni
+    return { ok: true };
+  }
+  return { ok: false, error: 'Nieznana akcja administratora' };
+}
+
 // ---- wejście HTTP (aplikacja wywołuje POST z text/plain) ----
 function doPost(e) {
   try {
     var req = JSON.parse(e.postData.contents || '{}');
     if (!SECRET) {
       // same nazwy (bez wartości, bez danych kont) — żeby było widać, co skrypt faktycznie ma
-      var names = PROPS.getKeys().filter(function (k) { return k.indexOf('acct_') !== 0; });
+      var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv)_/.test(k); });
       return out({ ok: false, error: 'Brak SECRET we Właściwościach skryptu. Widzę: ' +
         (names.length ? names.join(', ') : '(brak właściwości — sprawdź, czy to ten sam projekt)') });
     }
-    if (req.token !== SECRET) return out({ ok: false, error: 'Zły token' });
-    var account = (req.account || '').toString().trim().toLowerCase();
-    if (!account && req.action !== 'ping') return out({ ok: false, error: 'Brak nazwy konta' });
+    if (req.action === 'redeem') return out(redeem(req));
 
-    if (req.action === 'ping') {
-      return out({ ok: true, pong: true });
+    var me = auth(req);
+    if (!me) return out({ ok: false, error: 'Zły token' });
+    if (req.action === 'ping') return out({ ok: true, pong: true, admin: me.admin });
+    if (String(req.action).indexOf('admin') === 0) {
+      if (!me.admin) return out({ ok: false, error: 'Brak uprawnień' });
+      return out(withLock(function () { return adminAction(req); }));
     }
+    if (!me.account) return out({ ok: false, error: 'Brak nazwy konta' });
+    if (me.user) touchUser(me.account, me.user);
+
     if (req.action === 'estimate') {
-      return out(estimateMeal(req.desc || ''));
+      var lim = rateLimit(me.account);
+      return out(lim || estimateMeal(req.desc || ''));
     }
     if (req.action === 'pull') {
-      return out({ ok: true, data: read(account) });
+      return out({ ok: true, data: read(me.account) });
     }
     if (req.action === 'push') {
       // scal przychodzący stan z tym, co już mamy (ochrona przed wyścigiem 2 urządzeń)
-      var current = read(account);
-      var merged = current ? mergeState(current, req.data) : req.data;
-      write(account, merged);
-      return out({ ok: true, data: merged });
+      return out(withLock(function () {
+        var current = read(me.account);
+        var merged = current ? mergeState(current, req.data) : req.data;
+        write(me.account, merged);
+        return { ok: true, data: merged };
+      }));
     }
     return out({ ok: false, error: 'Nieznana akcja' });
   } catch (err) {
@@ -135,13 +275,48 @@ function estimateMeal(desc) {
   };
 }
 
-// ---- magazyn: Script Properties, klucz per konto ----
+// ---- magazyn: pliki <konto>.json w folderze na Dysku właściciela ----
+// (Właściwości skryptu mają limit 9 KB na wartość — dziennik z kilku tygodni już się nie mieści.)
+// Skrypt ma zakres drive.file: widzi WYŁĄCZNIE pliki, które sam utworzył.
+function dataFolder() {
+  var id = PROPS.getProperty('DATA_FOLDER_ID');
+  if (id) { try { var f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (e) {} }
+  var folder = DriveApp.createFolder('ZELAZO — dane kont (nie usuwaj)');
+  PROPS.setProperty('DATA_FOLDER_ID', folder.getId());
+  return folder;
+}
+function dataFile(account, create) {
+  var folder = dataFolder(), it = folder.getFilesByName(account + '.json');
+  while (it.hasNext()) { var f = it.next(); if (!f.isTrashed()) return f; }
+  return create ? folder.createFile(account + '.json', 'null', MimeType.PLAIN_TEXT) : null;
+}
 function read(account) {
-  var raw = PropertiesService.getScriptProperties().getProperty('acct_' + account);
-  return raw ? JSON.parse(raw) : null;
+  var f = dataFile(account, false);
+  var data = null;
+  if (f) { var txt = f.getBlob().getDataAsString('UTF-8'); data = (txt && txt !== 'null') ? JSON.parse(txt) : null; }
+  // migracja: stary zapis we Właściwościach skryptu → plik
+  var old = PROPS.getProperty('acct_' + account);
+  if (old) {
+    data = data ? mergeState(data, JSON.parse(old)) : JSON.parse(old);
+    write(account, data);
+    PROPS.deleteProperty('acct_' + account);
+  }
+  return data;
 }
 function write(account, data) {
-  PropertiesService.getScriptProperties().setProperty('acct_' + account, JSON.stringify(data));
+  dataFile(account, true).setContent(JSON.stringify(data));
+}
+
+// JEDNORAZOWO po aktualizacji: wybierz w edytorze i kliknij „Uruchom".
+// Google poprosi o zgodę na Dysk (tylko pliki tworzone przez ten skrypt),
+// a funkcja przeniesie stare dane kont z Właściwości skryptu do plików.
+function przygotujDane() {
+  var folder = dataFolder(), moved = [];
+  PROPS.getKeys().forEach(function (k) {
+    if (k.indexOf('acct_') === 0) { read(k.slice(5)); moved.push(k.slice(5)); }
+  });
+  Logger.log('Gotowe. Folder danych: „' + folder.getName() + '”. Przeniesione konta: ' +
+    (moved.length ? moved.join(', ') : 'brak (nic do przeniesienia)'));
 }
 
 // ============================================================

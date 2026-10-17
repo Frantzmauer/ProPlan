@@ -77,10 +77,10 @@ a{color:var(--steel)}
 .add-kcal{display:flex;gap:8px}
 .add-kcal input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:16px;padding:12px 14px;font-family:var(--font-disp);font-weight:600}
 .add-kcal input:focus{outline:none;border-color:var(--amber)}
-#mealDialog,#guideDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;padding:0}
-#mealDialog.show,#guideDialog.show{display:flex}
-#mealDialog .md-card,#guideDialog .md-card{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:slideUp .28s cubic-bezier(.2,.8,.2,1)}
-@media(min-width:620px){#mealDialog,#guideDialog{align-items:center}#mealDialog .md-card,#guideDialog .md-card{border-radius:18px}}
+#mealDialog,#guideDialog,#joinDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;padding:0}
+#mealDialog.show,#guideDialog.show,#joinDialog.show{display:flex}
+#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:slideUp .28s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:620px){#mealDialog,#guideDialog,#joinDialog{align-items:center}#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card{border-radius:18px}}
 .show-btn{background:var(--panel2);border:1px solid var(--line);color:var(--steel);font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:7px;font-family:var(--font-body);white-space:nowrap}
 .show-btn:active{transform:scale(.95)}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
@@ -468,7 +468,25 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         </div>
       </div>
     </div>
-    <div class="note" id="cloudInfo">Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Oba urządzenia używają tego samego URL-a i tokenu, ale <b>każde swojej nazwy konta</b> — dzięki temu dane się nie mieszają.</div>
+    <div class="note" id="cloudInfo">Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Na drugim urządzeniu wpisz <b>to samo konto i ten sam token</b>. Nowe osoby dołączają przez <b>link zaproszenia</b> — każda ma własny token i widzi tylko swoje dane.</div>
+
+    <div id="adminSection" style="display:none;margin-top:16px">
+      <div class="eyebrow">Konta i zaproszenia · administrator</div>
+      <div class="panel panel-pad">
+        <label class="md-lab" style="margin-top:0">Zaproś nową osobę</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="md-in" id="admName" placeholder="nazwa konta, np. tomek (albo zostaw pustą)" autocomplete="off" spellcheck="false">
+          <button class="btn" id="admInviteBtn" style="white-space:nowrap">Zaproś</button>
+        </div>
+        <div class="md-hint">Pusta nazwa = zaproszony sam ją wybierze. Link działa raz i wygasa po 7 dniach.</div>
+        <div id="admLink" style="display:none;margin-top:12px"></div>
+        <label class="md-lab" style="margin-top:18px">Konta</label>
+        <div id="admUsers"><div class="md-hint">Ładowanie…</div></div>
+        <label class="md-lab" style="margin-top:18px">Oczekujące zaproszenia</label>
+        <div id="admInvites"></div>
+        <button class="btn ghost" id="admRefresh" style="width:100%;margin-top:14px;font-size:13px;padding:10px">Odśwież listę</button>
+      </div>
+    </div>
     <details class="panel" style="margin-top:10px">
       <summary style="padding:14px 16px;cursor:pointer;font-family:var(--font-disp);font-size:16px;color:var(--amber);letter-spacing:.04em">JAK TO USTAWIĆ — INSTRUKCJA KROK PO KROKU</summary>
       <div style="padding:0 16px 16px;font-size:13px;color:var(--ink-dim);line-height:1.7">
@@ -480,7 +498,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         5. „Wykonaj jako: <b>Ja</b>", „Kto ma dostęp: <b>Wszyscy</b>". Kliknij <b>Wdróż</b>, zezwól na uprawnienia.<br>
         6. Skopiuj <b>URL aplikacji internetowej</b> (kończy się na <span style="color:var(--steel)">/exec</span>).<br>
         7. Wklej tu: URL, ten sam token co SECRET, i swoją nazwę konta. Włącz przełącznik i kliknij <b>Test połączenia</b>.<br><br>
-        <b style="color:var(--ink)">Dla brata:</b> daj mu ten sam URL i token, ale niech wpisze <b>inną nazwę konta</b> (np. „brat"). Wtedy widzi tylko swoje dane. Nie musi nic instalować.
+        <b style="color:var(--ink)">Nowa osoba (np. brat):</b> w sekcji „Konta i zaproszenia” kliknij <b>Zaproś</b> i wyślij mu link. Otwiera go na telefonie, wpisuje imię — gotowe. Dostaje własny token, więc widzi tylko swoje dane. Nie musi nic instalować ani wpisywać URL-a.
       </div>
     </details>
   </div>
@@ -628,6 +646,22 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div id="gdCue" style="font-size:14.5px;line-height:1.6;color:var(--ink)"></div>
     <a id="gdVideo" href="#" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px;padding:13px">▶ Zobacz wideo (YouTube)</a>
     <button class="btn ghost" id="gdClose" style="width:100%;margin-top:10px;padding:12px">Zamknij</button>
+  </div>
+</div>
+
+<!-- okno dołączania z linku zaproszenia -->
+<div id="joinDialog">
+  <div class="md-card">
+    <div class="md-title">Dołącz do ŻELAZO 💪</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--ink-dim)">Dostałeś zaproszenie. Wybierz nazwę konta — po niej aplikacja rozpozna Twoje dane na każdym urządzeniu.</div>
+    <label class="md-lab">Nazwa konta</label>
+    <input type="text" class="md-in" id="joinName" placeholder="np. tomek" autocomplete="off" spellcheck="false" autocapitalize="off">
+    <div class="md-hint">2–24 znaki: małe litery, cyfry, „-” lub „_”. Polskie znaki zamienimy (ł → l).</div>
+    <div class="md-hint" id="joinMsg" style="display:none"></div>
+    <div class="md-btns">
+      <button class="btn ghost" id="joinCancel" style="flex:1">Nie teraz</button>
+      <button class="btn" id="joinOk" style="flex:2">Dołącz</button>
+    </div>
   </div>
 </div>
 
@@ -1169,7 +1203,7 @@ async function cloudTest(){
   refreshCloudUI('...test');
   try{
     const j=await cloudCall('ping', {});
-    CLOUD.lastError=''; saveCloud(); refreshCloudUI();
+    CLOUD.lastError=''; saveCloud(); refreshCloudUI(); setAdmin(!!j.admin);
     showInAppReminder('✅ Połączenie działa', 'Skrypt odpowiada poprawnie.');
   }catch(e){ CLOUD.lastError=e.message; saveCloud(); refreshCloudUI(); alert('Test nieudany: '+e.message); }
 }
@@ -2562,7 +2596,134 @@ function refreshCloudUI(statusOverride){
 }
 refreshCloudUI();
 // przy starcie: jeśli chmura włączona, pobierz najnowsze
-if(CLOUD.on && CLOUD.url && CLOUD.account){ cloudPull({silent:true}); }
+if(CLOUD.on && CLOUD.url && CLOUD.account){ cloudPull({silent:true}).then(checkAdmin); }
+
+/* ============================================================
+   KONTA: link zaproszenia (#invite=KOD&s=URL_SKRYPTU&n=konto) + panel administratora
+   ============================================================ */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function slugAccount(s){
+  return (s||'').toLowerCase().replace(/ł/g,'l').normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24);
+}
+// link może wskazywać tylko na Google Apps Script — obca strona nie przejmie danych
+const isScriptUrl=u=>/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u||'');
+function inviteLink(code, account){
+  return location.origin+location.pathname+'#invite='+encodeURIComponent(code)+'&s='+encodeURIComponent(CLOUD.url)+(account?'&n='+encodeURIComponent(account):'');
+}
+const INVITE=(()=>{
+  const h=new URLSearchParams(location.hash.slice(1));
+  const code=h.get('invite'), url=h.get('s');
+  return code ? {code, url, account:h.get('n')||''} : null;
+})();
+function closeJoin(){ document.getElementById('joinDialog').classList.remove('show'); history.replaceState(null,'',location.pathname); }
+// link otwarty w już działającej karcie zmienia tylko #… — przeładuj, żeby go obsłużyć
+window.addEventListener('hashchange',()=>{ if(/(^|[#&])invite=/.test(location.hash)) location.reload(); });
+if(INVITE){
+  const inp=document.getElementById('joinName'), msg=document.getElementById('joinMsg');
+  inp.value=INVITE.account; inp.readOnly=!!INVITE.account;
+  if(!isScriptUrl(INVITE.url)){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Ten link jest uszkodzony albo nie pochodzi z ŻELAZO. Poproś o nowy.'; document.getElementById('joinOk').disabled=true; }
+  document.getElementById('joinDialog').classList.add('show');
+  document.getElementById('joinCancel').onclick=closeJoin;
+  inp.addEventListener('blur',()=>{ if(!inp.readOnly) inp.value=slugAccount(inp.value); });
+  document.getElementById('joinOk').onclick=async()=>{
+    const account=slugAccount(inp.value);
+    if(account.length<2){ inp.focus(); return; }
+    const btn=document.getElementById('joinOk'); btn.disabled=true; btn.textContent='⏳ Łączę…';
+    msg.style.display='none';
+    try{
+      const res=await fetch(INVITE.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'redeem',code:INVITE.code,account})});
+      const j=JSON.parse(await res.text());
+      if(!j.ok) throw new Error(j.error||'Błąd serwera');
+      const sameAccount=(CLOUD.account||'').toLowerCase()===j.account;
+      const hasData=Object.keys(S.log||{}).length>0;
+      // nowa osoba na urządzeniu z cudzymi danymi → start od zera, żeby nic nie przeszło na jej konto
+      if(!sameAccount && hasData && confirm('Na tym urządzeniu są już dane innej osoby. Zacząć od zera na koncie „'+j.account+'”? (Zalecane. Anuluj = przenieś obecne dane na nowe konto.)')){
+        localStorage.removeItem(LS); S=load();
+      }
+      if(!sameAccount){ S.profile.name=j.account; S._settingsM=Date.now(); localStorage.setItem(LS,JSON.stringify(S)); }
+      CLOUD={url:INVITE.url, token:j.token, account:j.account, on:true, lastSync:0, lastError:''};
+      saveCloud();
+      cloudUrl.value=CLOUD.url; cloudToken.value=CLOUD.token; cloudAccount.value=CLOUD.account;
+      closeJoin();
+      await cloudPull({silent:true}); cloudPush();
+      refreshAllViews(); refreshCloudUI(); loadProfileUI();
+      alert(sameAccount
+        ? '✅ Połączono ponownie. Twoje dane są bezpieczne.'
+        : '✅ Witaj, '+j.account+'! Konto gotowe, synchronizacja włączona.\n\nUzupełnij teraz profil (Więcej → Profil): wagę, wzrost i wiek — od nich zależą kalorie.\nNa drugim urządzeniu otwórz Więcej → Synchronizacja i wpisz ten sam token i konto.');
+    }catch(e){
+      msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Nie udało się dołączyć: '+e.message;
+    }
+    btn.disabled=false; btn.textContent='Dołącz';
+  };
+}
+
+// ---- panel administratora (widoczny tylko z tokenem administratora) ----
+async function checkAdmin(){
+  if(!CLOUD.url||!CLOUD.token) return;
+  try{ const j=await cloudCall('ping',{}); setAdmin(!!j.admin); }catch(e){ setAdmin(false); }
+}
+function setAdmin(on){
+  document.getElementById('adminSection').style.display=on?'block':'none';
+  if(on) loadAdmin();
+}
+const fmtDate=t=>t?new Date(t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})+' '+new Date(t).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}):'—';
+function showInviteLink(code, account, expires, title){
+  const link=inviteLink(code, account);
+  const box=document.getElementById('admLink');
+  box.style.display='block';
+  box.innerHTML=`<div style="border:1px solid var(--amber);border-radius:12px;padding:12px">
+    <div style="font-size:13px;color:var(--ink);margin-bottom:6px"><b>${esc(title)}</b>${account?' · konto „'+esc(account)+'”':''} · ważny do ${esc(fmtDate(expires))}</div>
+    <input class="md-in" readonly value="${esc(link)}" style="font-size:12px" onclick="this.select()">
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn" id="admCopy" style="flex:1;font-size:13px;padding:10px">Kopiuj link</button>
+      ${navigator.share?'<button class="btn ghost" id="admShare" style="flex:1;font-size:13px;padding:10px">Wyślij…</button>':''}
+    </div>
+    <div class="md-hint">Wyślij link tylko tej osobie (SMS / Messenger). Działa jeden raz.</div></div>`;
+  document.getElementById('admCopy').onclick=async()=>{ try{ await navigator.clipboard.writeText(link); document.getElementById('admCopy').textContent='Skopiowano ✓'; }catch(e){ box.querySelector('input').select(); } };
+  const sh=document.getElementById('admShare');
+  if(sh) sh.onclick=()=>navigator.share({title:'ŻELAZO — zaproszenie',text:'Dołącz do mnie w ŻELAZO (dieta + trening):',url:link}).catch(()=>{});
+}
+async function adminCall(action, payload){
+  try{ return await cloudCall(action, payload||{}); }
+  catch(e){ alert('Błąd: '+e.message); return null; }
+}
+async function loadAdmin(){
+  const j=await adminCall('adminList'); if(!j) return;
+  const users=j.users.sort((a,b)=>a.account<b.account?-1:1);
+  const me=(CLOUD.account||'').toLowerCase();
+  document.getElementById('admUsers').innerHTML=
+    `<div class="settings-row" style="padding:10px 0"><div class="l"><div class="t">${esc(me||'—')} <span style="color:var(--amber);font-size:12px">administrator (Ty)</span></div><div class="s">Twój token = SECRET ze skryptu</div></div></div>`+
+    (users.length?users.map(u=>`<div class="settings-row" style="padding:10px 0;flex-wrap:wrap;gap:8px">
+      <div class="l" style="min-width:150px"><div class="t">${esc(u.account)} ${u.disabled?'<span style="color:var(--red);font-size:12px">zablokowane</span>':u.pending?'<span style="color:var(--ink-faint);font-size:12px">czeka na nowy link</span>':''}</div>
+        <div class="s">ostatnio: ${esc(fmtDate(u.lastSeen))} · dane: ${u.kb} KB</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn ghost" data-adm="${u.disabled?'adminEnable':'adminDisable'}" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">${u.disabled?'Odblokuj':'Zablokuj'}</button>
+        <button class="btn ghost" data-adm="adminReset" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">Nowy link</button>
+        <button class="btn ghost" data-adm="adminDelete" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px;color:var(--red)">Usuń</button>
+      </div></div>`).join(''):'<div class="md-hint">Nikogo jeszcze nie zaprosiłeś.</div>');
+  document.getElementById('admInvites').innerHTML=j.invites.length?j.invites.map(i=>`<div class="settings-row" style="padding:8px 0">
+      <div class="l"><div class="t" style="font-size:14px">${i.account?esc(i.account):'<i>dowolna nazwa</i>'}${i.reset?' · nowy token':''}</div><div class="s">ważne do ${esc(fmtDate(i.expires))}</div></div>
+      <div style="display:flex;gap:6px"><button class="btn ghost" data-inv-show="${esc(i.code)}" data-a="${esc(i.account)}" data-e="${i.expires}" style="font-size:12px;padding:7px 10px">Link</button>
+      <button class="btn ghost" data-inv-del="${esc(i.code)}" style="font-size:12px;padding:7px 10px">Anuluj</button></div></div>`).join('')
+    :'<div class="md-hint">Brak.</div>';
+  document.querySelectorAll('[data-adm]').forEach(b=>b.onclick=async()=>{
+    const a=b.dataset.adm, t=b.dataset.t;
+    if(a==='adminDelete' && prompt('Usunąć konto „'+t+'” razem z danymi? Plik trafi do kosza Dysku (30 dni na odzyskanie).\nWpisz nazwę konta, aby potwierdzić:')!==t) return;
+    if(a==='adminReset' && !confirm('Wygenerować nowy link dla „'+t+'”? Obecny token przestanie działać od razu (dane zostają).')) return;
+    const r=await adminCall(a,{target:t}); if(!r) return;
+    if(a==='adminReset') showInviteLink(r.code, r.account, r.expires, 'Nowy link logowania');
+    loadAdmin();
+  });
+  document.querySelectorAll('[data-inv-show]').forEach(b=>b.onclick=()=>showInviteLink(b.dataset.invShow, b.dataset.a, +b.dataset.e, 'Zaproszenie'));
+  document.querySelectorAll('[data-inv-del]').forEach(b=>b.onclick=async()=>{ if(await adminCall('adminRevokeInvite',{code:b.dataset.invDel})){ document.getElementById('admLink').style.display='none'; loadAdmin(); } });
+}
+document.getElementById('admInviteBtn').onclick=async()=>{
+  const el=document.getElementById('admName'); const name=slugAccount(el.value); el.value=name;
+  const r=await adminCall('adminInvite',{name}); if(!r) return;
+  el.value=''; showInviteLink(r.code, r.account, r.expires, 'Zaproszenie gotowe'); loadAdmin();
+};
+document.getElementById('admRefresh').onclick=loadAdmin;
 
 // reminders UI
 ['workout','meal','water','weight'].forEach(k=>{
