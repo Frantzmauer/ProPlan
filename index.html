@@ -1005,6 +1005,21 @@ const LOWER={title:"LOWER · dół ciała",type:"lift",ex:[
   {n:"Wspięcia na palce siedząc",s:4,r:"15–20",start:"40 kg",w:40,rp:18},
   {n:"Ab Wheel / brzuszki na piłce",s:3,r:"max",start:"masa ciała",w:0,rp:15},
 ]};
+// Dom (Faza 2–3, dzień bez siłowni): kettlebell, hantle, masa ciała, ławka skośna.
+// Umiarkowanie (RIR 3) — to dodatek, który ma nie zabrać siły na jutrzejszy UPPER.
+// w:0 = bez podpowiedzi ciężaru: wpisz to, czym faktycznie ćwiczysz w domu.
+const HOME={title:"DOM · kettlebell, kalistenika, brzuch",type:"lift",ex:[
+  {n:"Swing kettlebell",s:4,r:"15",start:"kettlebell 12–16 kg",w:0,rp:15},
+  {n:"Pompki",s:3,r:"max − 3",start:"masa ciała (za ciężko? dłonie na ławce)",w:0,rp:10},
+  {n:"Farmer walk z hantlami",s:3,r:"40 s",start:"najcięższe hantle, jakie masz",w:0,rp:40},
+  {n:"Brzuszki na ławce skośnej",s:3,r:"12–15",start:"masa ciała, potem hantel na klatce",w:0,rp:15},
+  {n:"Unoszenie nóg na ławce skośnej",s:3,r:"10–12",start:"masa ciała",w:0,rp:12},
+  {n:"Russian twist z hantlem",s:3,r:"20 (10/str.)",start:"hantel 6–10 kg",w:0,rp:20},
+  {n:"Deska boczna",s:2,r:"30 s/stronę",start:"masa ciała",w:0,rp:30},
+  {n:"Rozciąganie całego ciała",s:1,r:"10 min",start:"bez obciążenia — wpisz minuty",w:0,rp:10},
+]};
+const CARDIO_RUN_STRETCH={title:"Bieg spokojny + rozciąganie",type:"cardio",note:"30–40 min trucht, tętno 130–140 (masz móc mówić pełnymi zdaniami). Potem 15 min rozciągania: dwugłowe ud, biodra (wykrok), pośladki, klatka w drzwiach, łydki — każde 2×30 s."};
+const MOBILITY={title:"Rozciąganie i mobilność",type:"rest",active:true,ico:"🧘",note:"20–30 min: koci grzbiet, rotacje odcinka piersiowego, biodra 90/90, wykrok z rotacją, wiszenie na drążku, rozciąganie dwugłowych i klatki. Do tego spacer 30 min."};
 const CARDIO_RUN={title:"Bieganie",type:"cardio",note:"30–40 min trucht / szybki marsz, tętno 130–140."};
 const CARDIO_RUN_LONG={title:"Bieg terenowy",type:"cardio",note:"40 min trucht w terenie."};
 const CARDIO_HIIT={title:"Interwały biegowe",type:"cardio",note:"10 min rozgrzewki, 8×(30 s sprint / 1 min trucht), 10 min wyciszenia."};
@@ -1030,14 +1045,14 @@ function workoutFor(week, dow){
       6:CARDIO_RUN_LONG,
     };
     return map[dow];
-  } else if(week<=16){ // FAZA 2 Upper/Lower
-    const map={0:REST,1:UPPER,2:LOWER,3:CARDIO_HIIT,4:REST,5:UPPER,6:LOWER};
+  } else if(week<=16){ // FAZA 2 Upper/Lower ×4 + interwały, sesja domowa (czw), bieg + rozciąganie (nd)
+    const map={0:CARDIO_RUN_STRETCH,1:UPPER,2:LOWER,3:CARDIO_HIIT,4:HOME,5:UPPER,6:LOWER};
     return map[dow];
   } else { // FAZA 3 rzeźba: U/L + cardio po treningu, dłuższy bieg w weekend
     const cut={note:"Faza 3: ciężar −10%, +2–4 powt./serię. Po sesji 20 min rowerek/orbitrek."};
     const U=Object.assign({},UPPER,{title:"UPPER · rzeźba",phase3:true});
     const L=Object.assign({},LOWER,{title:"LOWER · rzeźba",phase3:true});
-    const map={0:CARDIO_LONG,1:U,2:L,3:REST,4:REST,5:U,6:L};
+    const map={0:CARDIO_LONG,1:U,2:L,3:MOBILITY,4:HOME,5:U,6:L};
     return map[dow];
   }
 }
@@ -1732,6 +1747,14 @@ const GUIDE = {
   "Wyciskanie nóg na suwnicy":"Stopy na szerokość bioder. Opuszczasz platformę aż kolana ~90°, nie odrywasz pleców. Wypychasz piętami bez blokowania kolan.",
   "Wspięcia na palce siedząc":"Ciężar na kolanach. Wspinasz się na palce maksymalnie, pauza, powolny powrót.",
   "Ab Wheel / brzuszki na piłce":"Ab wheel: wyjeżdżasz kółkiem w przód trzymając napięty brzuch (plecy nie opadają), wracasz spinając brzuch.",
+  "Swing kettlebell":"Ruch z bioder, nie z rąk i nie przysiad. Kettlebell między nogi jak podanie w futbolu, plecy proste, potem dynamiczny wyprost bioder i spięcie pośladków — kettlebell leci do wysokości klatki. Ręce tylko prowadzą.",
+  "Pompki":"Dłonie trochę szerzej niż barki, ciało w jednej linii, brzuch i pośladki napięte. Klatka prawie do podłogi, łokcie ~45° od tułowia. Kończ serię 3 powtórzenia przed upadkiem — jutro UPPER.",
+  "Farmer walk z hantlami":"Ciężkie hantle w dłoniach, barki w dół i do tyłu, wyprostowana sylwetka. Chodzisz krótkimi, pewnymi krokami przez podany czas. Wzmacnia chwyt, core i postawę.",
+  "Brzuszki na ławce skośnej":"Stopy zablokowane, ręce na klatce (z hantlem, gdy 15 powtórzeń to za mało). Zwijasz tułów kręg po kręgu, bez szarpania głową. Powolny powrót, nie kładź się całkowicie.",
+  "Unoszenie nóg na ławce skośnej":"Głowa wyżej, trzymasz się ławki za głową. Unosisz proste lub lekko ugięte nogi, na górze podwijasz miednicę. Opuszczasz powoli, lędźwie przyklejone do ławki.",
+  "Russian twist z hantlem":"Siad, tułów odchylony ~45°, plecy proste, stopy na ziemi (trudniej: w górze). Hantel przy klatce, obracasz tułów na boki — rotacja z tułowia, nie z samych rąk.",
+  "Deska boczna":"Łokieć pod barkiem, ciało w linii prostej od głowy do stóp, biodra wysoko. Trzymasz czas na każdą stronę.",
+  "Rozciąganie całego ciała":"Każda pozycja 2×30 s, spokojny oddech: dwugłowe ud, zginacze bioder (wykrok), pośladki (gołąb), klatka w drzwiach, najszerszy (wiszenie/skłon przy ścianie), łydki.",
 };
 function openGuide(name){
   const cue = GUIDE[name] || GUIDE[name.trim()] || 'Skup się na kontrolowanym ruchu w pełnym zakresie i napięciu docelowego mięśnia.';
