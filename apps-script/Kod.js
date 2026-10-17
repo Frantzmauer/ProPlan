@@ -60,6 +60,7 @@ var ACCOUNT_RE = /^[a-z0-9][a-z0-9_-]{1,23}$/;
 var ACCOUNT_RULE = 'Nazwa konta: 2–24 znaki — małe litery a–z, cyfry, „-” lub „_”.';
 var INVITE_DAYS = 7;
 var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
+var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dziennie
 
 function sha(s) {
   return Utilities.base64EncodeWebSafe(
@@ -93,11 +94,11 @@ function auth(req) {
 function touchUser(acc, u) {
   if (Date.now() - (u.lastSeen || 0) > 10 * 60 * 1000) { u.lastSeen = Date.now(); setJSON('user_' + acc, u); }
 }
-function rateLimit(acc) {
+function rateLimit(acc, kind, max, label) {
   var c = CacheService.getScriptCache();
-  var k = 'rl_' + acc + '_' + Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyyMMdd');
+  var k = 'rl_' + kind + '_' + acc + '_' + Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyyMMdd');
   var n = +(c.get(k) || 0);
-  if (n >= ESTIMATE_PER_DAY) return { ok: false, error: 'Dzienny limit szacowań wyczerpany (' + ESTIMATE_PER_DAY + ')' };
+  if (n >= max) return { ok: false, error: 'Dzienny limit ' + label + ' wyczerpany (' + max + '). Wróć jutro.' };
   c.put(k, String(n + 1), 24 * 60 * 60);
   return null;
 }
@@ -218,8 +219,12 @@ function doPost(e) {
     if (me.user) touchUser(me.account, me.user);
 
     if (req.action === 'estimate') {
-      var lim = rateLimit(me.account);
+      var lim = rateLimit(me.account, 'est', ESTIMATE_PER_DAY, 'szacowań');
       return out(lim || estimateMeal(req.desc || ''));
+    }
+    if (req.action === 'coach') {
+      var limc = rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
+      return out(limc || coachReply(req));
     }
     if (req.action === 'pull') {
       return out({ ok: true, data: read(me.account) });
@@ -247,6 +252,75 @@ function doGet() {
 function out(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+// TRENER AI („Zapytaj Trenera”) — Claude przez ten serwer; klucz nigdy nie trafia do przeglądarki.
+// Aplikacja wysyła zwięzłe podsumowanie danych użytkownika (tylko jego własnych) + historię rozmowy.
+// ============================================================
+var COACH_MODEL = 'claude-opus-5';
+var COACH_SYSTEM = [
+  'Jesteś Trenerem w aplikacji ŻELAZO — doświadczonym trenerem personalnym i dietetykiem sportowym.',
+  'Rozmawiasz po polsku, bezpośrednio, ciepło i konkretnie, jak dobry trener na siłowni. Mów do użytkownika po imieniu, jeśli je znasz.',
+  '',
+  'Masz poniżej DANE UŻYTKOWNIKA z aplikacji: profil, cel kalorii i makro, plan treningowy, zapis treningów (ciężary × powtórzenia), wagę, obwody, realizację diety, wodę i nawyki. Opieraj rady na tych danych i cytuj konkretne liczby (daty, ciężary, kg). Nie wymyślaj danych, których nie ma. Jeśli czegoś brakuje albo zapis ma luki (np. dni bez wpisów), powiedz to wprost i zapytaj — luka w zapisie nie zawsze oznacza brak treningu.',
+  '',
+  'Jak odpowiadać:',
+  '- Najpierw krótka odpowiedź na pytanie, potem 2–5 konkretnych kroków. Zwykle do ~200 słów; dłużej tylko, gdy użytkownik prosi o plan lub szczegóły.',
+  '- Zmiany w treningu podawaj tak, by dało się je od razu zastosować: ćwiczenie, serie × powtórzenia, ciężar lub sposób doboru (RIR).',
+  '- Formatowanie: krótkie akapity, listy z „- ”, pogrubienia **tak**. Bez tabel i nagłówków.',
+  '',
+  'Bezpieczeństwo:',
+  '- Nie jesteś lekarzem. Ból w klatce piersiowej, duszność, omdlenia, ostry ból stawu, objawy kontuzji → przerwij trening i skontaktuj się z lekarzem lub fizjoterapeutą (przy ostrych objawach: 112).',
+  '- Suplementy: tylko te z mocnymi dowodami (kreatyna monohydrat, witamina D przy niedoborze, białko w proszku, omega-3, kofeina), z dawkami i zastrzeżeniem, by przy chorobach przewlekłych, lekach lub ciąży skonsultować je z lekarzem. Nie doradzaj sterydów, SARM-ów, „spalaczy” ani leków na odchudzanie — wyjaśnij krótko ryzyko i wróć do podstaw.',
+  '- Redukcja: bezpieczne tempo to ok. 0,5–1% masy ciała tygodniowo; nie schodź z kaloriami poniżej podstawowej przemiany materii bez nadzoru specjalisty. Zauważasz sygnały zaburzeń odżywiania → odpowiedz z troską i zasugeruj wsparcie specjalisty.',
+  '- Dane osobowe: widzisz tylko dane tego jednego użytkownika — nie pytaj o dane innych osób.'
+].join('\n');
+var COACH_MAX_CONTEXT = 16000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
+
+function coachReply(req) {
+  if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie' };
+  var ctx = String(req.context || '').slice(0, COACH_MAX_CONTEXT);
+  var hist = Array.isArray(req.messages) ? req.messages.slice(-COACH_MAX_TURNS) : [];
+  var messages = [];
+  hist.forEach(function (m) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant')) return;
+    var t = String(m.content || '').slice(0, COACH_MAX_MSG).trim();
+    if (!t) return;
+    // API wymaga naprzemienności ról — sklej kolejne wiadomości tej samej roli
+    var last = messages[messages.length - 1];
+    if (last && last.role === m.role) last.content += '\n\n' + t; else messages.push({ role: m.role, content: t });
+  });
+  while (messages.length && messages[0].role !== 'user') messages.shift();
+  if (!messages.length || messages[messages.length - 1].role !== 'user') return { ok: false, error: 'Brak pytania' };
+
+  var payload = {
+    model: COACH_MODEL,
+    max_tokens: 8000,
+    output_config: { effort: 'low' },   // rozmowa: niski effort = szybciej i taniej, jakość wystarcza
+    fallbacks: 'default',               // odmowa klasyfikatora → serwer sam ponawia na zalecanym modelu
+    system: [
+      { type: 'text', text: COACH_SYSTEM },
+      // dane użytkownika w cache: kolejne pytania w tej samej rozmowie czytają je taniej
+      { type: 'text', text: 'DANE UŻYTKOWNIKA (z aplikacji, stan na dziś):\n' + ctx, cache_control: { type: 'ephemeral' } }
+    ],
+    messages: messages
+  };
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
+    payload: JSON.stringify(payload)
+  });
+  var code = res.getResponseCode();
+  if (code === 429 || code === 529) return { ok: false, error: 'Trener jest teraz przeciążony — spróbuj za chwilę' };
+  if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
+  var data = JSON.parse(res.getContentText());
+  if (data.stop_reason === 'refusal') return { ok: false, error: 'Trener nie może odpowiedzieć na to pytanie. Spróbuj sformułować je inaczej.' };
+  var text = '';
+  (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
+  if (!text.trim()) return { ok: false, error: 'Trener nie zwrócił odpowiedzi — spróbuj ponownie' };
+  if (data.stop_reason === 'max_tokens') text += '\n\n_(odpowiedź ucięta — dopytaj o resztę)_';
+  return { ok: true, text: text.trim() };
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----

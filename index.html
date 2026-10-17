@@ -253,6 +253,20 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 #reminderBar .rb-t{font-family:var(--font-disp);font-weight:600;font-size:18px;color:var(--amber)}
 #reminderBar .rb-b{font-size:13px;color:var(--ink);margin-top:1px}
 #reminderBar .rb-x{flex:none;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);color:var(--ink);font-size:14px}
+
+/* ---- Trener AI ---- */
+#coachFab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:60;background:var(--amber);color:#0e1114;border-radius:999px;padding:12px 16px;font-family:var(--font-disp);font-weight:700;font-size:15px;letter-spacing:.03em;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#coachFab:active{transform:scale(.96)}
+#coachDialog{position:fixed;inset:0;z-index:310;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+#coachDialog.show{display:flex}
+#coachDialog .md-card{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:640px;height:min(88vh,760px);display:flex;flex-direction:column;padding:14px 14px calc(12px + env(safe-area-inset-bottom))}
+@media(min-width:620px){#coachDialog{align-items:center}#coachDialog .md-card{border-radius:18px}}
+#coachMsgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px}
+.coach-b{max-width:88%;padding:10px 12px;border-radius:14px;font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
+.coach-b.a{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+.coach-b.u{align-self:flex-end;background:var(--amber);color:#0e1114}
+#coachChips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+#coachChips button{border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:13px;color:var(--ink-dim);background:transparent}
 </style>
 </head>
 <body>
@@ -686,6 +700,32 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <select class="md-in" id="obGoal"><option value="-500" selected>Redukcja (chudnięcie)</option><option value="0">Utrzymanie wagi</option><option value="300">Budowa masy</option></select>
     <div class="md-hint" id="obCalc">Uzupełnij dane, a policzymy kalorie.</div>
     <div class="md-btns"><button class="btn" id="obSave" style="flex:1">Zapisz i zaczynam</button></div>
+  </div>
+</div>
+
+<!-- Trener AI -->
+<button id="coachFab" aria-label="Zapytaj Trenera">💬 Trener</button>
+<div id="coachDialog">
+  <div class="md-card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div class="md-title" style="margin:0;flex:1">Zapytaj Trenera</div>
+      <button class="btn ghost" id="coachClear" style="font-size:12px;padding:7px 10px">Wyczyść</button>
+      <button class="btn ghost" id="coachClose" style="font-size:12px;padding:7px 10px">Zamknij</button>
+    </div>
+    <div class="md-hint" style="margin:0 0 6px">Trener to AI (Claude). Do odpowiedzi dostaje Twoje dane z aplikacji — tylko Twoje. Nie zastępuje lekarza.</div>
+    <div id="coachSetup" class="note" style="display:none">Aby rozmawiać z Trenerem, włącz synchronizację w chmurze. <button class="btn" id="coachGoSync" style="font-size:12px;padding:7px 10px;margin-top:8px">Przejdź do ustawień</button></div>
+    <div id="coachMsgs"></div>
+    <div id="coachChips">
+      <button>Jak mi idzie? Oceń moje postępy</button>
+      <button>Co poprawić w diecie?</button>
+      <button>Jakie suplementy mają sens w moim przypadku?</button>
+      <button>Czy zmienić coś w planie treningowym?</button>
+      <button>Jak dobrać ciężary na następny trening?</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <textarea class="md-in" id="coachIn" rows="2" placeholder="Napisz pytanie…" style="resize:none;font-size:15px"></textarea>
+      <button class="btn" id="coachSend" style="align-self:stretch">Wyślij</button>
+    </div>
   </div>
 </div>
 
@@ -2769,6 +2809,98 @@ document.getElementById('obSave').onclick=()=>{
 };
 // profil niedokończony (np. zamknięta karta w trakcie) — wróć do niego przy następnym starcie
 if(S.profile && S.profile.needsSetup && !INVITE) openProfileSetup();
+
+/* ============================================================
+   TRENER AI — „Zapytaj Trenera”
+   Rozmowa idzie przez Apps Script (klucz API i instrukcje Trenera są tylko na serwerze).
+   Aplikacja dokłada zwięzłe podsumowanie danych WYŁĄCZNIE bieżącego użytkownika.
+   ============================================================ */
+function buildCoachContext(){
+  const p=S.profile||{}, today=todayISO(), wkNow=weekOf(dayIndexFor(today));
+  const inPlan=wkNow>=1&&wkNow<=24, out=[];
+  const dd=iso=>iso.slice(8,10)+'.'+iso.slice(5,7);
+  out.push(`Dzisiaj: ${today}. Start planu: ${S.startDate}. ${inPlan?'Tydzień '+wkNow+'/24 — '+phaseInfo(wkNow).name:'Poza 24-tygodniowym planem'}.`);
+  out.push(`Profil: ${p.name||'bez imienia'}, ${p.sex==='f'?'kobieta':'mężczyzna'}, ${p.age||'?'} lat, ${p.height||'?'} cm, waga w profilu ${p.weight||'?'} kg, aktywność ×${p.activity||'?'}.`);
+  const g=macroGoalFor(S.kcalGoal||DEFAULT_KCAL);
+  out.push(`Cel dzienny: ${g.kcal} kcal (szacowane utrzymanie ${estMaintenance()} kcal), białko ${g.p} g, węglowodany ${g.c} g, tłuszcz ${g.f} g. Jadłospis z aplikacji: 4 posiłki dziennie skalowane do celu.`);
+  const dn=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+  if(inPlan) out.push('Plan tego tygodnia: '+[1,2,3,4,5,6,0].map(d=>dn[d]+' '+workoutFor(wkNow,d).title).join(' | '));
+  if(inPlan && wkNow<24) out.push('Plan następnego tygodnia: '+[1,2,3,4,5,6,0].map(d=>dn[d]+' '+workoutFor(wkNow+1,d).title).join(' | '));
+  const ws=(S.weights||[]).slice().sort((a,b)=>a.d<b.d?-1:1).slice(-45);
+  out.push(ws.length?'Waga (dzień.miesiąc: kg): '+ws.map(w=>dd(w.d)+': '+w.w).join(', '):'Waga: brak pomiarów.');
+  const ms=(S.measures||[]).slice().sort((a,b)=>a.d<b.d?-1:1).slice(-12);
+  if(ms.length) out.push('Obwody (cm): '+ms.map(m=>dd(m.d)+' '+MEASURES.filter(x=>m[x.k]).map(x=>x.l.split(' ')[0].toLowerCase()+' '+m[x.k]).join(', ')).join(' | '));
+  // tygodniowa realizacja (ostatnie 8 tygodni planu)
+  const weeks={}, exHist={}, meals=[];
+  const d=parseISO(today); d.setDate(d.getDate()-70);
+  for(let i=0;i<=70;i++,d.setDate(d.getDate()+1)){
+    const iso=todayISO(d), di=dayIndexFor(iso); if(di<1) continue;
+    const wk=weekOf(di), w=workoutFor(wk,d.getDay()), Lg=S.log[iso]||{};
+    const W=weeks[wk]=weeks[wk]||{gym:0,gymP:0,home:0,homeP:0,run:0,runP:0,meals:0,days:0,water:0,logged:0,hab:{}};
+    if(iso>today) continue;
+    W.days++;
+    const exs=Lg.ex||{};
+    if(Object.keys(Lg.meals||{}).length||Object.keys(exs).length||Object.keys(Lg.habits||{}).length) W.logged++;
+    if(w.type==='lift'){
+      const done=w.ex.filter((e,j)=>exs[iso+'_e'+j]&&exs[iso+'_e'+j].done).length;
+      const ok=done>=Math.ceil(w.ex.length/2);
+      if(w===HOME){W.homeP++; if(ok)W.home++;} else {W.gymP++; if(ok)W.gym++;}
+      w.ex.forEach((e,j)=>{ const r=exs[iso+'_e'+j]; if(!r||!r.sets) return;
+        const sets=[]; for(let s=1;s<=e.s;s++){ const kg=r.sets['w'+s], rp=r.sets['r'+s]; if(rp) sets.push((kg&&+kg?kg+'×':'')+rp); }
+        if(sets.length) (exHist[e.n]=exHist[e.n]||[]).push(dd(iso)+(r.done?'':' (nieodhaczone)')+' '+sets.join(', ')); });
+    }
+    if(w.type==='cardio'){ W.runP++; if(exs[iso+'_cardio']) W.run++; }
+    W.meals+=Object.values(Lg.meals||{}).filter(Boolean).length; W.water+=Lg.water||0;
+    Object.entries(Lg.habits||{}).forEach(([h,v])=>{ if(v) W.hab[h]=(W.hab[h]||0)+1; });
+    (Lg.custom||[]).filter(c=>c.done&&!c._del).forEach(c=>meals.push(dd(iso)+' '+String(c.txt||'').slice(0,60)+' ('+(c.kcal||0)+' kcal, B'+(c.p||0)+')'));
+  }
+  const habName={sleep:'sen 7–8h',sun:'ruch/kroki',notool:'dziennik',noalco:'bez alkoholu',nosugar:'bez słodyczy'};
+  const wkRows=Object.entries(weeks).filter(([,W])=>W.days).slice(-8).map(([wk,W])=>`tydz. ${wk}: siłownia ${W.gym}/${W.gymP}`+(W.homeP?`, dom ${W.home}/${W.homeP}`:'')+`, bieg ${W.run}/${W.runP}, posiłki z planu ${Math.round(100*W.meals/(4*W.days))}%, woda śr. ${(W.water/W.days).toFixed(1)} szkl., dni z wpisami ${W.logged}/${W.days}`+(Object.keys(W.hab).length?', nawyki: '+Object.entries(W.hab).map(([h,n])=>(habName[h]||h)+' '+n+'d').join(', '):''));
+  out.push(wkRows.length?'Realizacja tygodniowa (zrobione/zaplanowane):\n'+wkRows.join('\n'):'Realizacja: brak wpisów.');
+  const exRows=Object.entries(exHist).map(([n,a])=>'- '+n+': '+a.slice(-5).join(' | '));
+  out.push(exRows.length?'Historia ćwiczeń (ostatnie sesje, kg×powtórzenia):\n'+exRows.join('\n'):'Historia ćwiczeń: brak zapisanych serii.');
+  if(meals.length) out.push('Własne posiłki spoza planu (ostatnie):\n'+meals.slice(-12).join('\n'));
+  return out.join('\n').slice(0,15500);
+}
+
+const coachKey=()=>'zelazo_coach_'+((CLOUD.account||'lokalnie').toLowerCase());
+function loadCoach(){ try{ return JSON.parse(localStorage.getItem(coachKey()))||[]; }catch(e){ return []; } }
+function saveCoach(h){ try{ localStorage.setItem(coachKey(), JSON.stringify(h.slice(-40))); }catch(e){} }
+function coachMd(t){
+  return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|\s)_(.+?)_(?=\s|$)/g,'$1<i>$2</i>')
+    .split('\n').map(l=>/^\s*[-•]\s+/.test(l)?'<div style="padding-left:14px;text-indent:-10px">• '+l.replace(/^\s*[-•]\s+/,'')+'</div>':(l.trim()?'<div>'+l+'</div>':'<div style="height:8px"></div>')).join('');
+}
+let coachBusy=false;
+function renderCoach(){
+  const box=document.getElementById('coachMsgs'), h=loadCoach();
+  const ready=CLOUD.on&&CLOUD.url&&CLOUD.token;
+  document.getElementById('coachSetup').style.display=ready?'none':'block';
+  document.getElementById('coachChips').style.display=(ready&&!h.length)?'flex':'none';
+  box.innerHTML=(h.length?'':`<div class="coach-b a">Cześć${S.profile&&S.profile.name?', '+esc(S.profile.name):''}! Jestem Twoim Trenerem. Widzę Twoje treningi, dietę, wagę i postępy — zapytaj, co poprawić, jak dobrać ciężary albo jakie suplementy mają sens.</div>`)+
+    h.map(m=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):coachMd(m.content)}</div>`).join('')+
+    (coachBusy?'<div class="coach-b a" style="color:var(--ink-dim)">Trener myśli…</div>':'');
+  box.scrollTop=box.scrollHeight;
+}
+async function coachSend(text){
+  text=(text||'').trim(); if(!text||coachBusy) return;
+  const h=loadCoach(); h.push({role:'user',content:text}); saveCoach(h);
+  coachBusy=true; document.getElementById('coachIn').value=''; renderCoach();
+  try{
+    const j=await cloudCall('coach',{messages:h.slice(-16).map(m=>({role:m.role,content:m.content})), context:buildCoachContext()});
+    const h2=loadCoach(); h2.push({role:'assistant',content:j.text}); saveCoach(h2);
+  }catch(e){
+    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+e.message}); saveCoach(h2);
+  }
+  coachBusy=false; renderCoach();
+}
+function openCoach(){ document.getElementById('coachDialog').classList.add('show'); renderCoach(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
+document.getElementById('coachFab').onclick=openCoach;
+document.getElementById('coachClose').onclick=()=>document.getElementById('coachDialog').classList.remove('show');
+document.getElementById('coachClear').onclick=()=>{ if(confirm('Wyczyścić rozmowę z Trenerem na tym urządzeniu?')){ saveCoach([]); renderCoach(); } };
+document.getElementById('coachSend').onclick=()=>coachSend(document.getElementById('coachIn').value);
+document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); coachSend(e.target.value); } });
+document.querySelectorAll('#coachChips button').forEach(b=>b.onclick=()=>coachSend(b.textContent));
+document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('coachDialog').classList.remove('show'); document.querySelector('.nav button[data-v="set"]').click(); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),300); };
 
 // ---- panel administratora (widoczny tylko z tokenem administratora) ----
 async function checkAdmin(){
