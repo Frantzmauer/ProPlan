@@ -8,3 +8,6 @@ zelazo-*.json
 
 # macOS
 .DS_Store
+
+# clasp — token logowania Google (nigdy do repo)
+.clasprc.json
