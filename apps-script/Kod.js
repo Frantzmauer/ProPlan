@@ -27,6 +27,20 @@ function prop(name) {
   return '';
 }
 
+// JEDNORAZOWO: wybierz tę funkcję w edytorze i kliknij „Uruchom".
+// Tworzy losowe, długie hasło SECRET i zapisuje je we Właściwościach skryptu.
+// Hasło nie trafia do logów — skopiuj je z: Ustawienia projektu → Właściwości skryptu.
+// Nie nadpisuje istniejącego SECRET (żeby nie rozłączyć działających urządzeń).
+function ustawSecret() {
+  if (prop('SECRET')) {
+    Logger.log('SECRET już istnieje — nic nie zmieniam. Aby wygenerować nowy, najpierw usuń go w Ustawieniach projektu.');
+    return;
+  }
+  var s = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '').slice(0, 40);
+  PROPS.setProperty('SECRET', s);
+  Logger.log('Gotowe. SECRET zapisany (40 znaków). Skopiuj go z: Ustawienia projektu → Właściwości skryptu.');
+}
+
 // Hasło synchronizacji — z Właściwości skryptu. Bez niego każde żądanie jest odrzucane.
 var SECRET = prop('SECRET');
 
