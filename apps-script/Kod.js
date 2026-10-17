@@ -279,8 +279,11 @@ var COACH_SYSTEM = [
   'Zmiany w planie:',
   '- Gdy proponujesz KONKRETNE zmiany ciężaru, liczby serii lub powtórzeń w ćwiczeniach z planu albo zmianę dziennego celu kalorii, wywołaj dodatkowo narzędzie zaproponuj_zmiany. Użytkownik zobaczy je jako kartę z przyciskiem „Zastosuj od dziś” — nic nie zmienia się bez jego zgody.',
   '- Używaj dokładnych nazw ćwiczeń z planu. Podawaj realne ciężary (sztanga co 2,5 kg, hantle co 1–2 kg, maszyny co 5 kg). Zmiany kalorii trzymaj w bezpiecznym zakresie (nie niżej niż szacowana podstawowa przemiana materii).',
+  '- Wymiana ćwiczenia (zamiany_cwiczen): gdy coś boli, brakuje sprzętu albo ćwiczenie nie służy celowi. Podaj nazwę nowego ćwiczenia po polsku, serie, powtórzenia, ciężar startowy (0 = dobierz) i 1–2 zdania techniki. Przy bólu wybieraj warianty odciążające staw, a ból ostry lub narastający kieruj do fizjoterapeuty.',
+  '- Zmiana posiłku (posilki): zastępuje posiłek z jadłospisu w wybrane dni tygodnia (pusta lista dni = codziennie). Podaj konkretny skład z gramaturami i realne kcal oraz makro; reszta dnia przeskaluje się tak, by dzień nadal trzymał cel kalorii. Szanuj to, co użytkownik lubi i je.',
   '- Nie wywołuj narzędzia przy ogólnych radach ani gdy użytkownik tylko pyta o opinię — wtedy wystarczy tekst. W tekście krótko wyjaśnij, co proponujesz i dlaczego.'
 ].join('\n');
+var MEAL_SLOTS = ['Śniadanie', 'Przekąska', 'Obiad', 'Po treningu', 'Kolacja'];
 var COACH_MAX_CONTEXT = 16000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
 function coachReply(req) {
@@ -309,14 +312,31 @@ function coachReply(req) {
       serie: { type: 'integer', description: 'Liczba serii (1–8)' },
       powtorzenia: { type: 'integer', description: 'Docelowe powtórzenia na serię (przy ćwiczeniach na czas: sekundy)' }
     } };
+  var swapItem = { type: 'object', additionalProperties: false, required: ['z', 'na', 'serie', 'powtorzenia', 'ciezar_kg', 'technika'],
+    properties: {
+      z: names.length ? { type: 'string', enum: names } : { type: 'string' },
+      na: { type: 'string', description: 'Nazwa nowego ćwiczenia po polsku, np. „Przysiad bułgarski z hantlami”' },
+      serie: { type: 'integer' }, powtorzenia: { type: 'integer' },
+      ciezar_kg: { type: 'number', description: 'Ciężar startowy w kg (na rękę przy hantlach); 0 = dobierz na pierwszym treningu' },
+      technika: { type: 'string', description: '1–2 zdania: jak wykonać i na co uważać' }
+    } };
+  var mealItem = { type: 'object', additionalProperties: false, required: ['posilek', 'dni', 'opis', 'kcal', 'bialko_g', 'wegle_g', 'tluszcz_g'],
+    properties: {
+      posilek: { type: 'string', enum: MEAL_SLOTS },
+      dni: { type: 'array', items: { type: 'integer' }, description: 'Dni tygodnia 0=niedziela…6=sobota; pusta lista = codziennie' },
+      opis: { type: 'string', description: 'Skład z gramaturami, np. „Owsianka: 80 g płatków, 30 g WPC, banan, 15 g orzechów”' },
+      kcal: { type: 'integer' }, bialko_g: { type: 'integer' }, wegle_g: { type: 'integer' }, tluszcz_g: { type: 'integer' }
+    } };
   var tool = {
     name: 'zaproponuj_zmiany',
-    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary, serie i powtórzenia w ćwiczeniach z planu oraz opcjonalnie nowy dzienny cel kalorii. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji.',
+    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
     strict: true,
-    input_schema: { type: 'object', additionalProperties: false, required: ['podsumowanie', 'cwiczenia', 'cel_kcal'],
+    input_schema: { type: 'object', additionalProperties: false, required: ['podsumowanie', 'cwiczenia', 'zamiany_cwiczen', 'posilki', 'cel_kcal'],
       properties: {
         podsumowanie: { type: 'string', description: 'Jedno zdanie: co się zmienia i po co' },
-        cwiczenia: { type: 'array', items: exItem, description: 'Zmienione ćwiczenia; pusta lista, jeśli zmieniasz tylko kalorie' },
+        cwiczenia: { type: 'array', items: exItem, description: 'Zmienione ciężary/serie/powtórzenia; pusta lista, jeśli bez zmian' },
+        zamiany_cwiczen: { type: 'array', items: swapItem, description: 'Ćwiczenia zastąpione innymi; pusta lista, jeśli bez zmian' },
+        posilki: { type: 'array', items: mealItem, description: 'Posiłki zastąpione innymi; pusta lista, jeśli bez zmian' },
         cel_kcal: { type: 'integer', description: 'Nowy dzienny cel kcal albo 0, jeśli bez zmiany' }
       } }
   };
@@ -362,10 +382,24 @@ function cleanProposal(p, names) {
     return { nazwa: String(e.nazwa), ciezar_kg: Math.max(0, Math.min(400, Math.round((+e.ciezar_kg || 0) * 2) / 2)),
       serie: Math.max(1, Math.min(8, Math.round(+e.serie || 1))), powtorzenia: Math.max(1, Math.min(120, Math.round(+e.powtorzenia || 1))) };
   }).slice(0, 20);
+  var clampI = function (v, lo, hi) { return Math.max(lo, Math.min(hi, Math.round(+v || 0))); };
+  var swaps = (Array.isArray(p.zamiany_cwiczen) ? p.zamiany_cwiczen : []).filter(function (z) {
+    return z && (!names.length || names.indexOf(z.z) >= 0) && String(z.na || '').trim();
+  }).map(function (z) {
+    return { z: String(z.z), na: String(z.na).trim().slice(0, 60), serie: clampI(z.serie, 1, 8), powtorzenia: clampI(z.powtorzenia, 1, 120),
+      ciezar_kg: Math.max(0, Math.min(400, Math.round((+z.ciezar_kg || 0) * 2) / 2)), technika: String(z.technika || '').slice(0, 300) };
+  }).slice(0, 10);
+  var meals = (Array.isArray(p.posilki) ? p.posilki : []).filter(function (m) {
+    return m && MEAL_SLOTS.indexOf(m.posilek) >= 0 && String(m.opis || '').trim();
+  }).map(function (m) {
+    var dni = (Array.isArray(m.dni) ? m.dni : []).map(Number).filter(function (d, i, a) { return d >= 0 && d <= 6 && a.indexOf(d) === i; });
+    return { posilek: m.posilek, dni: dni.length === 7 ? [] : dni, opis: String(m.opis).trim().slice(0, 240),
+      kcal: clampI(m.kcal, 50, 1500), bialko_g: clampI(m.bialko_g, 0, 200), wegle_g: clampI(m.wegle_g, 0, 300), tluszcz_g: clampI(m.tluszcz_g, 0, 150) };
+  }).slice(0, 10);
   var kcal = Math.round(+p.cel_kcal || 0);
   kcal = kcal ? Math.max(1200, Math.min(4500, kcal)) : 0;
-  if (!ex.length && !kcal) return null;
-  return { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, cel_kcal: kcal };
+  if (!ex.length && !swaps.length && !meals.length && !kcal) return null;
+  return { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, zamiany_cwiczen: swaps, posilki: meals, cel_kcal: kcal };
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----

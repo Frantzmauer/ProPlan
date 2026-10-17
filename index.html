@@ -1610,9 +1610,39 @@ function exAdj(name, iso){
   const list=S.adj&&S.adj.ex&&S.adj.ex[name]; if(!list) return null;
   let r=null; list.forEach(x=>{ if(x.from<=iso && (!r || x.from>=r.from)) r=x; }); return r;
 }
+// wymiana (swap) zapisana pod starą nazwą; późniejsze korekty nowego ćwiczenia — pod nową nazwą
 function effEx(e, iso){
-  const a=exAdj(e.n, iso); if(!a) return e;
-  return Object.assign({}, e, {s:a.s, rp:a.rp, r:String(a.rp), w:a.w>0?a.w:e.w, _adj:a});
+  let cur=e, a=exAdj(e.n, iso), guard=0;
+  while(a && guard++<3){
+    if(a.swap){
+      cur=Object.assign({}, cur, {n:a.swap.n, s:a.s, rp:a.rp, r:String(a.rp), w:a.w||0, start:a.w>0?a.w+' kg':'dobierz (RIR 2)', _adj:a, _from:cur._from||cur.n});
+      const b=exAdj(cur.n, iso); a=(b && b!==a && b.from>=a.from) ? b : null;
+    } else {
+      cur=Object.assign({}, cur, {s:a.s, rp:a.rp, r:String(a.rp), w:a.w>0?a.w:cur.w, _adj:a}); a=null;
+    }
+  }
+  return cur;
+}
+function swapCue(name){
+  const ex=(S.adj&&S.adj.ex)||{};
+  for(const k in ex) for(const x of ex[k]) if(x.swap && x.swap.n===name && x.swap.cue) return x.swap.cue;
+  return '';
+}
+/* ---- posiłki od Trenera: S.adj.meals=[{from, posilek, dni, opis, kcal, b, w, t, id}] ---- */
+function mealAdj(iso, dow, tag){
+  let r=null;
+  ((S.adj&&S.adj.meals)||[]).forEach(m=>{ if(m.from<=iso && m.posilek===tag && (!m.dni.length||m.dni.includes(dow)) && (!r||m.from>=r.from)) r=m; });
+  return r;
+}
+// posiłki dnia: podmienione stoją z wartościami od Trenera, reszta skaluje się do (cel − podmienione)
+function dayMeals(iso, dow, L, wk){
+  const diet=DIET[dow], goal=S.kcalGoal||DEFAULT_KCAL;
+  const slots=diet.meals.map((slot,i)=>({slot, i, vi:variantIndex(L,i,wk), adj:mealAdj(iso,dow,slot.tag)}));
+  let bk=0, bp=0, fixed=0, fixedP=0;
+  slots.forEach(x=>{ if(x.adj){ fixed+=x.adj.kcal; fixedP+=x.adj.b||0; return; } const b=variantBase(x.slot.v[x.vi]); bk+=b.kcal; bp+=b.p; });
+  const f=scaleFactors(Math.max(0,goal-fixed), {kcal:bk, p:bp}, fixed?Math.max(0,protFloor()-fixedP):undefined);
+  slots.forEach(x=>{ x.mc = x.adj ? {txt:esc(x.adj.opis), kcal:x.adj.kcal, p:x.adj.b, c:x.adj.w, f:x.adj.t} : mealComputed(x.slot.v[x.vi], f); });
+  return slots;
 }
 
 /* ---- progresja: ostatnia sesja tego samego ćwiczenia (po nazwie, także z poprzedniej fazy) ---- */
@@ -1624,12 +1654,13 @@ function prevSession(exName, iso){
     if(di<1) break;
     const w=workoutFor(weekOf(di), d.getDay());
     if(!w || w.type!=='lift') continue;
-    const idx=w.ex.findIndex(x=>x.n.trim()===exName.trim());
+    const exs=w.ex.map(x=>effEx(x,p));   // po wymianie ćwiczenia historia idzie pod nową nazwą
+    const idx=exs.findIndex(x=>x.n.trim()===exName.trim());
     if(idx<0) continue;
     const r=S.log[p] && S.log[p].ex && S.log[p].ex[p+'_e'+idx];
     if(!r || !r.sets) continue;
     const sets=[];
-    for(let s=1; s<=w.ex[idx].s; s++){
+    for(let s=1; s<=exs[idx].s; s++){
       const kg=parseFloat(r.sets['w'+s]), rp=parseFloat(r.sets['r'+s]);
       if(rp>0) sets.push({kg:kg>0?kg:0, rp});
     }
@@ -1757,7 +1788,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
       const prev=prevSession(e.n, iso);
       if(!prev || prev.iso < e._adj.from){
         const fmt=x=>String(x).replace('.',',');
-        prog={kg:e._adj.w, up:true, hint:`Trener (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)}): ${e._adj.w>0?fmt(e._adj.w)+' kg · ':''}${e.s}×${e.rp}`};
+        prog={kg:e._adj.w, up:true, hint:`Trener (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)})${e._from?' zamiast „'+e._from+'”':''}: ${e._adj.w>0?fmt(e._adj.w)+' kg · ':''}${e.s}×${e.rp}`};
       }
     }
     if(prog && prog.kg>0) recW=prog.kg;
@@ -1862,9 +1893,11 @@ function dayBase(dow, L, wk){
   return {kcal,p};
 }
 // współczynniki skalowania: białko chronione, węgle/tłuszcz absorbują różnicę
-function scaleFactors(goalKcal, base){
+// floor: ile białka mają dać skalowane posiłki (domyślnie cały dzienny próg; mniej, gdy część dnia to posiłki od Trenera)
+function scaleFactors(goalKcal, base, floor){
   if(!base.kcal) return {fProt:1,fCF:1};
-  const targetProt = Math.max(Math.min(base.p, protFloor()), goalKcal>=base.kcal ? base.p : Math.min(base.p, protFloor()));
+  const pf = (floor===undefined) ? protFloor() : floor;
+  const targetProt = Math.max(Math.min(base.p, pf), goalKcal>=base.kcal ? base.p : Math.min(base.p, pf));
   const fProt = base.p ? targetProt/base.p : 1;
   const protKcal = base.p*4*fProt;
   const restBaseKcal = base.kcal - base.p*4;
@@ -1877,18 +1910,16 @@ function renderMeals(iso, dow, L, wk){
   const diet=DIET[dow];
   const card=document.getElementById('mealsCard');
   const goal=S.kcalGoal||DEFAULT_KCAL;
-  const base=dayBase(dow, L, wk);
-  const f=scaleFactors(goal, base);
+  const dm=dayMeals(iso, dow, L, wk);
   let done=0, tot={kcal:0,p:0,c:0,f:0};
   let html='';
   diet.meals.forEach((slot,i)=>{
-    const vi=variantIndex(L,i,wk);
-    const slotm=slot.v[vi];
-    const mc=mealComputed(slotm, f);               // kcal, makra i opis z tych samych (skalowanych) gramatur
+    const vi=dm[i].vi, madj=dm[i].adj;
+    const mc=dm[i].mc;               // kcal, makra i opis z tych samych (skalowanych) gramatur; posiłek od Trenera — jego wartości
     const key='m'+i, on=!!L.meals[key];
     if(on){done++;tot.kcal+=mc.kcal;tot.p+=mc.p;tot.c+=mc.c;tot.f+=mc.f;}
     const isAuto = !(L.var && L.var[i]!==undefined);
-    const dots=slot.v.map((_,vx)=>`<button class="vdot ${vx===vi?'on':''}" data-vpick="${i}" data-vx="${vx}" title="Wariant ${vx+1}">${vx+1}</button>`).join('');
+    const dots=madj?'<span class="vman">od Trenera</span>':slot.v.map((_,vx)=>`<button class="vdot ${vx===vi?'on':''}" data-vpick="${i}" data-vx="${vx}" title="Wariant ${vx+1}">${vx+1}</button>`).join('');
     html+=`<div class="meal ${on?'done':''}">
       <div class="check ${on?'on':''}" data-meal="${key}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
       <div class="body">
@@ -1897,7 +1928,7 @@ function renderMeals(iso, dow, L, wk){
           <span class="vdots">${dots}</span>
         </div>
         <div class="txt" data-meal="${key}">${mc.txt}</div>
-        <div class="kcal">${mc.kcal} kcal · B ${mc.p} / W ${mc.c} / T ${mc.f}${isAuto?'':' · <span class="vman">ręczny wariant</span>'}</div>
+        <div class="kcal">${mc.kcal} kcal · B ${mc.p} / W ${mc.c} / T ${mc.f}${(isAuto||madj)?'':' · <span class="vman">ręczny wariant</span>'}</div>
       </div>
     </div>`;
   });
@@ -1997,7 +2028,7 @@ const GUIDE = {
   "Rozciąganie całego ciała":"Każda pozycja 2×30 s, spokojny oddech: dwugłowe ud, zginacze bioder (wykrok), pośladki (gołąb), klatka w drzwiach, najszerszy (wiszenie/skłon przy ścianie), łydki.",
 };
 function openGuide(name){
-  const cue = GUIDE[name] || GUIDE[name.trim()] || 'Skup się na kontrolowanym ruchu w pełnym zakresie i napięciu docelowego mięśnia.';
+  const cue = GUIDE[name] || GUIDE[name.trim()] || swapCue(name) || 'Skup się na kontrolowanym ruchu w pełnym zakresie i napięciu docelowego mięśnia.';
   const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' technika');
   const dlg=document.getElementById('guideDialog');
   dlg.querySelector('#gdTitle').textContent=name;
@@ -2108,12 +2139,9 @@ function dietMet(iso){
   const wk=weekOf(di); const dow=parseISO(iso).getDay();
   const diet=DIET[dow]; if(!diet) return false;
   const goal=S.kcalGoal||DEFAULT_KCAL;
-  const base=dayBase(dow,L,wk); const f=scaleFactors(goal,base);
   let checked=0, kcal=0;
-  diet.meals.forEach((slot,i)=>{
-    const vi=variantIndex(L,i,wk);
-    const mc=mealComputed(slot.v[vi], f);
-    if(L.meals&&L.meals['m'+i]){ checked++; kcal+=mc.kcal; }
+  dayMeals(iso, dow, L, wk).forEach((x,i)=>{
+    if(L.meals&&L.meals['m'+i]){ checked++; kcal+=x.mc.kcal; }
   });
   (L.custom||[]).forEach(c=>{ if(c.done!==false&&!c._del) kcal+=(c.kcal||0); });
   return checked>=3 && kcal<=goal;
@@ -2868,7 +2896,7 @@ function buildCoachContext(){
       const done=w.ex.filter((e,j)=>exs[iso+'_e'+j]&&exs[iso+'_e'+j].done).length;
       const ok=done>=Math.ceil(w.ex.length/2);
       if(w===HOME){W.homeP++; if(ok)W.home++;} else {W.gymP++; if(ok)W.gym++;}
-      w.ex.forEach((e,j)=>{ const r=exs[iso+'_e'+j]; if(!r||!r.sets) return;
+      w.ex.forEach((e0,j)=>{ const e=effEx(e0,iso), r=exs[iso+'_e'+j]; if(!r||!r.sets) return;
         const sets=[]; for(let s=1;s<=e.s;s++){ const kg=r.sets['w'+s], rp=r.sets['r'+s]; if(rp) sets.push((kg&&+kg?kg+'×':'')+rp); }
         if(sets.length) (exHist[e.n]=exHist[e.n]||[]).push(dd(iso)+(r.done?'':' (nieodhaczone)')+' '+sets.join(', ')); });
     }
@@ -2883,6 +2911,11 @@ function buildCoachContext(){
   const exRows=Object.entries(exHist).map(([n,a])=>'- '+n+': '+a.slice(-5).join(' | '));
   out.push(exRows.length?'Historia ćwiczeń (ostatnie sesje, kg×powtórzenia):\n'+exRows.join('\n'):'Historia ćwiczeń: brak zapisanych serii.');
   if(meals.length) out.push('Własne posiłki spoza planu (ostatnie):\n'+meals.slice(-12).join('\n'));
+  { const t=parseISO(today), Lt=S.log[today]||{meals:{}}, wkT=weekOf(dayIndexFor(today));
+    if(wkT>=1){ const strip=x=>String(x).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');
+      out.push('Jadłospis na dziś ('+dn[t.getDay()]+'):\n'+dayMeals(today,t.getDay(),Lt,wkT).map(x=>'- '+x.slot.tag+(x.adj?' [od Trenera]':'')+': '+strip(x.mc.txt)+' — '+x.mc.kcal+' kcal, B'+x.mc.p).join('\n')); } }
+  const am=((S.adj&&S.adj.meals)||[]);
+  if(am.length) out.push('Posiłki zmienione wcześniej przez Trenera: '+am.map(m=>m.posilek+(m.dni.length?' ('+m.dni.map(d=>dn[d]).join(',')+')':' (codziennie)')+' od '+m.from+': '+m.opis).join(' | '));
   const tg=coachTargets();
   if(tg.length) out.push('Ćwiczenia w planie na najbliższe 2 tygodnie (aktualne cele; nazwy dokładnie takie do narzędzia zaproponuj_zmiany):\n'+tg.map(t=>'- '+t.n+': '+t.txt).join('\n'));
   return out.join('\n').slice(0,15500);
@@ -2922,12 +2955,19 @@ function renderCoach(){
   box.querySelectorAll('[data-prop-dismiss]').forEach(b=>b.onclick=()=>{ const h=loadCoach(); h[+b.dataset.propDismiss].dismissed=true; saveCoach(h); renderCoach(); });
 }
 const fmtKg=x=>String(x).replace('.',',');
+const DAY_SHORT=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+const daysTxt=d=>(!d||!d.length)?'codziennie':d.slice().sort((a,b)=>((a+6)%7)-((b+6)%7)).map(x=>DAY_SHORT[x]).join(', ');
 function propText(P){
-  return [...P.cwiczenia.map(x=>x.nazwa+': '+(x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':'')+x.serie+'×'+x.powtorzenia), ...(P.cel_kcal?['cel kalorii '+P.cel_kcal+' kcal/dzień']:[])].join('; ');
+  return [...(P.cwiczenia||[]).map(x=>x.nazwa+': '+(x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':'')+x.serie+'×'+x.powtorzenia),
+    ...(P.zamiany_cwiczen||[]).map(x=>'zamiast '+x.z+' → '+x.na+' '+x.serie+'×'+x.powtorzenia),
+    ...(P.posilki||[]).map(x=>x.posilek+' ('+daysTxt(x.dni)+') → '+x.opis+' '+x.kcal+' kcal'),
+    ...(P.cel_kcal?['cel kalorii '+P.cel_kcal+' kcal/dzień']:[])].join('; ');
 }
 function propCard(m,i){
   const P=m.proposal;
-  const rows=P.cwiczenia.map(x=>`<div>• <b>${esc(x.nazwa)}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}</div>`).join('')+
+  const rows=(P.cwiczenia||[]).map(x=>`<div>• <b>${esc(x.nazwa)}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}</div>`).join('')+
+    (P.zamiany_cwiczen||[]).map(x=>`<div>• <b>${esc(x.z)}</b> → <b>${esc(x.na)}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}${x.technika?'<div style="color:var(--ink-dim);font-size:13px;padding-left:12px">'+esc(x.technika)+'</div>':''}</div>`).join('')+
+    (P.posilki||[]).map(x=>`<div>• <b>${esc(x.posilek)}</b> (${esc(daysTxt(x.dni))}): ${esc(x.opis)} <span style="color:var(--ink-dim)">— ${x.kcal} kcal · B ${x.bialko_g} / W ${x.wegle_g} / T ${x.tluszcz_g}</span></div>`).join('')+
     (P.cel_kcal?`<div>• <b>Cel kalorii</b>: ${P.cel_kcal} kcal/dzień</div>`:'');
   const act=m.applied
     ? `<div style="color:#5fbf7a;margin-top:8px">✅ Zastosowano od ${esc(m.appliedFrom||'')}</div><button class="btn ghost" data-prop-undo="${i}" style="font-size:12px;padding:7px 10px;margin-top:6px">Cofnij</button>`
@@ -2939,13 +2979,24 @@ function applyProposal(i){
   const h=loadCoach(), m=h[i]; if(!m||!m.proposal||m.applied) return;
   const P=m.proposal, from=todayISO(), id=Date.now();
   S.adj=S.adj||{}; S.adj.ex=S.adj.ex||{}; S.adj.log=S.adj.log||[];
-  P.cwiczenia.forEach(x=>{
-    const list=(S.adj.ex[x.nazwa]||[]).filter(y=>y.from!==from);   // nowsza decyzja z tego samego dnia zastępuje starszą
+  // wymiana zapisana pod nazwą, którą widzi użytkownik (po wcześniejszej wymianie — pod nazwą pierwotną z planu)
+  const origOf=name=>{ const ex=S.adj.ex; for(const k in ex) for(const y of ex[k]) if(y.swap&&y.swap.n===name) return k; return name; };
+  (P.cwiczenia||[]).forEach(x=>{
+    const list=(S.adj.ex[x.nazwa]||[]).filter(y=>y.from!==from||y.swap);   // nowsza decyzja z tego samego dnia zastępuje starszą
     list.push({from, w:x.ciezar_kg, s:x.serie, rp:x.powtorzenia, id}); S.adj.ex[x.nazwa]=list;
+  });
+  (P.zamiany_cwiczen||[]).forEach(x=>{
+    const k=origOf(x.z), list=(S.adj.ex[k]||[]).filter(y=>y.from!==from);
+    list.push({from, w:x.ciezar_kg, s:x.serie, rp:x.powtorzenia, swap:{n:x.na, cue:x.technika}, id}); S.adj.ex[k]=list;
+  });
+  S.adj.meals=(S.adj.meals||[]);
+  (P.posilki||[]).forEach(x=>{
+    S.adj.meals=S.adj.meals.filter(y=>!(y.from===from && y.posilek===x.posilek && JSON.stringify(y.dni)===JSON.stringify(x.dni)));
+    S.adj.meals.push({from, posilek:x.posilek, dni:x.dni||[], opis:x.opis, kcal:x.kcal, b:x.bialko_g, w:x.wegle_g, t:x.tluszcz_g, id});
   });
   const prevKcal=S.kcalGoal;
   if(P.cel_kcal){ S.kcalGoal=Math.min(3200,Math.max(1500,Math.round(P.cel_kcal/100)*100)); kcalSlider.value=S.kcalGoal; updateKcalHint(); }
-  S.adj.log.push({id, at:id, from, summary:P.podsumowanie, ex:P.cwiczenia, kcal:P.cel_kcal?S.kcalGoal:0, prevKcal});
+  S.adj.log.push({id, at:id, from, summary:P.podsumowanie, ex:P.cwiczenia, swaps:P.zamiany_cwiczen||[], meals:P.posilki||[], kcal:P.cel_kcal?S.kcalGoal:0, prevKcal});
   S._settingsM=Date.now(); save(); renderToday();
   m.applied=id; m.appliedFrom=from.slice(8,10)+'.'+from.slice(5,7); saveCoach(h); renderCoach();
 }
@@ -2954,6 +3005,7 @@ function undoProposal(i){
   const id=m.applied, entry=(S.adj.log||[]).find(x=>x.id===id);
   Object.keys(S.adj.ex||{}).forEach(n=>{ S.adj.ex[n]=S.adj.ex[n].filter(y=>y.id!==id); if(!S.adj.ex[n].length) delete S.adj.ex[n]; });
   if(entry && entry.kcal && S.kcalGoal===entry.kcal && entry.prevKcal){ S.kcalGoal=entry.prevKcal; kcalSlider.value=S.kcalGoal; updateKcalHint(); }
+  S.adj.meals=(S.adj.meals||[]).filter(x=>x.id!==id);
   S.adj.log=(S.adj.log||[]).filter(x=>x.id!==id);
   S._settingsM=Date.now(); save(); renderToday();
   m.applied=false; saveCoach(h); renderCoach();
