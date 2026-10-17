@@ -1,0 +1,10 @@
+# Sekrety
+.env
+.env.*
+
+# Kopie zapasowe z aplikacji (dane osobowe: waga, dziennik, profil)
+*backup*.json
+zelazo-*.json
+
+# macOS
+.DS_Store
