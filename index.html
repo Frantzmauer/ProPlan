@@ -492,6 +492,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
     <div class="note" id="cloudInfo">Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Na drugim urządzeniu wpisz <b>to samo konto i ten sam token</b>. Nowe osoby dołączają przez <b>link zaproszenia</b> — każda ma własny token i widzi tylko swoje dane.</div>
 
+    <div id="usageSection" style="display:none;margin-top:16px">
+      <div class="eyebrow">Zużycie AI · Twoje konto</div>
+      <div class="panel panel-pad" id="usageBox"></div>
+    </div>
+
     <div id="adminSection" style="display:none;margin-top:16px">
       <div class="eyebrow">Konta i zaproszenia · administrator</div>
       <div class="panel panel-pad">
@@ -503,6 +508,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <div class="md-hint">Pusta nazwa = zaproszony sam ją wybierze. Link działa raz i wygasa po 7 dniach.</div>
         <div id="admLink" style="display:none;margin-top:12px"></div>
         <label class="md-lab" style="margin-top:18px">Konta</label>
+        <div id="admTotal" class="md-hint" style="margin:0 0 4px"></div>
         <div id="admUsers"><div class="md-hint">Ładowanie…</div></div>
         <label class="md-lab" style="margin-top:18px">Oczekujące zaproszenia</label>
         <div id="admInvites"></div>
@@ -2602,6 +2608,7 @@ document.querySelectorAll('.nav button').forEach(b=>{
     document.getElementById('v-'+b.dataset.v).classList.add('on');
     window.scrollTo(0,0);
     if(b.dataset.v==='progress')renderWeight();
+    if(b.dataset.v==='set')loadUsage();   // świeże zużycie AI przy każdym wejściu w „Więcej”
     if(b.dataset.v==='plan')renderPlan();
     if(b.dataset.v==='shop')renderShop();
   };
@@ -3030,6 +3037,7 @@ async function coachSend(text){
     const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+e.message}); saveCoach(h2);
   }
   coachBusy=false; renderCoach();
+  if(document.getElementById('usageSection').style.display==='block') loadUsage();
 }
 function openCoach(){ document.getElementById('coachDialog').classList.add('show'); renderCoach(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
 document.getElementById('coachFab').onclick=openCoach;
@@ -3039,6 +3047,28 @@ document.getElementById('coachSend').onclick=()=>coachSend(document.getElementBy
 document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); coachSend(e.target.value); } });
 document.querySelectorAll('#coachChips button').forEach(b=>b.onclick=()=>coachSend(b.textContent));
 document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('coachDialog').classList.remove('show'); document.querySelector('.nav button[data-v="set"]').click(); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),300); };
+
+// ---- zużycie AI (koszt Trenera i szacowania kalorii, liczony na serwerze z tokenów × cennik) ----
+const fmtUsd=v=>'$'+(v>0&&v<0.01?v.toFixed(3):v.toFixed(2));
+const MONTHS_PL=['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+const monthName=m=>m?MONTHS_PL[+m.slice(5,7)-1]+' '+m.slice(0,4):'';
+function usageTxt(u){ if(!u) return '—'; return fmtUsd(u.usd)+' w tym mies. ('+u.n+' zapyt.)'; }
+async function loadUsage(){
+  const sec=document.getElementById('usageSection');
+  if(!CLOUD.on||!CLOUD.url||!CLOUD.token){ sec.style.display='none'; return; }
+  try{
+    const u=(await cloudCall('usage',{})).usage;
+    sec.style.display='block';
+    document.getElementById('usageBox').innerHTML=`
+      <div class="wstat">
+        <div class="b"><div class="n" style="color:var(--amber)">${fmtUsd(u.usd)}</div><div class="l">${esc(monthName(u.m))}</div></div>
+        <div class="b"><div class="n">${u.coach}</div><div class="l">Pytania do Trenera</div></div>
+        <div class="b"><div class="n">${u.est}</div><div class="l">Szacowania kalorii</div></div>
+      </div>
+      <div class="md-hint" style="margin-top:10px">${u.prev?'Poprzedni miesiąc ('+esc(monthName(u.prev.m))+'): '+fmtUsd(u.prev.usd)+' · ':''}Łącznie od początku: ${fmtUsd(u.all)}.
+      Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. Limit: 30 pytań do Trenera i 40 szacowań dziennie.</div>`;
+  }catch(e){ sec.style.display='none'; }
+}
 
 // ---- panel administratora (widoczny tylko z tokenem administratora) ----
 async function checkAdmin(){
@@ -3073,16 +3103,17 @@ async function adminCall(action, payload){
 async function loadAdmin(){
   const j=await adminCall('adminList'); if(!j) return;
   const users=j.users.sort((a,b)=>a.account<b.account?-1:1);
+  document.getElementById('admTotal').innerHTML=`Koszt AI wszystkich kont w tym miesiącu: <b style="color:var(--ink)">${fmtUsd(j.totalUsd||0)}</b> · łącznie od początku: ${fmtUsd(j.totalAllUsd||0)}`;
   const me=(CLOUD.account||'').toLowerCase();
   document.getElementById('admUsers').innerHTML=
-    `<div class="settings-row" style="padding:10px 0"><div class="l"><div class="t">${esc(me||'—')} <span style="color:var(--amber);font-size:12px">administrator (Ty)</span></div><div class="s">Twój token = SECRET ze skryptu</div></div></div>`+
+    `<div class="settings-row" style="padding:10px 0"><div class="l"><div class="t">${esc(me||'—')} <span style="color:var(--amber);font-size:12px">administrator (Ty)</span></div><div class="s">Twój token = SECRET ze skryptu · AI: ${usageTxt(j.myUsage)}</div></div></div>`+
     (users.length?users.map(u=>u.legacy?`<div class="settings-row" style="padding:10px 0;flex-wrap:wrap;gap:8px">
       <div class="l" style="min-width:150px"><div class="t">${esc(u.account)} <span style="color:var(--amber);font-size:12px">stare konto</span></div>
-        <div class="s">używa Twojego tokenu administratora · dane: ${u.kb} KB</div></div>
+        <div class="s">używa Twojego tokenu administratora · dane: ${u.kb} KB · AI: ${usageTxt(u.usage)}</div></div>
       <button class="btn" data-adm="adminReset" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">Wyślij własny link</button></div>`
     :`<div class="settings-row" style="padding:10px 0;flex-wrap:wrap;gap:8px">
       <div class="l" style="min-width:150px"><div class="t">${esc(u.account)} ${u.disabled?'<span style="color:var(--red);font-size:12px">zablokowane</span>':u.pending?'<span style="color:var(--ink-faint);font-size:12px">czeka na nowy link</span>':''}</div>
-        <div class="s">ostatnio: ${esc(fmtDate(u.lastSeen))} · dane: ${u.kb} KB</div></div>
+        <div class="s">ostatnio: ${esc(fmtDate(u.lastSeen))} · dane: ${u.kb} KB · AI: ${usageTxt(u.usage)}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn ghost" data-adm="${u.disabled?'adminEnable':'adminDisable'}" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">${u.disabled?'Odblokuj':'Zablokuj'}</button>
         <button class="btn ghost" data-adm="adminReset" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">Nowy link</button>

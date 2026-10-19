@@ -65,7 +65,7 @@ var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dzienni
 
 // same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
 function propNames() {
-  var n = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv)_/.test(k) && k !== 'DATA_FOLDER_ID'; });
+  var n = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use)_/.test(k) && k !== 'DATA_FOLDER_ID'; });
   return 'Skrypt widzi właściwości: ' + (n.length ? n.join(', ') : '(żadnych)') + '.';
 }
 function sha(s) {
@@ -150,7 +150,7 @@ function adminAction(req) {
         invites.push({ code: k.slice(4), account: i.account || '', expires: i.expires, reset: !!i.reset });
       }
     });
-    users.forEach(function (u) { var f = dataFile(u.account, false); u.kb = f ? Math.round(f.size / 1024) : 0; });
+    users.forEach(function (u) { var f = dataFile(u.account, false); u.kb = f ? Math.round(f.size / 1024) : 0; u.usage = usageView(u.account); });
     // konta sprzed zaproszeń: mają plik z danymi, ale nie mają własnego tokenu (używały SECRET)
     var known = {}; users.forEach(function (u) { known[u.account] = 1; });
     var me = cleanAccount(req.account);
@@ -158,7 +158,10 @@ function adminAction(req) {
       var acc = f.name.replace(/\.json$/, '');
       if (!known[acc] && acc !== me) users.push({ account: acc, created: 0, lastSeen: 0, disabled: false, legacy: true, kb: Math.round(f.size / 1024) });
     });
-    return { ok: true, users: users, invites: invites };
+    users.forEach(function (u) { if (!u.usage) u.usage = usageView(u.account); });
+    var mine = usageView(me), total = mine.usd, totalAll = mine.all;
+    users.forEach(function (u) { total += u.usage.usd; totalAll += u.usage.all; });
+    return { ok: true, users: users, invites: invites, myUsage: mine, totalUsd: total, totalAllUsd: totalAll };
   }
   if (a === 'adminInvite') {
     var acc = cleanAccount(req.name);
@@ -195,6 +198,7 @@ function adminAction(req) {
   }
   if (a === 'adminDelete') {
     PROPS.deleteProperty('user_' + target);
+    PROPS.deleteProperty('use_' + target);
     var f = dataFile(target, false);
     if (f) trashFile(f);   // kosz Dysku — da się odzyskać przez 30 dni
     return { ok: true };
@@ -208,7 +212,7 @@ function doPost(e) {
     var req = JSON.parse(e.postData.contents || '{}');
     if (!prop('SECRET')) {
       // same nazwy (bez wartości, bez danych kont) — żeby było widać, co skrypt faktycznie ma
-      var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv)_/.test(k); });
+      var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use)_/.test(k); });
       return out({ ok: false, error: 'Brak SECRET we Właściwościach skryptu. Widzę: ' +
         (names.length ? names.join(', ') : '(brak właściwości — sprawdź, czy to ten sam projekt)') });
     }
@@ -226,11 +230,14 @@ function doPost(e) {
 
     if (req.action === 'estimate') {
       var lim = rateLimit(me.account, 'est', ESTIMATE_PER_DAY, 'szacowań');
-      return out(lim || estimateMeal(req.desc || ''));
+      return out(lim || estimateMeal(req.desc || '', me.account));
+    }
+    if (req.action === 'usage') {
+      return out({ ok: true, usage: usageView(me.account) });
     }
     if (req.action === 'coach') {
       var limc = rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
-      return out(limc || coachReply(req));
+      return out(limc || coachReply(req, me.account));
     }
     if (req.action === 'pull') {
       return out({ ok: true, data: read(me.account) });
@@ -258,6 +265,45 @@ function doGet() {
 function out(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+// ZUŻYCIE API per konto (szacunek z liczby tokenów × cennik; faktyczny rachunek: console.anthropic.com)
+//   use_<konto> = {m:'RRRR-MM', usd, n, coach, est, tin, tout, all, prev:{m, usd, n}}
+// ============================================================
+var PRICES = {   // $ za 1 mln tokenów: [wejście, wyjście]
+  'claude-opus-5': [5, 25], 'claude-opus-5-5': [4, 20], 'claude-opus-4-8': [5, 25], 'claude-opus-4-7': [5, 25],
+  'claude-sonnet-5': [2, 10], 'claude-sonnet-4-6': [3, 15], 'claude-haiku-4-5': [1, 5]
+};
+function costUSD(model, u) {
+  var p = PRICES[String(model || '').replace(/-\d{8}$/, '')] || [5, 25];   // nieznany model → stawka Opus (ostrożnie)
+  return ((u.input_tokens || 0) * p[0] + (u.cache_creation_input_tokens || 0) * p[0] * 1.25 +
+          (u.cache_read_input_tokens || 0) * p[0] * 0.1 + (u.output_tokens || 0) * p[1]) / 1e6;
+}
+function recordUsage(acc, kind, model, u) {
+  if (!acc || !u) return;
+  try {
+    withLock(function () {
+      var k = 'use_' + acc, r = getJSON(k) || {};
+      var m = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM');
+      if (r.m !== m) {   // nowy miesiąc: poprzedni zostaje jako „prev”
+        if (r.m) r.prev = { m: r.m, usd: r.usd || 0, n: r.n || 0 };
+        r.m = m; r.usd = 0; r.n = 0; r.coach = 0; r.est = 0; r.tin = 0; r.tout = 0;
+      }
+      var c = costUSD(model, u);
+      r.usd += c; r.all = (r.all || 0) + c; r.n += 1; r[kind] = (r[kind] || 0) + 1;
+      r.tin += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
+      r.tout += (u.output_tokens || 0);
+      setJSON(k, r);
+    });
+  } catch (e) { /* licznik nie może zablokować odpowiedzi */ }
+}
+function usageView(acc) {
+  var r = getJSON('use_' + acc);
+  var m = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM');
+  if (!r) return { m: m, usd: 0, n: 0, coach: 0, est: 0, all: 0, prev: null };
+  if (r.m !== m) return { m: m, usd: 0, n: 0, coach: 0, est: 0, all: r.all || 0, prev: { m: r.m, usd: r.usd || 0, n: r.n || 0 } };
+  return { m: r.m, usd: r.usd || 0, n: r.n || 0, coach: r.coach || 0, est: r.est || 0, all: r.all || 0, prev: r.prev || null };
 }
 
 // ============================================================
@@ -292,7 +338,7 @@ var COACH_SYSTEM = [
 var MEAL_SLOTS = ['Śniadanie', 'Przekąska', 'Obiad', 'Po treningu', 'Kolacja'];
 var COACH_MAX_CONTEXT = 16000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
-function coachReply(req) {
+function coachReply(req, acc) {
   if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
   var ctx = String(req.context || '').slice(0, COACH_MAX_CONTEXT);
   var hist = Array.isArray(req.messages) ? req.messages.slice(-COACH_MAX_TURNS) : [];
@@ -369,6 +415,7 @@ function coachReply(req) {
   if (code === 429 || code === 529) return { ok: false, error: 'Trener jest teraz przeciążony — spróbuj za chwilę' };
   if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
   var data = JSON.parse(res.getContentText());
+  recordUsage(acc, 'coach', data.model || COACH_MODEL, data.usage);
   if (data.stop_reason === 'refusal') return { ok: false, error: 'Trener nie może odpowiedzieć na to pytanie. Spróbuj sformułować je inaczej.' };
   var text = '', proposal = null;
   (data.content || []).forEach(function (b) {
@@ -409,7 +456,7 @@ function cleanProposal(p, names) {
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----
-function estimateMeal(desc) {
+function estimateMeal(desc, acc) {
   if (!CLAUDE_API_KEY) return { ok: false, error: 'Brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
   if (!desc) return { ok: false, error: 'Pusty opis' };
   var prompt =
@@ -434,6 +481,7 @@ function estimateMeal(desc) {
   var code = res.getResponseCode();
   if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
   var data = JSON.parse(res.getContentText());
+  recordUsage(acc, 'est', data.model || CLAUDE_MODEL, data.usage);
   var text = '';
   (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
   var m = text.match(/\{[\s\S]*\}/);
