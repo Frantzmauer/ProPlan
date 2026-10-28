@@ -674,6 +674,17 @@ function mergeState(local, inc){
       var skip = (ka===kb) ? ka : pick('skip:'+k, ka, kb, true);
       m.ex[k]={done:done,sets:sets};
       if(skip && !done) m.ex[k].skip=true;
+      // odhaczone serie: każda wg własnego znacznika („ok:<klucz>:<seria>”)
+      if((ea&&ea.ok)||(eb&&eb.ok)){
+        var oa=(ea&&ea.ok)||{}, ob=(eb&&eb.ok)||{}, ok={}, oKeys={};
+        Object.keys(oa).forEach(function(s){oKeys[s]=1;});
+        Object.keys(ob).forEach(function(s){oKeys[s]=1;});
+        Object.keys(oKeys).forEach(function(s){
+          var va=!!oa[s], vb=!!ob[s];
+          if((va===vb) ? va : pick('ok:'+k+':'+s, va, vb, true)) ok[s]=true;
+        });
+        m.ex[k].ok=ok;
+      }
     });
     out.log[iso]=m;
   });
