@@ -669,7 +669,11 @@ function mergeState(local, inc){
         else if(va!==undefined&&vb!==undefined)sets[sk]= bNewer?vb:va;
         else sets[sk]=va!==undefined?va:vb;
       });
+      // „Pomiń” wg własnego znacznika; zaliczone ćwiczenie nigdy nie jest pominięte
+      var ka=!!(ea&&ea.skip), kb=!!(eb&&eb.skip);
+      var skip = (ka===kb) ? ka : pick('skip:'+k, ka, kb, true);
       m.ex[k]={done:done,sets:sets};
+      if(skip && !done) m.ex[k].skip=true;
     });
     out.log[iso]=m;
   });
