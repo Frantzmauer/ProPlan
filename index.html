@@ -2526,7 +2526,8 @@ function renderStreakCards(){
   }).join('');
 }
 
-let calMonth=new Date(); calMonth.setDate(1);
+// 1. dzień miesiąca o północy — bez godziny, żeby porównanie z limitem było dokładne
+let calMonth=(()=>{ const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
 let calCat='diet';
 // najdalszy miesiąc w kalendarzu: bieżący albo miesiąc startu planu, jeśli start jest później
 function calMaxMonth(){
@@ -2560,8 +2561,8 @@ function renderStreakCalendar(){
   grid.innerHTML=html;
 }
 document.addEventListener('click',e=>{
-  if(e.target&&e.target.id==='calPrev'){ calMonth.setMonth(calMonth.getMonth()-1); renderStreakCalendar(); }
-  if(e.target&&e.target.id==='calNext'){ const n=new Date(calMonth); n.setMonth(n.getMonth()+1); if(n<=calMaxMonth()){ calMonth=n; renderStreakCalendar(); } }
+  if(e.target&&e.target.id==='calPrev'){ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()-1, 1); renderStreakCalendar(); }
+  if(e.target&&e.target.id==='calNext'){ const n=new Date(calMonth.getFullYear(), calMonth.getMonth()+1, 1); if(n<=calMaxMonth()){ calMonth=n; renderStreakCalendar(); } }
 });
 
 /* ============================================================
