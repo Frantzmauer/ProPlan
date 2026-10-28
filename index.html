@@ -241,6 +241,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .cal-nav{display:flex;align-items:center;gap:10px}
 .cal-arrow{background:var(--panel2);border:1px solid var(--line);color:var(--ink);width:30px;height:30px;border-radius:8px;font-size:18px;line-height:1}
 .cal-arrow:active{transform:scale(.94)}
+.cal-arrow:disabled{opacity:.3;cursor:default}
+.join-choice{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.jc-warn{font-size:13.5px;line-height:1.55;color:var(--ink-dim);background:var(--amber-soft);border:1px solid rgba(255,122,26,.3);border-radius:10px;padding:11px 13px}
+.jc-warn b{color:var(--ink);font-weight:600}
+#joinMove{font-size:13px}
 .cal-month{font-family:var(--font-disp);font-weight:600;font-size:15px;min-width:120px;text-align:center}
 .cal-cats{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
 .cal-cat{background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;font-family:var(--font-body)}
@@ -738,7 +743,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <input type="text" class="md-in" id="joinName" placeholder="np. tomek" autocomplete="off" spellcheck="false" autocapitalize="off">
     <div class="md-hint">2–24 znaki: małe litery, cyfry, „-” lub „_”. Polskie znaki zamienimy (ł → l).</div>
     <div class="md-hint" id="joinMsg" style="display:none"></div>
-    <div class="md-btns">
+    <div id="joinChoice" class="join-choice" style="display:none">
+      <div class="jc-warn"><b>Na tym urządzeniu są dane innej osoby<span id="joinWho"></span>.</b> Na nowym koncie zaczniesz od zera: te dane znikną z tego urządzenia, ale na koncie ich właściciela w chmurze nic się nie zmieni.</div>
+      <button class="btn" id="joinFresh">Zacznij od zera</button>
+      <button class="btn ghost" id="joinMove">To moje dane — przenieś je na nowe konto</button>
+    </div>
+    <div class="md-btns" id="joinBtns">
       <button class="btn ghost" id="joinCancel" style="flex:1">Nie teraz</button>
       <button class="btn" id="joinOk" style="flex:2">Dołącz</button>
     </div>
@@ -1254,6 +1264,11 @@ function load(){
   }
   return {startDate:upcomingMondayISO(), kcalGoal:DEFAULT_KCAL, profile:{weight:104,height:186,age:45,sex:'m',activity:1.465,name:''}, log:{}, weights:[], custom:{}, shop:{}, shopT:{}, reminders:{on:false,workout:"17:30",meal:"12:00",water:"15:00",weight:"07:00"}, streak:0, lastStreakDay:null};
 }
+// czy na urządzeniu są czyjeś dane (dziennik, waga, obwody, posiłki, profil)
+function deviceHasData(){
+  return Object.keys(S.log||{}).length>0 || (S.weights||[]).length>0 || (S.measures||[]).length>0
+    || Object.keys(S.custom||{}).length>0 || !!(S.profile && S.profile.name);
+}
 function save(){localStorage.setItem(LS,JSON.stringify(S)); if(fileHandle) scheduleFileWrite(); scheduleCloudPush();}
 function touch(L){ if(L) L._m=Date.now(); }
 // znacznik czasu pojedynczego pola (dla scalania „nowsza zmiana wygrywa")
@@ -1306,10 +1321,12 @@ async function cloudPush(){
   if(!CLOUD.on || !CLOUD.url || cloudBusy) return;
   if(!CLOUD.account){ CLOUD.lastError='Brak nazwy konta'; saveCloud(); refreshCloudUI(); return; }
   cloudBusy=true; refreshCloudUI('...zapisywanie');
+  const acc=CLOUD.account;
   try{
     // wyślij nasz stan; serwer scali z tym, co ma, i zwróci wynik scalenia
     const j=await cloudCall('push', {data:S, clientMerge:true});
-    if(j.data){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
+    // w międzyczasie zmieniono konto (np. dołączenie nowej osoby) — nie wpuszczaj danych poprzedniego
+    if(j.data && CLOUD.account===acc){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
     CLOUD.lastSync=Date.now(); CLOUD.lastError='';
   }catch(e){ CLOUD.lastError=e.message; }
   cloudBusy=false; saveCloud(); refreshCloudUI();
@@ -1318,9 +1335,10 @@ async function cloudPull({silent}={}){
   if(!CLOUD.url){ if(!silent) alert('Najpierw wpisz URL skryptu.'); return; }
   if(!CLOUD.account){ if(!silent) alert('Wpisz nazwę konta.'); return; }
   cloudBusy=true; refreshCloudUI('...pobieranie');
+  const acc=CLOUD.account;
   try{
     const j=await cloudCall('pull', {});
-    if(j.data){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
+    if(j.data && CLOUD.account===acc){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
     CLOUD.lastSync=Date.now(); CLOUD.lastError='';
     if(!silent) showInAppReminder('✅ Zsynchronizowano','Dane pobrane i scalone.');
   }catch(e){ CLOUD.lastError=e.message; if(!silent) alert('Błąd synchronizacji: '+e.message); }
@@ -2418,6 +2436,7 @@ function habitOn(iso,key){ const L=S.log[iso]; return !!(L&&L.habits&&L.habits[k
 
 // ocena kategorii: zwraca 'yes' | 'no' | 'skip' (dzień neutralny, np. nietreningowy) dla danego ISO
 function evalCategory(cat, iso){
+  if(dayIndexFor(iso)<1) return 'skip';   // przed startem planu nic się nie liczy
   if(cat==='diet')  return dietMet(iso)?'yes':'no';
   if(cat==='sleep') return habitOn(iso,'sleep')?'yes':'no';
   if(cat==='alco')  return habitOn(iso,'noalco')?'yes':'no';
@@ -2472,6 +2491,7 @@ function updateStreak(){
   // statystyki ogólne
   let totWk=0,totDays=0;
   Object.keys(S.log).forEach(iso=>{
+    if(dayIndexFor(iso)<1) return;   // tylko dni od startu planu
     const L=S.log[iso];
     const ex=Object.values(L.ex||{}).filter(exAny).length;
     if(ex>0)totWk++;
@@ -2508,6 +2528,12 @@ function renderStreakCards(){
 
 let calMonth=new Date(); calMonth.setDate(1);
 let calCat='diet';
+// najdalszy miesiąc w kalendarzu: bieżący albo miesiąc startu planu, jeśli start jest później
+function calMaxMonth(){
+  const now=new Date(), a=new Date(now.getFullYear(),now.getMonth(),1);
+  const st=parseISO(S.startDate), b=new Date(st.getFullYear(),st.getMonth(),1);
+  return b>a?b:a;
+}
 function renderStreakCalendar(){
   const catsBox=document.getElementById('calCats'); if(!catsBox) return;
   catsBox.innerHTML=STREAK_CATS.map(c=>`<button class="cal-cat ${c.k===calCat?'on':''}" data-cal="${c.k}">${c.ic} ${c.lab}</button>`).join('');
@@ -2515,6 +2541,7 @@ function renderStreakCalendar(){
   const y=calMonth.getFullYear(), m=calMonth.getMonth();
   const MON=['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
   document.getElementById('calMonth').textContent=MON[m]+' '+y;
+  document.getElementById('calNext').disabled = new Date(y,m+1,1) > calMaxMonth();
   const first=new Date(y,m,1); const daysInMonth=new Date(y,m+1,0).getDate();
   let startDow=first.getDay(); startDow=(startDow===0)?6:startDow-1; // Pn=0
   const DOW=['Pn','Wt','Śr','Cz','Pt','So','Nd'];
@@ -2534,7 +2561,7 @@ function renderStreakCalendar(){
 }
 document.addEventListener('click',e=>{
   if(e.target&&e.target.id==='calPrev'){ calMonth.setMonth(calMonth.getMonth()-1); renderStreakCalendar(); }
-  if(e.target&&e.target.id==='calNext'){ const n=new Date(calMonth); n.setMonth(n.getMonth()+1); const now=new Date(); if(n<=new Date(now.getFullYear(),now.getMonth(),1)){ calMonth=n; renderStreakCalendar(); } }
+  if(e.target&&e.target.id==='calNext'){ const n=new Date(calMonth); n.setMonth(n.getMonth()+1); if(n<=calMaxMonth()){ calMonth=n; renderStreakCalendar(); } }
 });
 
 /* ============================================================
@@ -3049,35 +3076,49 @@ if(INVITE){
   document.getElementById('joinDialog').classList.add('show');
   document.getElementById('joinCancel').onclick=closeJoin;
   inp.addEventListener('blur',()=>{ if(!inp.readOnly) inp.value=slugAccount(inp.value); });
+  // cudze dane na urządzeniu: wybór w okienku (domyślnie od zera), zanim zużyjemy zaproszenie
+  let joinChoice=null;
+  const choiceBox=document.getElementById('joinChoice'), moveBtn=document.getElementById('joinMove');
+  document.getElementById('joinFresh').onclick=()=>{ joinChoice='fresh'; document.getElementById('joinOk').click(); };
+  moveBtn.onclick=()=>{
+    if(!moveBtn.dataset.armed){ moveBtn.dataset.armed='1'; moveBtn.textContent='Na pewno? Dane z tego urządzenia trafią na konto „'+slugAccount(inp.value)+'”'; return; }
+    joinChoice='move'; document.getElementById('joinOk').click();
+  };
   document.getElementById('joinOk').onclick=async()=>{
     const account=slugAccount(inp.value);
     if(account.length<2){ inp.focus(); return; }
+    const sameAccount=(CLOUD.account||'').toLowerCase()===account;
+    if(!sameAccount && deviceHasData() && !joinChoice){
+      document.getElementById('joinWho').textContent=(S.profile&&S.profile.name)?' ('+S.profile.name+')':(CLOUD.account?' (konto „'+CLOUD.account+'”)':'');
+      choiceBox.style.display='flex'; document.getElementById('joinOk').style.display='none'; inp.readOnly=true;
+      return;
+    }
     const btn=document.getElementById('joinOk'); btn.disabled=true; btn.textContent='⏳ Łączę…';
+    [document.getElementById('joinFresh'), moveBtn].forEach(b=>b.disabled=true);
     msg.style.display='none';
     try{
       const res=await fetch(INVITE.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'redeem',code:INVITE.code,account})});
       const j=JSON.parse(await res.text());
       if(!j.ok) throw new Error(j.error||'Błąd serwera');
-      const sameAccount=(CLOUD.account||'').toLowerCase()===j.account;
-      const hasData=Object.keys(S.log||{}).length>0;
-      // nowa osoba na urządzeniu z cudzymi danymi → start od zera, żeby nic nie przeszło na jej konto
-      if(!sameAccount && hasData && confirm('Na tym urządzeniu są już dane innej osoby. Zacząć od zera na koncie „'+j.account+'”? (Zalecane. Anuluj = przenieś obecne dane na nowe konto.)')){
-        localStorage.removeItem(LS); S=load();
-      }
+      const same=(CLOUD.account||'').toLowerCase()===j.account;
+      clearTimeout(cloudPushTimer);   // nic nie może już trafić na poprzednie konto
+      // nowa osoba: wszystko z poprzedniego konta znika z urządzenia (chyba że świadomie przenosi swoje dane)
+      if(!same && joinChoice!=='move'){ localStorage.removeItem(LS); S=load(); if(fileHandle) unlinkFile(); }
       // nowe konto: żadnych cudzych domyślnych danych — profil wypełnia sam zaproszony
-      if(!sameAccount){ S.profile={name:'',weight:0,height:0,age:0,sex:'m',activity:1.465,needsSetup:true}; S._settingsM=Date.now(); localStorage.setItem(LS,JSON.stringify(S)); }
+      if(!same){ S.profile={name:'',weight:0,height:0,age:0,sex:'m',activity:1.465,needsSetup:true}; S._settingsM=Date.now(); localStorage.setItem(LS,JSON.stringify(S)); }
       CLOUD={url:INVITE.url, token:j.token, account:j.account, on:true, lastSync:0, lastError:''};
       saveCloud();
       cloudUrl.value=CLOUD.url; cloudToken.value=CLOUD.token; cloudAccount.value=CLOUD.account;
       closeJoin();
       await cloudPull({silent:true}); cloudPush();
       refreshAllViews(); refreshCloudUI(); loadProfileUI();
-      if(sameAccount) alert('✅ Połączono ponownie. Twoje dane są bezpieczne.');
+      if(same) alert('✅ Połączono ponownie. Twoje dane są bezpieczne.');
       else openProfileSetup();
     }catch(e){
       msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Nie udało się dołączyć: '+e.message;
     }
     btn.disabled=false; btn.textContent='Dołącz';
+    [document.getElementById('joinFresh'), moveBtn].forEach(b=>b.disabled=false);
   };
 }
 
