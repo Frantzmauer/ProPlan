@@ -330,6 +330,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .coach-b.u{align-self:flex-end;background:var(--amber);color:#0e1114}
 #coachChips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
 #coachChips button{border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:13px;color:var(--ink-dim);background:transparent}
+/* wersja aplikacji: stabilna albo beta */
+.ver-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ver-btn{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
+.ver-btn b{font-family:var(--font-disp);font-size:18px;font-weight:600}
+.ver-btn span{font-size:12px;color:var(--ink-dim)}
+.ver-btn.on{border-color:var(--amber);background:var(--amber-soft)}
+.ver-btn.on b::after{content:" ✓";color:var(--amber)}
+.ver-hint{font-size:12px;color:var(--ink-faint);margin-top:8px}
 </style>
 </head>
 <body>
@@ -491,6 +499,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <div class="section" style="margin-top:10px">
     <div class="eyebrow">Konfiguracja</div>
     <h2 style="font-size:30px;font-weight:600">Ustawienia</h2>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <div class="eyebrow">Wersja aplikacji</div>
+    <div class="ver-row">
+      <a class="ver-btn" id="verStable" href="./"><b>Stabilna</b><span>obecny wygląd</span></a>
+      <a class="ver-btn" id="verBeta" href="beta/"><b>Beta</b><span>nowa nawigacja · do testów</span></a>
+    </div>
+    <div class="ver-hint">Obie wersje mają te same dane i synchronizację. Ikona na ekranie głównym otwiera wersję stabilną.</div>
   </div>
 
   <div class="section" style="margin-top:14px">
@@ -3480,6 +3497,10 @@ function refreshSyncUI(){
     fsBox.style.display='none'; fsUnsup.style.display='';
   }
 }
+
+// wersja aplikacji: zaznacz tę, w której jesteś
+const APP_BETA=/\/beta\/(index\.html)?$/.test(location.pathname);
+document.getElementById(APP_BETA?"verBeta":"verStable").classList.add("on");
 
 // wipe
 document.getElementById('wipe').onclick=()=>{

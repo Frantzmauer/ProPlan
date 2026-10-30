@@ -379,18 +379,26 @@ function coachReply(req, acc) {
       opis: { type: 'string', description: 'Skład z gramaturami, np. „Owsianka: 80 g płatków, 30 g WPC, banan, 15 g orzechów”' },
       kcal: { type: 'integer' }, bialko_g: { type: 'integer' }, wegle_g: { type: 'integer' }, tluszcz_g: { type: 'integer' }
     } };
+  // nowe pola tylko dla wersji aplikacji, które je obsługują (stabilna nie wysyła features)
+  var features = Array.isArray(req.features) ? req.features : [];
+  var steps = features.indexOf('kroki') >= 0;
+  var props = {
+    podsumowanie: { type: 'string', description: 'Jedno zdanie: co się zmienia i po co' },
+    cwiczenia: { type: 'array', items: exItem, description: 'Zmienione ciężary/serie/powtórzenia; pusta lista, jeśli bez zmian' },
+    zamiany_cwiczen: { type: 'array', items: swapItem, description: 'Ćwiczenia zastąpione innymi; pusta lista, jeśli bez zmian' },
+    posilki: { type: 'array', items: mealItem, description: 'Posiłki zastąpione innymi; pusta lista, jeśli bez zmian' },
+    cel_kcal: { type: 'integer', description: 'Nowy dzienny cel kcal albo 0, jeśli bez zmiany' }
+  };
+  var required = ['podsumowanie', 'cwiczenia', 'zamiany_cwiczen', 'posilki', 'cel_kcal'];
+  if (steps) {
+    props.cel_krokow = { type: 'integer', description: 'Nowy dzienny cel kroków (3000–30000, np. 9000) albo 0, jeśli bez zmiany. Podnoś stopniowo, o 500–1500, gdy użytkownik regularnie osiąga obecny cel.' };
+    required.push('cel_krokow');
+  }
   var tool = {
     name: 'zaproponuj_zmiany',
-    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
+    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii' + (steps ? ' i kroków' : '') + '. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
     strict: true,
-    input_schema: { type: 'object', additionalProperties: false, required: ['podsumowanie', 'cwiczenia', 'zamiany_cwiczen', 'posilki', 'cel_kcal'],
-      properties: {
-        podsumowanie: { type: 'string', description: 'Jedno zdanie: co się zmienia i po co' },
-        cwiczenia: { type: 'array', items: exItem, description: 'Zmienione ciężary/serie/powtórzenia; pusta lista, jeśli bez zmian' },
-        zamiany_cwiczen: { type: 'array', items: swapItem, description: 'Ćwiczenia zastąpione innymi; pusta lista, jeśli bez zmian' },
-        posilki: { type: 'array', items: mealItem, description: 'Posiłki zastąpione innymi; pusta lista, jeśli bez zmian' },
-        cel_kcal: { type: 'integer', description: 'Nowy dzienny cel kcal albo 0, jeśli bez zmiany' }
-      } }
+    input_schema: { type: 'object', additionalProperties: false, required: required, properties: props }
   };
 
   var payload = {
@@ -451,8 +459,12 @@ function cleanProposal(p, names) {
   }).slice(0, 10);
   var kcal = Math.round(+p.cel_kcal || 0);
   kcal = kcal ? Math.max(1200, Math.min(4500, kcal)) : 0;
-  if (!ex.length && !swaps.length && !meals.length && !kcal) return null;
-  return { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, zamiany_cwiczen: swaps, posilki: meals, cel_kcal: kcal };
+  var kroki = Math.round((+p.cel_krokow || 0) / 500) * 500;
+  kroki = kroki ? Math.max(3000, Math.min(30000, kroki)) : 0;
+  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki) return null;
+  var out = { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, zamiany_cwiczen: swaps, posilki: meals, cel_kcal: kcal };
+  if (kroki) out.cel_krokow = kroki;   // tylko gdy Trener go zaproponował — stabilna wersja tego pola nie dostaje
+  return out;
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----
