@@ -490,6 +490,12 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-confirm button{flex:1;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:14px}
 .wo-confirm .yes{background:var(--amber);color:#0e1114;border:none;font-family:var(--font-disp);font-weight:700;font-size:17px}
 @media (prefers-reduced-motion:reduce){.wo-ring .fg,.wo-pbar span{transition:none}}
+/* klatki z nagrania dołączone do pytania do Trenera */
+.coach-att{align-items:center;gap:8px;margin-top:6px;padding:4px 4px 4px 12px;border-radius:999px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:13px;align-self:flex-start;max-width:100%}
+.coach-att span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.coach-att button{min-width:36px;min-height:36px;border-radius:999px;color:var(--ink-dim);font-size:16px}
+.coach-ask-vid{margin-top:6px;min-height:40px;padding:0 12px;border-radius:10px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:13px}
+.coach-b .att{display:block;font-size:12px;opacity:.8;margin-top:4px}
 /* biblioteka ćwiczeń w Więcej */
 .lib-hint{font-size:13px;color:var(--ink-dim);margin-bottom:10px}
 .lib-search{margin-bottom:10px}
@@ -1065,6 +1071,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
       <button>Czy zmienić coś w planie treningowym?</button>
       <button>Jak dobrać ciężary na następny trening?</button>
     </div>
+    <div class="coach-att" id="coachAtt" style="display:none"></div>
     <div class="md-voice" id="coachVoice" style="display:none"></div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <textarea class="md-in" id="coachIn" rows="2" placeholder="Napisz albo powiedz pytanie…" style="resize:none;font-size:15px;flex:1;min-width:0"></textarea>
@@ -3846,9 +3853,11 @@ function renderCoach(){
   document.getElementById('coachSetup').style.display=ready?'none':'block';
   document.getElementById('coachChips').style.display=(ready&&!h.length)?'flex':'none';
   box.innerHTML=(h.length?'':`<div class="coach-b a">Cześć${S.profile&&S.profile.name?', '+esc(S.profile.name):''}! Jestem Twoim Trenerem. Widzę Twoje treningi, dietę, wagę i postępy — zapytaj, co poprawić, jak dobrać ciężary albo jakie suplementy mają sens.</div>`)+
-    h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):coachMd(m.content)}</div>`+(m.proposal?propCard(m,i):'')).join('')+
+    h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>')+(m.att?`<span class="att">📎 ${m.att.n} klatek: ${esc(m.att.ex)}</span>`:''):coachMd(m.content)}${m.kind==='form'?`<button class="coach-ask-vid" data-att="${esc(m.id)}">📎 Zapytaj o to nagranie</button>`:''}</div>`+(m.proposal?propCard(m,i):'')).join('')+
     (coachBusy?'<div class="coach-b a" style="color:var(--ink-dim)">Trener myśli…</div>':'');
   box.scrollTop=box.scrollHeight;
+  box.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{ const m=loadCoach().find(x=>x.id===b.dataset.att); if(m){ coachAtt={id:m.id, ex:m.ex||'nagranie', t:m.t}; renderCoachAtt(); document.getElementById('coachIn').focus(); } });
+  renderCoachAtt();
   box.querySelectorAll('[data-prop-apply]').forEach(b=>b.onclick=()=>applyProposal(+b.dataset.propApply));
   box.querySelectorAll('[data-prop-undo]').forEach(b=>b.onclick=()=>undoProposal(+b.dataset.propUndo));
   box.querySelectorAll('[data-prop-dismiss]').forEach(b=>b.onclick=()=>{ const h=loadCoach(); const m=h[+b.dataset.propDismiss]; m.dismissed=true; coachDecided(m); saveCoach(h); renderCoach(); });
@@ -3930,16 +3939,47 @@ function undoProposal(i){
   S._settingsM=Date.now(); save(); renderToday();
   m.applied=false; coachDecided(m); saveCoach(h); renderCoach();
 }
+/* ---- klatki z nagrania techniki dołączone do pytania do Trenera ----
+   Po analizie klatki dołączają się same do następnego pytania (chip „📎 Klatki …” z ✕), można też wybrać starsze nagranie
+   przyciskiem przy ocenie. Wysyłane tylko z jednym pytaniem (do 8 klatek ze szkieletem i wzorcem); klatki są tylko na tym telefonie. */
+let coachAtt=null;
+function renderCoachAtt(){
+  const el=document.getElementById('coachAtt'); if(!el) return;
+  if(!coachAtt){ el.style.display='none'; return; }
+  el.style.display='inline-flex';
+  el.innerHTML=`<span>📎 Klatki: ${esc(coachAtt.ex)} · ${new Date(coachAtt.t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})}</span><button aria-label="Nie dołączaj klatek" id="coachAttX">✕</button>`;
+  document.getElementById('coachAttX').onclick=()=>{ coachAtt=null; renderCoachAtt(); };
+}
+// do 8 klatek: najpierw te z odchyleniami od wzorca, potem równomiernie z całej serii
+async function coachAttImages(att){
+  const rec=await fcGet(att.id); if(!rec) return null;
+  const issues=fcIssues(rec), n=rec.raw.length, pick=[];
+  issues.forEach((a,i)=>{ if(a.length && pick.length<4) pick.push(i); });
+  for(let k=0;k<n && pick.length<8;k++){ const i=Math.round(k*(n-1)/7); if(!pick.includes(i)) pick.push(i); }
+  pick.sort((a,b)=>a-b);
+  const imgs=[]; for(const i of pick.slice(0,8)){ const c=await fcRenderFrame(rec,i,issues); imgs.push(c.toDataURL('image/jpeg',0.72).split(',')[1]); }
+  return imgs;
+}
 async function coachSend(text, {voice=false}={}){
   text=(text||'').trim(); if(!text||coachBusy) return;
   coachSpeakStop();
-  const h=loadCoach(); h.push({role:'user',content:text, id:coachId(), t:Date.now()}); saveCoach(h);
+  const att=coachAtt; coachAtt=null;
+  const um={role:'user',content:text, id:coachId(), t:Date.now()};
+  const h=loadCoach(); h.push(um); saveCoach(h);
   coachBusy=true; document.getElementById('coachIn').value=''; renderCoach();
-  let reply='';
+  let reply='', extra={};
   try{
+    if(att){
+      const imgs=await coachAttImages(att), fm=loadCoach().find(x=>x.id===att.id)||{};
+      if(imgs && imgs.length){
+        const r=fm.res||{};
+        extra={images:imgs, imagesNote:`Ćwiczenie: ${att.ex}${fm.set?' ('+fm.set+')':''}, nagranie z ${new Date(att.t).toLocaleString('pl-PL')}. Wstępna automatyczna ocena: ${r.ocena||fm.grade||'—'} — ${r.podsumowanie||''} Poprawki: ${(r.poprawki||[]).map(p=>p.problem+' → '+p.jak_poprawic).join('; ')||'brak'}. Pomiary: ${JSON.stringify(fm.metrics||{})}`};
+        const hh=loadCoach(), me=hh.find(x=>x.id===um.id); if(me){ me.att={ex:att.ex, n:imgs.length}; saveCoach(hh); renderCoach(); }
+      }
+    }
     const msgs=h.slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
-    const j=await cloudCall('coach',{messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia']});
+    const j=await cloudCall('coach',Object.assign({messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia']}, extra));
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
     reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');
   }catch(e){
@@ -4526,9 +4566,12 @@ const FC_GRADE={'dobrze':0,'drobne poprawki':1,'do poprawy':2,'nie da się oceni
 function fcMeasLine(m){
   if(!m || m.rozpoznanie_sylwetki || m.sylwetka) return m&&(m.rozpoznanie_sylwetki||('Sylwetka '+m.sylwetka))||'';
   const a=[]; if(m.powtorzenia_wykryte) a.push(m.powtorzenia_wykryte+' powt.');
-  if(m.ruch_mierzony_na==='biodro') a.push(m.glebokosc); a.push('pochylenie tułowia do '+m.tulow_max_pochylenie_od_pionu+'°');
-  if(m.czas_na_powtorzenie_s) a.push(String(m.czas_na_powtorzenie_s).replace('.',',')+' s/powt.'); a.push('widok '+m.widok_wg_sylwetki);
-  return 'Pomiary: '+a.join(' · ');
+  // tylko pola, które są (niepełne pomiary nie mogą dawać „undefined”)
+  if(m.ruch_mierzony_na==='biodro' && m.glebokosc) a.push(m.glebokosc);
+  if(m.tulow_max_pochylenie_od_pionu!=null) a.push('pochylenie tułowia do '+m.tulow_max_pochylenie_od_pionu+'°');
+  if(m.czas_na_powtorzenie_s) a.push(String(m.czas_na_powtorzenie_s).replace('.',',')+' s/powt.');
+  if(m.widok_wg_sylwetki) a.push('widok '+m.widok_wg_sylwetki);
+  return a.length ? 'Pomiary: '+a.join(' · ') : '';
 }
 /* ---- biblioteka ćwiczeń: wszystkie ćwiczenia z 24 tygodni planu (z wymianami od Trenera), według rodzaju treningu ---- */
 function exLibrary(){
@@ -4646,11 +4689,12 @@ function fcSaveAndShow(r, metrics, rec){
   hh.push({role:'user', content:`📹 Sprawdź technikę: ${FC.ex}${FC.set?' ('+FC.set+')':''}`, id:coachId(), t});
   hh.push({role:'assistant', content:txt, id:rid, t:t+1, kind:'form', ex:FC.ex, set:FC.set, grade:r.ocena, fix:(r.poprawki[0]&&r.poprawki[0].problem)||'', res:r, metrics});
   saveCoach(hh); fcPut(rid, rec); renderExLib();
+  coachAtt={id:rid, ex:FC.ex, t};   // następne pytanie do Trenera dostanie te klatki (chip z ✕)
   if(WO){ WO.forms=WO.forms||[]; WO.forms.push({ex:FC.ex, ocena:r.ocena, at:t}); woSave(); }
-  fcResultView(r, metrics, rec, null);
+  fcResultView(r, metrics, rec, null, rid);
 }
 // wynik (świeży albo z historii): ocena, poprawki, pomiary i klatki ze szkieletem i wzorcem — stuknij, by powiększyć
-function fcResultView(r, metrics, rec, savedAt){
+function fcResultView(r, metrics, rec, savedAt, id){
   const g=FC_GRADE[r.ocena]??3, issues=rec?fcIssues(rec):[], nIss=issues.flat().length;
   fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}${savedAt?' · '+new Date(savedAt).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
     <span class="fc-grade g${g}">${esc(r.ocena)}</span>
@@ -4662,10 +4706,13 @@ function fcResultView(r, metrics, rec, savedAt){
     <p class="fc-meas">${esc(fcMeasLine(metrics))}</p>
     <div class="fc-sec"><h4>Klatki${rec?` · stuknij, by powiększyć${nIss?' · zielony = jak powinno być':''}`:''}</h4>
       ${rec?'<div class="fc-thumbs" id="fcThumbs"></div>':'<p class="fc-meas">Klatki z tego nagrania są na telefonie, na którym je nagrano.</p>'}</div>
-    <div class="fc-btns">${TTS?'<button class="fc-btn" id="fcRead">🔊 Przeczytaj</button>':''}
+    <div class="fc-btns">${id&&rec?'<button class="fc-btn" id="fcAsk">💬 Zapytaj Trenera o to nagranie</button>':''}${TTS?'<button class="fc-btn" id="fcRead">🔊 Przeczytaj</button>':''}
       ${savedAt?'<button class="fc-btn" id="fcBack">← Wróć do ćwiczenia</button>':''}<button class="fc-btn main" data-fc-close>OK</button></div>`);
   document.querySelector('[data-fc-close]').onclick=()=>{ if(TTS) TTS.cancel(); fcClose(); };
   const bk=document.getElementById('fcBack'); if(bk) bk.onclick=()=>openFormCheck(FC.ex,'',{lib:true});
+  // Trener z pełnym kontekstem: otwórz czat z dołączonymi klatkami tego nagrania
+  const ak=document.getElementById('fcAsk'); if(ak) ak.onclick=()=>{ if(TTS) TTS.cancel(); coachAtt={id, ex:FC.ex, t:savedAt||Date.now()}; fcClose(); openCoach();
+    const inp=document.getElementById('coachIn'); if(!inp.value) inp.value='Oceń ponownie to nagranie, biorąc pod uwagę mój plan, historię i ograniczenia.'; };
   const rd=document.getElementById('fcRead'); if(rd) rd.onclick=()=>coachSpeak(r.podsumowanie+' '+r.poprawki.map(p=>p.problem+'. '+p.jak_poprawic).join(' ')+(r.bezpieczenstwo?' Uwaga: '+r.bezpieczenstwo:''));
   if(rec){ const box=document.getElementById('fcThumbs');
     rec.raw.forEach((_,i)=>fcRenderFrame(rec,i,issues).then(c=>{ c.className='fc-th'+((issues[i]||[]).length?' bad':''); c.setAttribute('role','button'); c.setAttribute('aria-label','Klatka '+(i+1)); c.onclick=()=>fcZoom(rec,issues,i); c.style.order=i; box.appendChild(c); }).catch(()=>{})); }
@@ -4688,7 +4735,7 @@ async function fcOpenSaved(id){
   const m=loadCoach().find(x=>x.id===id); if(!m) return;
   FC.ex=m.ex||FC.ex; FC.set=m.set||'';
   if(!m.res){ fcShow(`<div class="fc-cue">${coachMd(m.content)}</div><div class="fc-btns"><button class="fc-btn" id="fcBack">← Wróć do ćwiczenia</button></div>`); document.getElementById('fcBack').onclick=()=>openFormCheck(FC.ex,'',{lib:true}); return; }
-  fcResultView(m.res, m.metrics||{}, await fcGet(id), m.t);
+  fcResultView(m.res, m.metrics||{}, await fcGet(id), m.t, id);
 }
 
 // init

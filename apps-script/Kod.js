@@ -359,6 +359,21 @@ function coachReply(req, acc) {
   while (messages.length && messages[0].role !== 'user') messages.shift();
   if (!messages.length || messages[messages.length - 1].role !== 'user') return { ok: false, error: 'Brak pytania' };
 
+  // klatki z nagrania techniki (beta): dołączone do ostatniego pytania jako obrazy, tylko gdy aplikacja je wysłała
+  var imgs = (Array.isArray(req.images) ? req.images : []).filter(function (f) {
+    return typeof f === 'string' && /^[A-Za-z0-9+/=]+$/.test(f) && f.length < 600000;
+  }).slice(0, 8);
+  if (imgs.length) {
+    var lastU = messages[messages.length - 1];
+    var blocks = [{ type: 'text', text: lastU.content },
+      { type: 'text', text: 'Klatki z nagrania serii (w kolejności czasowej; pomarańczowy szkielet = wykryta sylwetka, zielone przerywane linie = wzorzec kąta). ' + String(req.imagesNote || '').slice(0, 3000) }];
+    imgs.forEach(function (f, i) {
+      blocks.push({ type: 'text', text: 'Klatka ' + (i + 1) + ' z ' + imgs.length + ':' });
+      blocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: f } });
+    });
+    lastU.content = blocks;
+  }
+
   // nazwy ćwiczeń z planu (z aplikacji) — narzędzie może zmieniać tylko istniejące ćwiczenia
   var names = (Array.isArray(req.exercises) ? req.exercises : []).map(function (n) { return String(n).slice(0, 80); })
     .filter(function (n, i, a) { return n && a.indexOf(n) === i; }).slice(0, 60);
@@ -426,7 +441,10 @@ function coachReply(req, acc) {
       { type: 'text', text: COACH_SYSTEM },
       // dane użytkownika w cache: kolejne pytania w tej samej rozmowie czytają je taniej
       { type: 'text', text: 'DANE UŻYTKOWNIKA (z aplikacji, stan na dziś):\n' + ctx, cache_control: { type: 'ephemeral' } }
-    ],
+    ].concat(imgs.length ? [{ type: 'text', text: 'Do pytania dołączono klatki z nagrania techniki i wstępną automatyczną ocenę. ' +
+      'Oceń technikę ponownie, znając cały kontekst użytkownika (plan, ciężary i historia serii, dieta, regeneracja, a z rozmowy — bóle, kontuzje, ograniczenia sprzętowe). ' +
+      'Potwierdź albo skoryguj wstępną ocenę i wyjaśnij dlaczego. Pomiary kątów z obrazu 2D są przybliżone — opieraj się na tym, co widać. ' +
+      'Jeśli technika lub ograniczenia tego wymagają, możesz zaproponować zmiany narzędziem (lżejszy ciężar, mniej powtórzeń, wymiana ćwiczenia).' }] : []),
     messages: messages
   };
   var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
