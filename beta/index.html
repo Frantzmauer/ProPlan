@@ -1426,6 +1426,7 @@ function refreshAllViews(){
   // nie przerysowuj, gdy użytkownik właśnie coś wpisuje — inaczej straci focus i wpisywany tekst
   if(isEditing()){ pendingRefresh=true; return; }
   renderToday(); renderWeight(); renderShop();
+  if(document.getElementById('coachDialog').classList.contains('show')) renderCoach();   // nowe wiadomości z innego urządzenia
 }
 let pendingRefresh=false;
 // gdy użytkownik skończy edycję pola, dokończ odłożone przerysowanie
@@ -1437,6 +1438,7 @@ document.addEventListener('focusout', ()=>{
    SYNCHRONIZACJA / JSON (eksport, import ze scalaniem, plik na Dysku)
    ============================================================ */
 const SCHEMA_VERSION=1;
+const COACH_KEEP=40;      // tyle ostatnich wiadomości czatu z Trenerem trzymamy i synchronizujemy
 let fileHandle=null;      // uchwyt do pliku JSON (File System Access API, desktop Chrome)
 let fileWriteTimer=null;
 
@@ -1607,6 +1609,17 @@ function mergeState(local, inc){
     if(inc.profile) out.profile=inc.profile;
     if(inc.adj) out.adj=inc.adj;   // zmiany planu zaakceptowane od Trenera
     out._settingsM=is;
+  }
+  // czat z Trenerem: wiadomości po id (bez duplikatów, po kolei), status propozycji wg znacznika st,
+  // „Wyczyść” wg clearedAt — starsze wiadomości z innych urządzeń nie wracają
+  if(local.coach||inc.coach){
+    const a=local.coach||{}, b=inc.coach||{}, cl=Math.max(a.clearedAt||0, b.clearedAt||0), map={};
+    [...(a.msgs||[]), ...(b.msgs||[])].forEach(m=>{
+      if(!m || !m.id || (m.t||0)<=cl) return;
+      const x=map[m.id];
+      if(!x || (m.st||0)>(x.st||0)) map[m.id]=m;
+    });
+    out.coach={clearedAt:cl, msgs:Object.values(map).sort((x,y)=>(x.t||0)-(y.t||0)).slice(-COACH_KEEP)};
   }
   return out;
 }
@@ -3398,9 +3411,36 @@ function coachTargets(){
   return Object.values(res);
 }
 
+/* ---- czat z Trenerem w danych konta (S.coach), więc synchronizuje się między urządzeniami ----
+   S.coach = {clearedAt, msgs:[{id, t, st, role, content, proposal, applied, appliedFrom, dismissed}]}
+   t = czas wiadomości (kolejność), st = czas ostatniej decyzji o propozycji (nowsza wygrywa przy scalaniu). */
 const coachKey=()=>'zelazo_coach_'+((CLOUD.account||'lokalnie').toLowerCase());
-function loadCoach(){ try{ return JSON.parse(localStorage.getItem(coachKey()))||[]; }catch(e){ return []; } }
-function saveCoach(h){ try{ localStorage.setItem(coachKey(), JSON.stringify(h.slice(-40))); }catch(e){} }
+const coachId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function coachStore(){ if(!S.coach) S.coach={clearedAt:0, msgs:[]}; if(!S.coach.msgs) S.coach.msgs=[]; return S.coach; }
+// jednorazowo: przenieś czat zapisany dotąd tylko w tej przeglądarce do danych konta (stary zapis zostaje dla wersji stabilnej)
+function migrateLocalCoach(){
+  const flag=coachKey()+'_synced';
+  try{
+    if(localStorage.getItem(flag)) return;
+    const old=JSON.parse(localStorage.getItem(coachKey())||'[]');
+    if(Array.isArray(old) && old.length){
+      const c=coachStore(), base=Date.now()-old.length*1000;
+      old.forEach((m,i)=>c.msgs.push(Object.assign({}, m, {id:coachId(), t:base+i*1000, st:m.applied||m.dismissed?base+i*1000:0})));
+      c.msgs.sort((x,y)=>x.t-y.t); c.msgs=c.msgs.slice(-COACH_KEEP);
+      save();
+    }
+    localStorage.setItem(flag, '1');
+  }catch(e){}
+}
+function loadCoach(){ const c=coachStore(); return c.msgs.filter(m=>(m.t||0)>(c.clearedAt||0)).sort((x,y)=>x.t-y.t); }
+function saveCoach(h){
+  const c=coachStore(), now=Date.now();
+  h.forEach((m,i)=>{ if(!m.id) m.id=coachId(); if(!m.t) m.t=now+i; });
+  c.msgs=h.slice(-COACH_KEEP);
+  save();
+}
+// zmiana decyzji o propozycji (zastosuj / odrzuć / cofnij) dostaje własny znacznik czasu
+const coachDecided=m=>{ m.st=Date.now(); };
 function coachMd(t){
   return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|\s)_(.+?)_(?=\s|$)/g,'$1<i>$2</i>')
     .split('\n').map(l=>/^\s*[-•]\s+/.test(l)?'<div style="padding-left:14px;text-indent:-10px">• '+l.replace(/^\s*[-•]\s+/,'')+'</div>':(l.trim()?'<div>'+l+'</div>':'<div style="height:8px"></div>')).join('');
@@ -3417,7 +3457,7 @@ function renderCoach(){
   box.scrollTop=box.scrollHeight;
   box.querySelectorAll('[data-prop-apply]').forEach(b=>b.onclick=()=>applyProposal(+b.dataset.propApply));
   box.querySelectorAll('[data-prop-undo]').forEach(b=>b.onclick=()=>undoProposal(+b.dataset.propUndo));
-  box.querySelectorAll('[data-prop-dismiss]').forEach(b=>b.onclick=()=>{ const h=loadCoach(); h[+b.dataset.propDismiss].dismissed=true; saveCoach(h); renderCoach(); });
+  box.querySelectorAll('[data-prop-dismiss]').forEach(b=>b.onclick=()=>{ const h=loadCoach(); const m=h[+b.dataset.propDismiss]; m.dismissed=true; coachDecided(m); saveCoach(h); renderCoach(); });
 }
 const fmtKg=x=>String(x).replace('.',',');
 const DAY_SHORT=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
@@ -3470,7 +3510,7 @@ function applyProposal(i){
   }
   S.adj.log.push({id, at:id, from, summary:P.podsumowanie, ex:P.cwiczenia, swaps:P.zamiany_cwiczen||[], meals:P.posilki||[], kcal:P.cel_kcal?S.kcalGoal:0, prevKcal});
   S._settingsM=Date.now(); save(); renderToday();
-  m.applied=id; m.appliedFrom=from.slice(8,10)+'.'+from.slice(5,7); saveCoach(h); renderCoach();
+  m.applied=id; m.appliedFrom=from.slice(8,10)+'.'+from.slice(5,7); coachDecided(m); saveCoach(h); renderCoach();
 }
 function undoProposal(i){
   const h=loadCoach(), m=h[i]; if(!m||!m.applied||!S.adj) return;
@@ -3481,19 +3521,19 @@ function undoProposal(i){
   if(S.adj.steps) S.adj.steps=S.adj.steps.filter(x=>x.id!==id);
   S.adj.log=(S.adj.log||[]).filter(x=>x.id!==id);
   S._settingsM=Date.now(); save(); renderToday();
-  m.applied=false; saveCoach(h); renderCoach();
+  m.applied=false; coachDecided(m); saveCoach(h); renderCoach();
 }
 async function coachSend(text){
   text=(text||'').trim(); if(!text||coachBusy) return;
-  const h=loadCoach(); h.push({role:'user',content:text}); saveCoach(h);
+  const h=loadCoach(); h.push({role:'user',content:text, id:coachId(), t:Date.now()}); saveCoach(h);
   coachBusy=true; document.getElementById('coachIn').value=''; renderCoach();
   try{
     const msgs=h.slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
     const j=await cloudCall('coach',{messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki']});
-    const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null}); saveCoach(h2);
+    const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
   }catch(e){
-    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+e.message}); saveCoach(h2);
+    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+e.message, id:coachId(), t:Date.now()}); saveCoach(h2);
   }
   coachBusy=false; renderCoach();
   if(document.getElementById('usageSection').style.display==='block') loadUsage();
@@ -3501,7 +3541,7 @@ async function coachSend(text){
 function openCoach(){ document.getElementById('coachDialog').classList.add('show'); renderCoach(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
 document.getElementById('coachFab').onclick=openCoach;
 document.getElementById('coachClose').onclick=()=>document.getElementById('coachDialog').classList.remove('show');
-document.getElementById('coachClear').onclick=()=>{ if(confirm('Wyczyścić rozmowę z Trenerem na tym urządzeniu?')){ saveCoach([]); renderCoach(); } };
+document.getElementById('coachClear').onclick=()=>{ if(confirm('Wyczyścić rozmowę z Trenerem? Zniknie na wszystkich Twoich urządzeniach.')){ S.coach={clearedAt:Date.now(), msgs:[]}; save(); renderCoach(); } };
 document.getElementById('coachSend').onclick=()=>coachSend(document.getElementById('coachIn').value);
 document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); coachSend(e.target.value); } });
 document.querySelectorAll('#coachChips button').forEach(b=>b.onclick=()=>coachSend(b.textContent));
@@ -3663,6 +3703,7 @@ document.getElementById('wipe').onclick=()=>{
 
 // init
 renderToday();
+migrateLocalCoach();
 // start: dzień treningowy z niedokończonym treningiem → Trening, inaczej Dieta
 { const ds=daySummary(todayISO()); showView(ds.trainAll && ds.trainDone<ds.trainAll ? 'train' : 'diet'); }
 refreshNotifUI();

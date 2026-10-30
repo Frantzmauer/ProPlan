@@ -724,5 +724,17 @@ function mergeState(local, inc){
     if(inc.adj) out.adj=inc.adj;   // zmiany planu zaakceptowane od Trenera
     out._settingsM=is;
   }
+  // czat z Trenerem (beta): wiadomości po id, status propozycji wg znacznika st, „Wyczyść” wg clearedAt.
+  // Stabilna wersja nie wysyła czatu — wtedy zostaje to, co już jest na serwerze.
+  if(local.coach||inc.coach){
+    var ca=local.coach||{}, cb=inc.coach||{}, cl=Math.max(ca.clearedAt||0, cb.clearedAt||0), cmap={};
+    (ca.msgs||[]).concat(cb.msgs||[]).forEach(function(m){
+      if(!m || !m.id || (m.t||0)<=cl) return;
+      var x=cmap[m.id];
+      if(!x || (m.st||0)>(x.st||0)) cmap[m.id]=m;
+    });
+    var msgs=Object.keys(cmap).map(function(k){return cmap[k];}).sort(function(x,y){return (x.t||0)-(y.t||0);});
+    out.coach={clearedAt:cl, msgs:msgs.slice(-40)};
+  }
   return out;
 }
