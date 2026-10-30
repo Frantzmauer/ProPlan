@@ -490,6 +490,26 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-confirm button{flex:1;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:14px}
 .wo-confirm .yes{background:var(--amber);color:#0e1114;border:none;font-family:var(--font-disp);font-weight:700;font-size:17px}
 @media (prefers-reduced-motion:reduce){.wo-ring .fg,.wo-pbar span{transition:none}}
+/* biblioteka ćwiczeń w Więcej */
+.lib-hint{font-size:13px;color:var(--ink-dim);margin-bottom:10px}
+.lib-search{margin-bottom:10px}
+.lib{display:flex;flex-direction:column;gap:10px}
+.lib-grp{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.lib-grp>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:48px;padding:0 14px;font-family:var(--font-disp);font-size:18px;font-weight:600}
+.lib-grp>summary::-webkit-details-marker{display:none}
+.lib-grp>summary span{font-family:var(--font-body);font-size:12px;color:var(--ink-dim);font-weight:400}
+.lib-grp[open]>summary{border-bottom:1px solid var(--line)}
+.lib-ex{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 14px;border-bottom:1px solid var(--line);text-align:left;color:var(--ink);font-size:14.5px}
+.lib-ex:last-child{border-bottom:none}
+.lib-ex .nm{flex:1;min-width:0}
+.lib-ex .last{font-size:11.5px;color:var(--ink-dim);white-space:nowrap}
+.lib-ex .last.g0{color:var(--green)} .lib-ex .last.g1{color:var(--amber)} .lib-ex .last.g2{color:var(--red)}
+.lib-ex .go{color:var(--ink-faint);font-size:18px}
+.fc-cue{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5}
+.fc-yt{font-size:13px;color:var(--steel)}
+.fc-hist{display:flex;flex-direction:column;gap:6px}
+.fc-hist div{display:flex;gap:10px;justify-content:space-between;font-size:13px;color:var(--ink-dim);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.fc-hist b{font-weight:600}
 /* analiza techniki z nagrania */
 .wo-cam{min-height:48px;width:100%;border-radius:14px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:15px;font-weight:600}
 #formDialog{position:fixed;inset:0;z-index:470;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center}
@@ -706,6 +726,13 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <div class="section" style="margin-top:10px">
     <div class="eyebrow">Konfiguracja</div>
     <h2 style="font-size:30px;font-weight:600">Ustawienia</h2>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <div class="eyebrow">Ćwiczenia · nauka techniki</div>
+    <p class="lib-hint">Wszystkie ćwiczenia z planu. Wejdź w ćwiczenie, nagraj serię (np. z lekkim ciężarem) i dostań ocenę Trenera — niezależnie od treningu.</p>
+    <input type="search" class="md-in lib-search" id="libSearch" placeholder="Szukaj ćwiczenia…" autocomplete="off">
+    <div id="exLib" class="lib"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
@@ -3365,7 +3392,7 @@ function showView(v){
   document.body.classList.toggle('daily', v==='train'||v==='diet');
   window.scrollTo(0,0);
   if(v==='progress'){ renderWeight(); renderPlan(); }
-  if(v==='set')loadUsage();   // świeże zużycie AI przy każdym wejściu w „Więcej”
+  if(v==='set'){ loadUsage(); renderExLib(); }   // świeże zużycie AI i lista ćwiczeń przy każdym wejściu w „Więcej”
   if(v==='shop')renderShop();
 }
 document.querySelectorAll('.nav button').forEach(b=>{ b.onclick=()=>showView(b.dataset.v); });
@@ -4326,14 +4353,23 @@ let posePromise=null;
 function camView(name){ return /wznos|unoszenie.*bok|łydk|wspięcia|biceps|triceps|uginanie ramion/i.test(name) ? 'z przodu' : 'z boku'; }
 function fcShow(html){ document.getElementById('fcBody').innerHTML=html; document.getElementById('formDialog').style.display='flex'; }
 function fcClose(){ if(FC.busy) return; document.getElementById('formDialog').style.display='none'; }
-function openFormCheck(name, setInfo){
+// historia ocen techniki danego ćwiczenia (z rozmowy z Trenerem — synchronizowana)
+function formHistory(name){ return loadCoach().filter(m=>m.kind==='form' && m.ex===name).reverse(); }
+// opts.lib: wejście z biblioteki ćwiczeń — dodatkowo opis techniki, link do filmów i historia ocen
+function openFormCheck(name, setInfo, opts){
   FC.ex=name; FC.set=setInfo||'';
+  const lib=!!(opts&&opts.lib);
+  const cue=GUIDE[name]||GUIDE[name.trim()]||swapCue(name)||'';
+  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' technika');
+  const head=lib ? `${cue?`<div class="fc-cue">${esc(cue)}</div>`:''}<a class="fc-yt" href="${yt}" target="_blank" rel="noopener">▶ Filmy z techniką (YouTube)</a>` : '';
+  const hist=formHistory(name);
+  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>Twoje oceny (${hist.length})</h4><div class="fc-hist">`+hist.slice(0,6).map(m=>`<div><span>${new Date(m.t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})}</span><b>${esc(m.grade||'')}</b><span>${esc((m.fix||'').slice(0,40))}</span></div>`).join('')+`</div></div>` : '';
   if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
-    fcShow(`<p class="fc-sub">Analiza techniki korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
   }
   const view=camView(name);
-  fcShow(`<p class="fc-sub"><b>${esc(name)}</b>${FC.set?' · '+esc(FC.set):''}</p>
+  fcShow(`<p class="fc-sub"><b>${esc(name)}</b>${FC.set?' · '+esc(FC.set):''}</p>${head}
     <ul class="fc-tips">
       <li>Postaw telefon <b>${view}</b>, 2–3 m od siebie, na wysokości bioder (np. oparty o ławkę).</li>
       <li>Całe ciało i sztanga/hantle w kadrze przez całą serię; dobre światło.</li>
@@ -4342,8 +4378,8 @@ function openFormCheck(name, setInfo){
     <div class="fc-btns">
       <button class="fc-btn main" id="fcRecBtn">📹 NAGRAJ SERIĘ</button>
       <button class="fc-btn" id="fcPickBtn">Wybierz film z galerii</button>
-      <button class="fc-btn ghost" data-fc-close>Anuluj</button>
-    </div>`);
+      <button class="fc-btn ghost" data-fc-close>${lib?'Zamknij':'Anuluj'}</button>
+    </div>${histHtml}`);
   document.getElementById('fcRecBtn').onclick=()=>{ const i=document.getElementById('fcRec'); i.value=''; i.click(); };
   document.getElementById('fcPickBtn').onclick=()=>{ const i=document.getElementById('fcPick'); i.value=''; i.click(); };
   document.querySelector('[data-fc-close]').onclick=fcClose;
@@ -4463,6 +4499,30 @@ function fcMeasLine(m){
   if(m.czas_na_powtorzenie_s) a.push(String(m.czas_na_powtorzenie_s).replace('.',',')+' s/powt.'); a.push('widok '+m.widok_wg_sylwetki);
   return 'Pomiary: '+a.join(' · ');
 }
+/* ---- biblioteka ćwiczeń: wszystkie ćwiczenia z 24 tygodni planu (z wymianami od Trenera), według rodzaju treningu ---- */
+function exLibrary(){
+  const groups=[['Całe ciało (FBW)',/^FBW/],['Góra ciała',/^UPPER/],['Dół ciała',/^LOWER/],['Dom',/^DOM/]], out=groups.map(g=>({name:g[0], ex:[]})), seen=new Set();
+  for(let wk=1;wk<=24;wk++) for(let d=0;d<7;d++){
+    const w=workoutFor(wk,d); if(!w||w.type!=='lift') continue;
+    const gi=Math.max(0, groups.findIndex(g=>g[1].test(w.title)));
+    w.ex.forEach(e=>{ if(!seen.has(e.n)){ seen.add(e.n); out[gi].ex.push(e.n); } });
+  }
+  // ćwiczenia wprowadzone przez Trenera (wymiany) — w grupie „Od Trenera”
+  const sw=[]; Object.values((S.adj&&S.adj.ex)||{}).forEach(l=>l.forEach(y=>{ if(y.swap&&y.swap.n&&!seen.has(y.swap.n)){ seen.add(y.swap.n); sw.push(y.swap.n); } }));
+  if(sw.length) out.push({name:'Od Trenera', ex:sw});
+  return out.filter(g=>g.ex.length);
+}
+function renderExLib(){
+  const box=document.getElementById('exLib'); if(!box) return;
+  const q=(document.getElementById('libSearch').value||'').trim().toLowerCase();
+  const groups=exLibrary().map(g=>({name:g.name, ex:g.ex.filter(n=>!q||n.toLowerCase().includes(q))})).filter(g=>g.ex.length);
+  box.innerHTML= groups.length ? groups.map(g=>`<details class="lib-grp" ${q?'open':''}><summary>${esc(g.name)}<span>${g.ex.length} ćw.</span></summary>`+
+    g.ex.map(n=>{ const h=formHistory(n)[0], gc=h?FC_GRADE[h.grade]:null;
+      return `<button class="lib-ex" data-lib="${esc(n)}"><span class="nm">${esc(n)}</span>${h?`<span class="last g${gc}">${esc(h.grade)}</span>`:''}<span class="go">›</span></button>`; }).join('')+`</details>`).join('')
+    : '<p class="lib-hint">Nic nie znaleziono.</p>';
+  box.querySelectorAll('[data-lib]').forEach(b=>b.onclick=()=>openFormCheck(b.dataset.lib,'',{lib:true}));
+}
+document.getElementById('libSearch').addEventListener('input', renderExLib);
 function fcResult(r, metrics, jpg){
   const g=FC_GRADE[r.ocena]??3;
   fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}</p>
@@ -4482,8 +4542,8 @@ function fcResult(r, metrics, jpg){
     r.poprawki.map(p=>`\n- ${p.problem} → ${p.jak_poprawic}`).join('')+(r.mocne_strony.length?`\n- Dobrze: ${r.mocne_strony.join('; ')}`:'')+`\n_${fcMeasLine(metrics)}_`;
   const hh=loadCoach(), t=Date.now();
   hh.push({role:'user', content:`📹 Sprawdź technikę: ${FC.ex}${FC.set?' ('+FC.set+')':''}`, id:coachId(), t});
-  hh.push({role:'assistant', content:txt, id:coachId(), t:t+1, kind:'form'});
-  saveCoach(hh);
+  hh.push({role:'assistant', content:txt, id:coachId(), t:t+1, kind:'form', ex:FC.ex, grade:r.ocena, fix:(r.poprawki[0]&&r.poprawki[0].problem)||''});
+  saveCoach(hh); renderExLib();
   if(WO){ WO.forms=WO.forms||[]; WO.forms.push({ex:FC.ex, ocena:r.ocena, at:t}); woSave(); }
 }
 
