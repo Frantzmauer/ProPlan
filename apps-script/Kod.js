@@ -62,6 +62,7 @@ var ACCOUNT_RULE = 'Nazwa konta: 2–24 znaki — małe litery a–z, cyfry, „
 var INVITE_DAYS = 7;
 var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
 var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dziennie
+var FORM_PER_DAY = 15;       // limit analiz techniki z nagrania na konto dziennie
 
 // same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
 function propNames() {
@@ -235,6 +236,10 @@ function doPost(e) {
     if (req.action === 'usage') {
       return out({ ok: true, usage: usageView(me.account) });
     }
+    if (req.action === 'form') {
+      var limf = rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
+      return out(limf || formCheck(req, me.account));
+    }
     if (req.action === 'coach') {
       var limc = rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
       return out(limc || coachReply(req, me.account));
@@ -288,7 +293,7 @@ function recordUsage(acc, kind, model, u) {
       var m = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM');
       if (r.m !== m) {   // nowy miesiąc: poprzedni zostaje jako „prev”
         if (r.m) r.prev = { m: r.m, usd: r.usd || 0, n: r.n || 0 };
-        r.m = m; r.usd = 0; r.n = 0; r.coach = 0; r.est = 0; r.tin = 0; r.tout = 0;
+        r.m = m; r.usd = 0; r.n = 0; r.coach = 0; r.est = 0; r.form = 0; r.tin = 0; r.tout = 0;
       }
       var c = costUSD(model, u);
       r.usd += c; r.all = (r.all || 0) + c; r.n += 1; r[kind] = (r[kind] || 0) + 1;
@@ -492,6 +497,81 @@ function cleanProposal(p, names) {
   if (kroki) out.cel_krokow = kroki;   // tylko gdy Trener go zaproponował — stabilna wersja tego pola nie dostaje
   if (mv.length) out.przesuniecia = mv;
   return out;
+}
+
+// ---- analiza techniki z nagrania (beta) ----
+// Aplikacja wysyła kilka klatek JPEG (film zostaje na telefonie) i pomiary z rozpoznania sylwetki.
+// Claude ocenia technikę i zwraca ustrukturyzowaną odpowiedź przez narzędzie (zawsze ten sam kształt).
+var FORM_SYSTEM = [
+  'Jesteś doświadczonym trenerem siłowym. Oceniasz technikę jednej serii ćwiczenia na podstawie klatek z nagrania',
+  '(w kolejności czasowej, czasem z narysowanym szkieletem: linie między stawami) oraz pomiarów z automatycznego rozpoznania sylwetki.',
+  'Pomiary są przybliżone (obraz 2D, jedna kamera) — traktuj je jako podpowiedź, ostateczną ocenę opieraj na tym, co widać.',
+  'Pisz po polsku, krótko i konkretnie, jak trener na siłowni. Najważniejsze najpierw. Maksymalnie 3 poprawki.',
+  'Jeśli kąt kamery, światło albo kadr nie pozwalają ocenić techniki — powiedz to wprost (ocena „nie da się ocenić”) i podaj, jak ustawić kamerę.',
+  'Bezpieczeństwo: wskaż ruchy grożące kontuzją (np. zaokrąglony odcinek lędźwiowy pod obciążeniem, kolana mocno do środka).',
+  'Nie stawiasz diagnoz medycznych; przy bólu zalecasz konsultację z fizjoterapeutą.'
+].join(' ');
+function formCheck(req, acc) {
+  if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
+  var frames = (Array.isArray(req.frames) ? req.frames : []).filter(function (f) {
+    return typeof f === 'string' && /^[A-Za-z0-9+/=]+$/.test(f) && f.length < 600000;
+  }).slice(0, 12);
+  if (frames.length < 3) return { ok: false, error: 'Za mało klatek z nagrania — nagraj całą serię (kilka sekund).' };
+  var ex = String(req.exercise || 'ćwiczenie').slice(0, 80);
+  var info = 'Ćwiczenie: ' + ex + '. ' +
+    (req.set ? 'Seria: ' + String(req.set).slice(0, 80) + '. ' : '') +
+    (req.view ? 'Ustawienie kamery według aplikacji: ' + String(req.view).slice(0, 40) + '. ' : '') +
+    'Pomiary z rozpoznania sylwetki (JSON, mogą być niepełne): ' + JSON.stringify(req.metrics || {}).slice(0, 3000);
+  var content = [{ type: 'text', text: info }];
+  frames.forEach(function (f, i) {
+    content.push({ type: 'text', text: 'Klatka ' + (i + 1) + ' z ' + frames.length + ':' });
+    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: f } });
+  });
+  var tool = {
+    name: 'ocena_techniki', strict: true,
+    description: 'Ocena techniki serii z nagrania.',
+    input_schema: { type: 'object', additionalProperties: false,
+      required: ['ocena', 'podsumowanie', 'mocne_strony', 'poprawki', 'bezpieczenstwo', 'nagranie'],
+      properties: {
+        ocena: { type: 'string', enum: ['dobrze', 'drobne poprawki', 'do poprawy', 'nie da się ocenić'] },
+        podsumowanie: { type: 'string', description: '1–2 zdania' },
+        mocne_strony: { type: 'array', items: { type: 'string' }, description: '0–3 krótkie punkty' },
+        poprawki: { type: 'array', description: '0–3 najważniejsze poprawki, od najważniejszej',
+          items: { type: 'object', additionalProperties: false, required: ['problem', 'jak_poprawic', 'waga'],
+            properties: { problem: { type: 'string' }, jak_poprawic: { type: 'string', description: 'konkretna wskazówka do zastosowania w następnej serii' },
+              waga: { type: 'string', enum: ['niska', 'średnia', 'wysoka'] } } } },
+        bezpieczenstwo: { type: 'string', description: 'ostrzeżenie o ryzyku kontuzji albo pusty tekst' },
+        nagranie: { type: 'string', description: 'uwaga o kadrze/kącie kamery na przyszłość albo pusty tekst' }
+      } }
+  };
+  var payload = {
+    model: COACH_MODEL, max_tokens: 2000, system: FORM_SYSTEM, tools: [tool],
+    tool_choice: { type: 'tool', name: 'ocena_techniki' }, fallbacks: 'default',
+    messages: [{ role: 'user', content: content }]
+  };
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
+    payload: JSON.stringify(payload)
+  });
+  var code = res.getResponseCode();
+  if (code === 429 || code === 529) return { ok: false, error: 'Trener jest teraz przeciążony — spróbuj za chwilę' };
+  if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
+  var data = JSON.parse(res.getContentText());
+  recordUsage(acc, 'form', data.model || COACH_MODEL, data.usage);
+  if (data.stop_reason === 'refusal') return { ok: false, error: 'Trener nie może ocenić tego nagrania.' };
+  var r = null;
+  (data.content || []).forEach(function (b) { if (b.type === 'tool_use' && b.name === 'ocena_techniki') r = b.input; });
+  if (!r) return { ok: false, error: 'Trener nie zwrócił oceny — spróbuj ponownie' };
+  var str = function (v, n) { return String(v || '').slice(0, n); };
+  var grades = ['dobrze', 'drobne poprawki', 'do poprawy', 'nie da się ocenić'], wagi = ['niska', 'średnia', 'wysoka'];
+  return { ok: true, result: {
+    ocena: grades.indexOf(r.ocena) >= 0 ? r.ocena : 'nie da się ocenić',
+    podsumowanie: str(r.podsumowanie, 400),
+    mocne_strony: (r.mocne_strony || []).slice(0, 3).map(function (x) { return str(x, 160); }),
+    poprawki: (r.poprawki || []).slice(0, 3).map(function (x) { return { problem: str(x.problem, 160), jak_poprawic: str(x.jak_poprawic, 240), waga: wagi.indexOf(x.waga) >= 0 ? x.waga : 'średnia' }; }),
+    bezpieczenstwo: str(r.bezpieczenstwo, 300), nagranie: str(r.nagranie, 200)
+  } };
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----

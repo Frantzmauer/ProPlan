@@ -490,6 +490,39 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-confirm button{flex:1;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:14px}
 .wo-confirm .yes{background:var(--amber);color:#0e1114;border:none;font-family:var(--font-disp);font-weight:700;font-size:17px}
 @media (prefers-reduced-motion:reduce){.wo-ring .fg,.wo-pbar span{transition:none}}
+/* analiza techniki z nagrania */
+.wo-cam{min-height:48px;width:100%;border-radius:14px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:15px;font-weight:600}
+#formDialog{position:fixed;inset:0;z-index:470;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center}
+.fc-card{width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px}
+.fc-title{font-family:var(--font-disp);font-size:24px;font-weight:600;text-transform:uppercase}
+.fc-sub{font-size:13.5px;color:var(--ink-dim);line-height:1.5}
+.fc-sub b{color:var(--ink)}
+.fc-tips{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
+.fc-tips li::before{content:"• ";color:var(--steel)}
+.fc-btns{display:flex;flex-direction:column;gap:8px}
+.fc-btn{min-height:52px;border-radius:14px;font-size:16px;font-weight:600;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+.fc-btn.main{background:var(--amber);border:none;color:#0e1114;font-family:var(--font-disp);font-size:20px;letter-spacing:.04em}
+.fc-btn.ghost{background:none;color:var(--ink-dim);min-height:44px}
+.fc-prog{display:flex;flex-direction:column;gap:8px;padding:8px 0}
+.fc-step{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-faint)}
+.fc-step.on{color:var(--ink)}
+.fc-step.ok{color:var(--green)}
+.fc-step i{width:18px;text-align:center;font-style:normal}
+.fc-grade{align-self:flex-start;font-family:var(--font-disp);font-weight:700;font-size:16px;letter-spacing:.05em;padding:4px 12px;border-radius:999px;text-transform:uppercase}
+.fc-grade.g0{background:rgba(78,201,126,.12);color:var(--green);border:1px solid rgba(78,201,126,.4)}
+.fc-grade.g1{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,122,26,.4)}
+.fc-grade.g2{background:#2a1512;color:var(--red);border:1px solid rgba(226,84,58,.5)}
+.fc-grade.g3{background:var(--panel2);color:var(--ink-dim);border:1px solid var(--line)}
+.fc-sec{display:flex;flex-direction:column;gap:6px}
+.fc-sec h4{font-size:11.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.fc-fix{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.fc-fix b{display:block;margin-bottom:2px}
+.fc-fix span{color:var(--ink-dim)}
+.fc-fix.wysoka{border-color:rgba(226,84,58,.5)}
+.fc-warn{background:#2a1512;border:1px solid rgba(226,84,58,.5);border-radius:12px;padding:10px 12px;font-size:14px;color:#ffb4a3}
+.fc-meas{font-size:12.5px;color:var(--ink-dim)}
+.fc-thumbs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.fc-thumbs img{height:84px;border-radius:8px;border:1px solid var(--line);flex:none}
 /* poprawki UX z testów (przyciski ≥40 px, kontrast, zwarty nagłówek) */
 .wo-setno{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .wo-show{flex:none;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--steel);font-size:13px;font-weight:600}
@@ -1024,6 +1057,16 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   </div>
 </div>
 
+
+<!-- analiza techniki z nagrania (film zostaje na telefonie; do Trenera idą klatki i pomiary) -->
+<div id="formDialog" style="display:none" role="dialog" aria-modal="true" aria-labelledby="fcTitle">
+  <div class="fc-card">
+    <div class="fc-title" id="fcTitle">Sprawdź technikę</div>
+    <div id="fcBody"></div>
+  </div>
+</div>
+<input type="file" id="fcRec" accept="video/*" capture="environment" style="display:none">
+<input type="file" id="fcPick" accept="video/*" style="display:none">
 
 <!-- tryb treningu: pełny ekran tylko z bieżącym ćwiczeniem -->
 <div id="woFocus" style="display:none" role="dialog" aria-modal="true" aria-label="Trening">
@@ -4194,6 +4237,7 @@ function woRender(){
     if(x.timed && !WO.tStart) h+=`<button class="wo-done timer" id="woTimer"><svg viewBox="0 0 24 24" style="fill:#0e1114;stroke:none"><path d="M7 4.5v15l13-7.5z"/></svg>${x.up?'START STOPERA':'START ODLICZANIA'}</button>`;
     else if(x.timed && x.up) h+=`<button class="wo-done" id="woStopUp"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>KONIEC SERII</button>`;
     else if(!x.timed) h+=`<button class="wo-done" id="woDone"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>SERIA ZROBIONA</button>`;
+    h+=`<button class="wo-cam" id="woCam">📹 Sprawdź technikę tej serii</button>`;
     h+=`<button class="wo-skip" id="woSkip">Pomiń tę serię</button>`;
   }
   h+=`<div class="wo-list"><h4>Ćwiczenia</h4>`+WO.ex.map((y,j)=>{ const d=y.ok.filter(Boolean).length; return `<button class="${d===y.s?'ok':''} ${j===i?'cur':''}" data-wgo="${j}"><span>${esc(y.n)}</span><span>${d}/${y.s}</span></button>`; }).join('')+`</div>`;
@@ -4205,6 +4249,7 @@ function woRender(){
   on('woTimer', g(()=>{ WO.tStart=Date.now(); WO.lastSec=null; woRender(); }));
   on('woStopUp', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].sets[k2].r=Math.round((Date.now()-WO.tStart)/1000); WO.tStart=0; woSetDone(); }));
   on('woShow', ()=>openGuide(x.n));   // opis techniki nad ekranem treningu
+  on('woCam', ()=>openFormCheck(x.n, (v.kg?String(v.kg).replace('.',',')+' kg × ':'')+v.r+(x.timed?' s':' powt.')));
   on('woPlus', ()=>{ WO.restEnd+=15000; WO.restPlan+=15; WO.beeped=false; woSave(); woStep(); });
   on('woSkip', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].ok[k2]=true; WO.ex[WO.cur].skipped=(WO.ex[WO.cur].skipped||0)+1; WO.skipped++; WO.tStart=0;
     if(woDone()===woTotal()) return woFinish(); if(woCurSet(WO.cur)<0) WO.cur=woNext(WO.cur); WO.setStart=Date.now(); woSave(); woRender(); }));
@@ -4225,7 +4270,7 @@ function woFinish(){
   const done=WO.log.length;
   const sess={start:WO.start, end:t, dur:Math.round((t-WO.start)/1000), work:WO.log.reduce((a,l)=>a+l.work,0),
     avgRest:Math.round(avg(rests.map(l=>l.restBefore))), avgRestPlan:Math.round(avg(rests.map(l=>l.restPlan))),
-    done, total:woTotal(), skipped:WO.skipped, title:WO.title,
+    done, total:woTotal(), skipped:WO.skipped, title:WO.title, forms:WO.forms||[],
     ex:WO.ex.map(x=>{ const rs=WO.log.filter(l=>l.ex===x.n&&l.restBefore!=null);
       return {n:x.n, sets:WO.log.filter(l=>l.ex===x.n).length, of:x.s, avgRest:Math.round(avg(rs.map(l=>l.restBefore))), restPlan:x.rest, avgWork:Math.round(avg(WO.log.filter(l=>l.ex===x.n).map(l=>l.work)))}; })};
   const L=log(WO.iso); L.session=sess; touch(L); save();
@@ -4265,6 +4310,182 @@ function woResume(){
 }
 
 document.getElementById('syncWarn').onclick=()=>{ showView('set'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),200); };
+
+/* ============================================================
+   ANALIZA TECHNIKI Z NAGRANIA (beta)
+   1) film z kamery telefonu albo z galerii — zostaje na telefonie
+   2) wycięcie klatek (canvas), 3) rozpoznanie sylwetki MediaPipe Pose (ładowane przy pierwszym użyciu),
+   4) pomiary: powtórzenia, kąty, głębokość, pochylenie, tempo, 5) do Trenera: pomiary + do 10 klatek ze szkieletem,
+   6) wynik w oknie, w rozmowie z Trenerem (synchronizowanej) i w sesji treningu.
+   ============================================================ */
+const FC={ex:'', set:'', busy:false};
+const POSE_VER='0.10.14';
+const POSE_MODEL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+let posePromise=null;
+// ustawienie kamery: ćwiczenia z ruchem biodra/kolana najlepiej z boku, wznosy i łydki z przodu
+function camView(name){ return /wznos|unoszenie.*bok|łydk|wspięcia|biceps|triceps|uginanie ramion/i.test(name) ? 'z przodu' : 'z boku'; }
+function fcShow(html){ document.getElementById('fcBody').innerHTML=html; document.getElementById('formDialog').style.display='flex'; }
+function fcClose(){ if(FC.busy) return; document.getElementById('formDialog').style.display='none'; }
+function openFormCheck(name, setInfo){
+  FC.ex=name; FC.set=setInfo||'';
+  if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
+    fcShow(`<p class="fc-sub">Analiza techniki korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    document.querySelector('[data-fc-close]').onclick=fcClose; return;
+  }
+  const view=camView(name);
+  fcShow(`<p class="fc-sub"><b>${esc(name)}</b>${FC.set?' · '+esc(FC.set):''}</p>
+    <ul class="fc-tips">
+      <li>Postaw telefon <b>${view}</b>, 2–3 m od siebie, na wysokości bioder (np. oparty o ławkę).</li>
+      <li>Całe ciało i sztanga/hantle w kadrze przez całą serię; dobre światło.</li>
+      <li>Nagraj całą serię (5–40 s). Film zostaje na telefonie — do Trenera trafi kilka klatek i pomiary.</li>
+    </ul>
+    <div class="fc-btns">
+      <button class="fc-btn main" id="fcRecBtn">📹 NAGRAJ SERIĘ</button>
+      <button class="fc-btn" id="fcPickBtn">Wybierz film z galerii</button>
+      <button class="fc-btn ghost" data-fc-close>Anuluj</button>
+    </div>`);
+  document.getElementById('fcRecBtn').onclick=()=>{ const i=document.getElementById('fcRec'); i.value=''; i.click(); };
+  document.getElementById('fcPickBtn').onclick=()=>{ const i=document.getElementById('fcPick'); i.value=''; i.click(); };
+  document.querySelector('[data-fc-close]').onclick=fcClose;
+}
+['fcRec','fcPick'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(f) fcRun(f); }));
+document.getElementById('formDialog').addEventListener('click',e=>{ if(e.target.id==='formDialog') fcClose(); });
+
+const FC_STEPS=['Wycinam klatki z nagrania','Rozpoznaję sylwetkę i mierzę ruch','Trener ocenia technikę'];
+function fcProgress(cur, note){
+  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}</p><div class="fc-prog">`+
+    FC_STEPS.map((t,i)=>`<div class="fc-step ${i<cur?'ok':i===cur?'on':''}"><i>${i<cur?'✓':i===cur?'●':'○'}</i>${t}${i===cur&&note?' — '+esc(note):''}</div>`).join('')+`</div>`);
+}
+const fcWait=(el,ev,ms)=>new Promise((res,rej)=>{ const t=setTimeout(()=>{ el.removeEventListener(ev,h); rej(new Error('timeout')); }, ms); const h=()=>{ clearTimeout(t); el.removeEventListener(ev,h); res(); }; el.addEventListener(ev,h); });
+// klatki z filmu: n równych momentów (5–95% czasu), dłuższy bok maks. 640 px
+async function fcFrames(file, n){
+  const url=URL.createObjectURL(file), v=document.createElement('video');
+  v.muted=true; v.playsInline=true; v.preload='auto'; v.src=url;
+  try{
+    await fcWait(v,'loadeddata',15000);
+    let d=v.duration;
+    if(!isFinite(d)||!d){ v.currentTime=1e7; await fcWait(v,'seeked',8000); d=v.currentTime; }   // część Androidów nie podaje długości od razu
+    if(!(d>0.5)) throw new Error('Nagranie jest za krótkie albo nieczytelne.');
+    const sc=Math.min(1, 640/Math.max(v.videoWidth,v.videoHeight)), w=Math.round(v.videoWidth*sc), h=Math.round(v.videoHeight*sc), out=[];
+    for(let i=0;i<n;i++){
+      const t=d*(0.05+0.9*i/(n-1)); v.currentTime=t; await fcWait(v,'seeked',8000);
+      const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h);
+      out.push({t, c});
+    }
+    return {frames:out, dur:d, w, h};
+  } finally { URL.revokeObjectURL(url); }
+}
+function loadPose(){
+  if(!posePromise) posePromise=(async()=>{
+    const m=await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}/vision_bundle.mjs`);
+    const fs=await m.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}/wasm`);
+    const opts=d=>({baseOptions:{modelAssetPath:POSE_MODEL, delegate:d}, runningMode:'IMAGE', numPoses:1});
+    try{ return await m.PoseLandmarker.createFromOptions(fs, opts('GPU')); }catch(e){ return await m.PoseLandmarker.createFromOptions(fs, opts('CPU')); }
+  })().catch(e=>{ posePromise=null; throw e; });
+  return posePromise;
+}
+// kąt w stawie b (stopnie), punkty w pikselach
+function fcAngle(a,b,c){ const v1=[a.x-b.x,a.y-b.y], v2=[c.x-b.x,c.y-b.y]; const cos=(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)||1); return Math.round(Math.acos(Math.max(-1,Math.min(1,cos)))*180/Math.PI); }
+// pomiary z punktów sylwetki (MediaPipe: 11/12 barki, 13/14 łokcie, 15/16 nadgarstki, 23/24 biodra, 25/26 kolana, 27/28 kostki)
+function fcMetrics(series, w, h, dur){
+  const ok=series.filter(f=>f.lm);
+  if(ok.length<Math.max(4, series.length*0.4)) return {sylwetka:'słabo widoczna ('+ok.length+'/'+series.length+' klatek)'};
+  const vis=(lm,ids)=>ids.reduce((a,i)=>a+(lm[i].visibility||0),0);
+  const left=ok.reduce((a,f)=>a+vis(f.lm,[11,13,23,25,27]),0)>=ok.reduce((a,f)=>a+vis(f.lm,[12,14,24,26,28]),0);
+  const I=left?{sh:11,el:13,wr:15,hip:23,kn:25,an:27}:{sh:12,el:14,wr:16,hip:24,kn:26,an:28};
+  const P=(lm,i)=>({x:lm[i].x*w, y:lm[i].y*h});
+  const rows=ok.map(f=>{ const lm=f.lm, sh=P(lm,I.sh), hip=P(lm,I.hip), kn=P(lm,I.kn), an=P(lm,I.an), el=P(lm,I.el), wr=P(lm,I.wr);
+    return {t:f.t, knee:fcAngle(hip,kn,an), hipA:fcAngle(sh,hip,kn), elbow:fcAngle(sh,el,wr),
+      lean:Math.round(Math.abs(Math.atan2(sh.x-hip.x, hip.y-sh.y))*180/Math.PI), hipY:lm[I.hip].y, kneeY:lm[I.kn].y, wrY:lm[I.wr].y,
+      shW:Math.abs(lm[11].x-lm[12].x), knW:Math.abs(lm[25].x-lm[26].x), anW:Math.abs(lm[27].x-lm[28].x)}; });
+  // powtórzenia: ruch biodra, a gdy biodro prawie stoi — ruch nadgarstka (ćwiczenia na górę ciała)
+  const rng=a=>Math.max(...a)-Math.min(...a);
+  let key=rows.map(r=>r.hipY), what='biodro';
+  if(rng(key)<0.05){ key=rows.map(r=>r.wrY); what='nadgarstek'; }
+  const lo=Math.min(...key), R=rng(key); let reps=0, down=false, bottoms=[];
+  if(R>=0.04) key.forEach((y,i)=>{ if(!down && y>lo+0.65*R){ down=true; reps++; bottoms.push(i); } else if(down && y<lo+0.35*R) down=false; });
+  const deep=rows.reduce((a,r)=>r.knee<a.knee?r:a, rows[0]);
+  const front=rows.reduce((a,r)=>a+r.shW,0)/rows.length > 0.12;   // barki szeroko w kadrze = widok z przodu
+  const m={widok_wg_sylwetki: front?'z przodu':'z boku', strona: front?'—':(left?'lewa':'prawa'), klatki_z_sylwetka: ok.length+'/'+series.length,
+    ruch_mierzony_na: what, powtorzenia_wykryte: reps, czas_nagrania_s: Math.round(dur),
+    kolano_min_kat: deep.knee, biodro_min_kat: Math.min(...rows.map(r=>r.hipA)), lokiec_min_kat: Math.min(...rows.map(r=>r.elbow)),
+    tulow_max_pochylenie_od_pionu: Math.max(...rows.map(r=>r.lean)),
+    glebokosc: deep.hipY>deep.kneeY+0.01 ? 'biodro poniżej kolana' : Math.abs(deep.hipY-deep.kneeY)<=0.01 ? 'biodro na wysokości kolana' : 'biodro powyżej kolana'};
+  if(reps>0) m.czas_na_powtorzenie_s=Math.round(dur/reps*10)/10;
+  if(front){ const r=Math.min(...rows.filter(x=>x.anW>0.02).map(x=>x.knW/x.anW)); if(isFinite(r)) m.kolana_do_kostek_min=Math.round(r*100)/100; }
+  return {m, bottoms:bottoms.map(i=>ok[i].t)};
+}
+const FC_BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
+function fcDraw(c, lm){
+  if(!lm) return;
+  const g=c.getContext('2d'), w=c.width, h=c.height;
+  g.lineWidth=Math.max(2, w/160); g.strokeStyle='#ff7a1a'; g.fillStyle='#ffffff';
+  FC_BONES.forEach(([a,b])=>{ if((lm[a].visibility||0)<0.3||(lm[b].visibility||0)<0.3) return; g.beginPath(); g.moveTo(lm[a].x*w,lm[a].y*h); g.lineTo(lm[b].x*w,lm[b].y*h); g.stroke(); });
+  [11,12,13,14,15,16,23,24,25,26,27,28].forEach(i=>{ if((lm[i].visibility||0)<0.3) return; g.beginPath(); g.arc(lm[i].x*w,lm[i].y*h,Math.max(3,w/110),0,7); g.fill(); });
+}
+async function fcRun(file){
+  if(FC.busy) return;
+  FC.busy=true;
+  try{
+    if(file.size>400*1024*1024) throw new Error('Film jest bardzo duży — nagraj samą serię (do ok. 40 s).');
+    fcProgress(0);
+    const {frames, dur, w, h}=await fcFrames(file, 24);
+    fcProgress(1);
+    let metrics={rozpoznanie_sylwetki:'niedostępne'}, bottoms=[];
+    try{
+      const pose=await Promise.race([loadPose(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))]);
+      frames.forEach(f=>{ const r=pose.detect(f.c); f.lm=(r&&r.landmarks&&r.landmarks[0])||null; });
+      const res=fcMetrics(frames, w, h, dur); metrics=res.m||res; bottoms=res.bottoms||[];
+    }catch(e){ metrics={rozpoznanie_sylwetki:'nie udało się załadować — ocena tylko z klatek'}; }
+    // do Trenera: dolne położenia z każdego powtórzenia (maks. 4) + równomiernie z całej serii, razem do 10
+    const pick=new Set(bottoms.slice(0,4).map(t=>frames.findIndex(f=>f.t===t)).filter(i=>i>=0));
+    for(let i=0;pick.size<10 && i<frames.length;i+=Math.max(1,Math.floor(frames.length/10))) pick.add(i);
+    const chosen=[...pick].sort((a,b)=>a-b).slice(0,10).map(i=>frames[i]);
+    chosen.forEach(f=>fcDraw(f.c, f.lm));
+    const jpg=chosen.map(f=>f.c.toDataURL('image/jpeg',0.72));
+    fcProgress(2, 'zwykle 10–30 s');
+    const j=await cloudCall('form', {exercise:FC.ex, set:FC.set, view:camView(FC.ex), metrics, frames:jpg.map(d=>d.split(',')[1])});
+    FC.busy=false;
+    fcResult(j.result, metrics, jpg);
+  }catch(e){
+    FC.busy=false;
+    const msg=/Failed to fetch|NetworkError|Load failed/i.test(e.message)?'Brak połączenia — spróbuj ponownie, gdy złapiesz zasięg.':e.message==='timeout'?'Nie udało się odczytać nagrania. Spróbuj krótszego filmu albo nagraj ponownie.':e.message;
+    fcShow(`<p class="fc-sub">${esc(msg)}</p><div class="fc-btns"><button class="fc-btn" id="fcRetry">Spróbuj ponownie</button><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    document.getElementById('fcRetry').onclick=()=>openFormCheck(FC.ex, FC.set);
+    document.querySelector('[data-fc-close]').onclick=fcClose;
+  }
+}
+const FC_GRADE={'dobrze':0,'drobne poprawki':1,'do poprawy':2,'nie da się ocenić':3};
+function fcMeasLine(m){
+  if(!m || m.rozpoznanie_sylwetki || m.sylwetka) return m&&(m.rozpoznanie_sylwetki||('Sylwetka '+m.sylwetka))||'';
+  const a=[]; if(m.powtorzenia_wykryte) a.push(m.powtorzenia_wykryte+' powt.');
+  if(m.ruch_mierzony_na==='biodro') a.push(m.glebokosc); a.push('pochylenie tułowia do '+m.tulow_max_pochylenie_od_pionu+'°');
+  if(m.czas_na_powtorzenie_s) a.push(String(m.czas_na_powtorzenie_s).replace('.',',')+' s/powt.'); a.push('widok '+m.widok_wg_sylwetki);
+  return 'Pomiary: '+a.join(' · ');
+}
+function fcResult(r, metrics, jpg){
+  const g=FC_GRADE[r.ocena]??3;
+  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}</p>
+    <span class="fc-grade g${g}">${esc(r.ocena)}</span>
+    <p class="fc-sub" style="color:var(--ink)">${esc(r.podsumowanie)}</p>
+    ${r.bezpieczenstwo?`<div class="fc-warn">⚠ ${esc(r.bezpieczenstwo)}</div>`:''}
+    ${r.poprawki.length?`<div class="fc-sec"><h4>Do poprawy w następnej serii</h4>${r.poprawki.map(p=>`<div class="fc-fix ${p.waga}"><b>${esc(p.problem)}</b><span>${esc(p.jak_poprawic)}</span></div>`).join('')}</div>`:''}
+    ${r.mocne_strony.length?`<div class="fc-sec"><h4>Dobrze</h4><ul class="fc-tips">${r.mocne_strony.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+    ${r.nagranie?`<p class="fc-meas">📹 ${esc(r.nagranie)}</p>`:''}
+    <p class="fc-meas">${esc(fcMeasLine(metrics))}</p>
+    <div class="fc-thumbs">${jpg.map(d=>`<img src="${d}" alt="">`).join('')}</div>
+    <div class="fc-btns">${TTS?'<button class="fc-btn" id="fcRead">🔊 Przeczytaj</button>':''}<button class="fc-btn main" data-fc-close>OK</button></div>`);
+  document.querySelector('[data-fc-close]').onclick=()=>{ if(TTS) TTS.cancel(); fcClose(); };
+  const rd=document.getElementById('fcRead'); if(rd) rd.onclick=()=>coachSpeak(r.podsumowanie+' '+r.poprawki.map(p=>p.problem+'. '+p.jak_poprawic).join(' ')+(r.bezpieczenstwo?' Uwaga: '+r.bezpieczenstwo:''));
+  // zapis: do rozmowy z Trenerem (synchronizowana, Trener ją pamięta) i do sesji treningu
+  const txt=`**Ocena techniki: ${r.ocena}.** ${r.podsumowanie}`+(r.bezpieczenstwo?`\n⚠ ${r.bezpieczenstwo}`:'')+
+    r.poprawki.map(p=>`\n- ${p.problem} → ${p.jak_poprawic}`).join('')+(r.mocne_strony.length?`\n- Dobrze: ${r.mocne_strony.join('; ')}`:'')+`\n_${fcMeasLine(metrics)}_`;
+  const hh=loadCoach(), t=Date.now();
+  hh.push({role:'user', content:`📹 Sprawdź technikę: ${FC.ex}${FC.set?' ('+FC.set+')':''}`, id:coachId(), t});
+  hh.push({role:'assistant', content:txt, id:coachId(), t:t+1, kind:'form'});
+  saveCoach(hh);
+  if(WO){ WO.forms=WO.forms||[]; WO.forms.push({ex:FC.ex, ocena:r.ocena, at:t}); woSave(); }
+}
 
 // init
 renderToday();
