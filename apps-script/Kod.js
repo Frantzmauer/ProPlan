@@ -394,6 +394,16 @@ function coachReply(req, acc) {
     props.cel_krokow = { type: 'integer', description: 'Nowy dzienny cel kroków (3000–30000, np. 9000) albo 0, jeśli bez zmiany. Podnoś stopniowo, o 500–1500, gdy użytkownik regularnie osiąga obecny cel.' };
     required.push('cel_krokow');
   }
+  var moves = features.indexOf('przesuniecia') >= 0;
+  if (moves) {
+    props.przesuniecia = { type: 'array', description: 'Przestawienie treningów w najbliższych dniach (od dziś do +7 dni, daty z „Plan treningów” w danych). ' +
+      'Każdy wpis: w dniu „dzien” odbywa się trening, który teraz jest w dniu „trening_z”. Wpisy muszą tworzyć pełną wymianę: ' +
+      'każda data występuje raz jako dzien i raz jako trening_z (np. przesunięcie na dzień wolny = zamiana z odpoczynkiem). ' +
+      'Unikaj dwóch dni siłowni pod rząd i siłowni z długim biegiem jednego dnia. Pusta lista, jeśli bez zmian.',
+      items: { type: 'object', additionalProperties: false, required: ['dzien', 'trening_z'],
+        properties: { dzien: { type: 'string', description: 'RRRR-MM-DD' }, trening_z: { type: 'string', description: 'RRRR-MM-DD' } } } };
+    required.push('przesuniecia');
+  }
   var tool = {
     name: 'zaproponuj_zmiany',
     description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii' + (steps ? ' i kroków' : '') + '. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
@@ -435,6 +445,21 @@ function coachReply(req, acc) {
   if (data.stop_reason === 'max_tokens') text += '\n\n_(odpowiedź ucięta — dopytaj o resztę)_';
   return { ok: true, text: text.trim(), proposal: proposal };
 }
+// przesunięcia treningów: daty od dziś do +7 dni (czas polski), pełna wymiana dni, bez zmian „dzień sam na siebie”
+function cleanMoves(list) {
+  if (!Array.isArray(list) || !list.length) return [];
+  var fmt = function (d) { return Utilities.formatDate(d, 'Europe/Warsaw', 'yyyy-MM-dd'); };
+  var today = fmt(new Date()), last = fmt(new Date(Date.now() + 8 * 864e5));
+  var ok = /^\d{4}-\d{2}-\d{2}$/, seen = {}, out = [];
+  for (var i = 0; i < list.length && i < 8; i++) {
+    var x = list[i] || {}, a = String(x.dzien || ''), b = String(x.trening_z || '');
+    if (!ok.test(a) || !ok.test(b) || a < today || b < today || a > last || b > last || seen[a]) return [];
+    seen[a] = 1;
+    if (a !== b) out.push({ dzien: a, trening_z: b });
+  }
+  var days = out.map(function (m) { return m.dzien; }).sort().join(), froms = out.map(function (m) { return m.trening_z; }).sort().join();
+  return days === froms ? out : [];
+}
 // granice bezpieczeństwa niezależnie od modelu: tylko ćwiczenia z planu, realne liczby
 function cleanProposal(p, names) {
   var ex = (Array.isArray(p.cwiczenia) ? p.cwiczenia : []).filter(function (e) {
@@ -461,9 +486,11 @@ function cleanProposal(p, names) {
   kcal = kcal ? Math.max(1200, Math.min(4500, kcal)) : 0;
   var kroki = Math.round((+p.cel_krokow || 0) / 500) * 500;
   kroki = kroki ? Math.max(3000, Math.min(30000, kroki)) : 0;
-  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki) return null;
+  var mv = cleanMoves(p.przesuniecia);
+  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki && !mv.length) return null;
   var out = { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, zamiany_cwiczen: swaps, posilki: meals, cel_kcal: kcal };
   if (kroki) out.cel_krokow = kroki;   // tylko gdy Trener go zaproponował — stabilna wersja tego pola nie dostaje
+  if (mv.length) out.przesuniecia = mv;
   return out;
 }
 

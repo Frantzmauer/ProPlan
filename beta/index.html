@@ -370,6 +370,41 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .md-voice.done{color:var(--green)}
 .md-voice.info{color:var(--ink-dim)}
 #mdEstimate.hi{border-color:var(--amber);color:var(--amber)}
+/* pasek tygodnia i przesuwanie treningów */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:12px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0 5px;border-radius:12px;border:1px solid var(--line);background:var(--panel);position:relative;min-width:0;color:var(--ink)}
+.wd .n{font-size:10.5px;color:var(--ink-dim);letter-spacing:.04em}
+.wd .ic{font-size:18px;line-height:1.15}
+.wd .dt{font-family:var(--font-disp);font-size:13px;font-weight:600;color:var(--ink-dim)}
+.wd.today{border-color:var(--amber)}
+.wd.today .dt{color:var(--amber)}
+.wd.sel{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--ink-dim)}
+.wd.past{opacity:.55}
+.wd .mv{position:absolute;top:2px;right:4px;font-size:10px;color:var(--steel)}
+.wd .ok{position:absolute;top:2px;left:5px;font-size:10px;color:var(--green)}
+.moved-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(95,168,211,.1);border-bottom:1px solid rgba(95,168,211,.3);font-size:13px;color:var(--steel)}
+.moved-bar span{flex:1}
+.moved-bar button{color:var(--steel);border:1px solid rgba(95,168,211,.4);border-radius:8px;padding:4px 10px;font-size:12.5px}
+.move-btn{margin-left:auto;display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--ink);font-size:13px;flex:none}
+.move-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.restday .moved-bar{margin:-34px -20px 20px;border-radius:var(--r) var(--r) 0 0;text-align:left}
+#moveDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+#moveDialog.show{display:flex}
+#moveDialog .md-card{max-height:92vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
+.mv-list{display:flex;flex-direction:column;gap:8px}
+.mv-opt{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);text-align:left;width:100%;min-height:56px;color:var(--ink)}
+.mv-opt:active{transform:scale(.98)}
+.mv-opt .when{width:64px;flex:none}
+.mv-opt .when b{display:block;font-family:var(--font-disp);font-size:17px;font-weight:600}
+.mv-opt .when small{font-size:11.5px;color:var(--ink-dim)}
+.mv-opt .what{flex:1;min-width:0;font-size:13.5px}
+.mv-opt .what small{display:block;color:var(--ink-faint);font-size:11.5px}
+.mv-opt .warn{display:block;font-size:11.5px;color:var(--amber)}
+.mv-opt .act{font-family:var(--font-disp);font-weight:700;font-size:13px;letter-spacing:.05em;padding:4px 9px;border-radius:8px;white-space:nowrap}
+.mv-opt .act.move{background:rgba(78,201,126,.1);color:var(--green);border:1px solid rgba(78,201,126,.4)}
+.mv-opt .act.swap{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,122,26,.4)}
+.mv-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(136px + env(safe-area-inset-bottom));z-index:70;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;font-size:13px;align-items:center;gap:10px;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.mv-toast button{color:var(--steel);font-weight:600;padding:6px 10px}
 /* wersja aplikacji: stabilna albo beta */
 .ver-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ver-btn{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
@@ -398,6 +433,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 
 <!-- ============ TRENING ============ -->
 <div class="view on" id="v-train">
+  <div class="week" id="weekStrip" aria-label="Tydzień"></div>
   <div class="phase-line" id="phaseLine"></div>
   <div class="section">
     <div class="eyebrow">Trening dnia</div>
@@ -886,6 +922,17 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 </div>
 
 
+<!-- przesuwanie treningu: wybór dnia -->
+<div id="moveDialog">
+  <div class="md-card" role="dialog" aria-modal="true" aria-labelledby="mvTitle">
+    <div class="md-title" id="mvTitle">Przesuń trening</div>
+    <div class="md-hint" id="mvSub" style="margin:0 0 10px"></div>
+    <div id="mvList" class="mv-list"></div>
+    <div class="md-btns"><button class="btn ghost" id="mvCancel" style="flex:1">Anuluj</button></div>
+  </div>
+</div>
+<div class="mv-toast" id="mvToast" style="display:none"><span id="mvToastTxt"></span><button id="mvUndo">Cofnij</button></div>
+
 <!-- przełącznik dni pod kciukiem (Trening i Dieta) -->
 <div class="dayswitch" id="daySwitch">
   <button class="ar" id="prevDay" aria-label="Poprzedni dzień">‹</button>
@@ -1305,6 +1352,14 @@ function workoutFor(week, dow){
   }
   const map={0:MOBILITY,1:odd?U:L,2:HOME,3:odd?L:U,4:REST,5:odd?U:L,6:run};
   return map[dow];
+}
+
+/* ---- przesunięte treningi: S.adj.moves[dzień] = dzień z planu, którego trening odbywa się tego dnia ----
+   To permutacja dni (przesunięcie na dzień wolny = zamiana z odpoczynkiem). Wersja stabilna jej nie zna. */
+function planSrc(iso){ const m=S.adj&&S.adj.moves; return (m&&m[iso])||iso; }
+function workoutOn(iso){
+  const s=planSrc(iso), di=dayIndexFor(s);
+  return (di>=1&&di<=168) ? workoutFor(weekOf(di), parseISO(s).getDay()) : REST;
 }
 
 function phaseInfo(week){
@@ -1737,7 +1792,7 @@ function log(iso){ if(!S.log[iso]) S.log[iso]={meals:{},ex:{},habits:{},water:0}
 function daySummary(iso){
   const di=dayIndexFor(iso), L=S.log[iso]||{meals:{},ex:{}};
   const meals=Object.values(L.meals||{}).filter(Boolean).length;
-  let w = (di>=1&&di<=168) ? workoutFor(weekOf(di), parseISO(iso).getDay()) : REST;
+  let w = (di>=1&&di<=168) ? workoutOn(iso) : REST;
   if(di===0) w=COOK; else if(di===-1) w=SHOP_DAY;
   if(w.type==='cardio'){ const d=!!(L.ex&&L.ex[iso+'_cardio']); return {train:'cardio '+(d?'✓':'<b>0/1</b>'), trainDone:d?1:0, trainAll:1, meals}; }
   if(w.type!=='lift') return {train:di<1?'przed startem':'odpoczynek', trainDone:0, trainAll:0, meals};
@@ -1765,6 +1820,93 @@ function renderPhaseCard(){
     document.getElementById('phaseBar').style.width=(dayIdx/168*100)+'%';
   }
 }
+/* ---- przesuwanie treningów ---- */
+const DOW_SHORT=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+const dmy=iso=>iso.slice(8,10)+'.'+iso.slice(5,7);
+const dowOf=iso=>DOW_SHORT[parseISO(iso).getDay()];
+const addDays=(iso,n)=>{ const d=parseISO(iso); d.setDate(d.getDate()+n); return todayISO(d); };
+const wIcon=w=>w.type==='lift'?'🏋️':w.type==='cardio'?'🏃':(w.ico||(w.active?'🚶':'😴'));
+// czy w danym dniu coś już odhaczono (wtedy nie przesuwamy)
+function dayStarted(iso){ const L=S.log[iso]; return !!(L && Object.values(L.ex||{}).some(exAny)); }
+function canMove(iso, w, L){
+  const di=dayIndexFor(iso);
+  return di>=1 && di<=168 && iso>=todayISO() && (w.type==='lift'||w.type==='cardio') && !dayStarted(iso);
+}
+function movedBar(iso){
+  const from=planSrc(iso); if(from===iso) return '';
+  return `<div class="moved-bar"><span>↪ Z planu na ${dowOf(from)} ${dmy(from)}</span><button data-restore="${iso}">Przywróć</button></div>`;
+}
+// nowe przypisania: map[dzień] = dzień, którego OBECNY trening ma się tu odbyć
+function nextMoves(map){
+  const cur=(S.adj&&S.adj.moves)||{}, next=Object.assign({}, cur);
+  Object.entries(map).forEach(([day, from])=>{ next[day]=cur[from]||from; });
+  Object.keys(next).forEach(k=>{ if(next[k]===k) delete next[k]; });
+  return next;
+}
+let mvUndoState=null, mvToastTimer=null;
+function setMoves(next, msg){
+  S.adj=S.adj||{};
+  mvUndoState=JSON.stringify(S.adj.moves||{});
+  S.adj.moves=next; S._settingsM=Date.now(); save(); renderToday();
+  const t=document.getElementById('mvToast'); document.getElementById('mvToastTxt').textContent=msg; t.style.display='flex';
+  clearTimeout(mvToastTimer); mvToastTimer=setTimeout(()=>{ t.style.display='none'; }, 6000);
+}
+document.getElementById('mvUndo').onclick=()=>{
+  if(mvUndoState===null) return;
+  S.adj.moves=JSON.parse(mvUndoState); mvUndoState=null; S._settingsM=Date.now(); save(); renderToday();
+  document.getElementById('mvToast').style.display='none';
+};
+// „Przywróć”: wraca cała grupa dni, które wymieniły się treningami (para albo np. 3 dni od Trenera)
+function restoreGroup(iso){
+  const next=Object.assign({}, (S.adj&&S.adj.moves)||{}); let k=iso, n=0;
+  while(next[k] && n++<14){ const f=next[k]; delete next[k]; k=f; }
+  setMoves(next, 'Przywrócono plan z kalendarza');
+}
+function openMove(src){
+  const w=workoutOn(src), today=todayISO();
+  document.getElementById('mvSub').innerHTML=`<b>${esc(w.title)}</b> z dnia ${dowOf(src)} ${dmy(src)}. Wybierz dzień:`;
+  let h='';
+  for(let i=0;i<=7;i++){
+    const k=addDays(today,i), di=dayIndexFor(k); if(k===src || di<1 || di>168) continue;
+    const q=workoutOn(k), swap=q.type!=='rest', started=dayStarted(k);
+    // podpowiedź: siłownia dzień obok
+    const nb=[addDays(k,-1), addDays(k,1)].filter(x=>x!==src).some(x=>workoutOn(x).type==='lift');
+    const warn= w.type==='lift' && nb ? '<span class="warn">⚠ Siłownia dzień obok — mniej regeneracji</span>' : '';
+    h+=`<button class="mv-opt" data-to="${k}" ${started?'disabled style="opacity:.45"':''}>
+      <span class="when"><b>${dowOf(k)} ${dmy(k)}</b><small>${i===0?'dziś':i===1?'jutro':'za '+i+' dni'}</small></span>
+      <span class="what">${wIcon(q)} ${esc(q.title)}${swap?`<small>przejdzie na ${dowOf(src)} ${dmy(src)}</small>`:''}${started?'<small>już zacząłeś ten dzień</small>':''}${warn}</span>
+      <span class="act ${swap?'swap':'move'}">${swap?'ZAMIEŃ':'PRZESUŃ'}</span></button>`;
+  }
+  const list=document.getElementById('mvList'); list.innerHTML=h||'<div class="md-hint">Brak dni, na które można przesunąć.</div>';
+  list.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>{
+    const to=b.dataset.to, swap=workoutOn(to).type!=='rest';
+    document.getElementById('moveDialog').classList.remove('show');
+    setMoves(nextMoves({[to]:src, [src]:to}), (swap?'Zamieniono':'Przesunięto')+`: ${dowOf(src)} ${dmy(src)} → ${dowOf(to)} ${dmy(to)}`);
+    viewOffset=Math.round((parseISO(to)-parseISO(today))/864e5); renderToday();
+  });
+  document.getElementById('moveDialog').classList.add('show');
+}
+document.getElementById('mvCancel').onclick=()=>document.getElementById('moveDialog').classList.remove('show');
+document.getElementById('moveDialog').addEventListener('click',e=>{ if(e.target.id==='moveDialog') e.currentTarget.classList.remove('show'); });
+function bindMoveUi(card){
+  card.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>openMove(b.dataset.move));
+  card.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>restoreGroup(b.dataset.restore));
+}
+// pasek tygodnia (pon–nd tygodnia oglądanego dnia)
+function renderWeekStrip(iso){
+  const d=parseISO(iso), mon=addDays(iso, -((d.getDay()+6)%7)), today=todayISO();
+  let h='';
+  for(let i=0;i<7;i++){
+    const k=addDays(mon,i), di=dayIndexFor(k), w=(di>=1&&di<=168)?workoutOn(k):null;
+    const L=S.log[k], done=!!(L && Object.values(L.ex||{}).some(exAny));
+    h+=`<button class="wd ${k===today?'today':''} ${k===iso?'sel':''} ${k<today?'past':''}" data-wd="${k}" aria-label="${DOW_PL[parseISO(k).getDay()]} ${dmy(k)}${w?': '+w.title:''}">
+      ${planSrc(k)!==k?'<span class="mv">↪</span>':''}${done?'<span class="ok">✓</span>':''}
+      <span class="n">${dowOf(k)}</span><span class="ic">${w?wIcon(w):'·'}</span><span class="dt">${parseISO(k).getDate()}</span></button>`;
+  }
+  const box=document.getElementById('weekStrip'); box.innerHTML=h;
+  box.querySelectorAll('[data-wd]').forEach(b=>b.onclick=()=>{ viewOffset=Math.round((parseISO(b.dataset.wd)-parseISO(today))/864e5); renderToday(); });
+}
+
 function renderToday(){
   const iso=viewDateISO();
   const dObj=parseISO(iso);
@@ -1787,6 +1929,7 @@ function renderToday(){
   // faza: krótka linia w Treningu (oglądany dzień), karta w Postępie (dziś)
   document.getElementById('phaseLine').textContent = dayIdx<1 ? 'Przed startem planu' : dayIdx>168 ? 'Plan ukończony' : phaseInfo(wk).name+' · tydzień '+wk+'/24';
   renderPhaseCard();
+  renderWeekStrip(iso);
 
   // ---- workout ----
   renderWorkout(iso, wk, dow, dayIdx, L);
@@ -1849,7 +1992,7 @@ function prevSession(exName, iso){
     d.setDate(d.getDate()-1);
     const p=todayISO(d), di=dayIndexFor(p);
     if(di<1) break;
-    const w=workoutFor(weekOf(di), d.getDay());
+    const w=workoutOn(p);
     if(!w || w.type!=='lift') continue;
     const exs=w.ex.map(x=>effEx(x,p));   // po wymianie ćwiczenia historia idzie pod nową nazwą
     const idx=exs.findIndex(x=>x.n.trim()===exName.trim());
@@ -2076,25 +2219,27 @@ function timerHtml(key){
 
 function renderWorkout(iso, wk, dow, dayIdx, L){
   const card=document.getElementById('workoutCard');
-  let w = (dayIdx>=1 && dayIdx<=168) ? workoutFor(wk,dow) : REST;
+  let w = (dayIdx>=1 && dayIdx<=168) ? workoutOn(iso) : REST;
   // weekend TUŻ PRZED startem: sobota = zakupy, niedziela = gotowanie (dzień -1 i 0)
   if(dayIdx===0) w=COOK;        // niedziela przed startem
   else if(dayIdx===-1) w=SHOP_DAY; // sobota przed startem
 
+  const mvBar=movedBar(iso), mvBtn=canMove(iso, w, L) ? `<button class="move-btn" data-move="${iso}" aria-label="Przesuń trening na inny dzień"><svg viewBox="0 0 24 24"><path d="M4 12h14M13 6l6 6-6 6"/></svg>Przesuń</button>` : '';
   if(w.type==='rest'){
-    card.innerHTML=`<div class="restday">
+    card.innerHTML=`<div class="restday">${mvBar}
       <div class="ico">${w.ico||(w.active?'🚶':'😴')}</div>
       <h3>${w.title}</h3>
       <p>${w.note||'Dziś regenerujesz się. Mięśnie rosną w odpoczynku — śpij 7–8 h i pij wodę.'}</p>
       <button class="go-diet" data-go-diet>Zobacz dietę na ten dzień →</button>
     </div>`;
     card.querySelector('[data-go-diet]').onclick=()=>showView('diet');
+    bindMoveUi(card);
     return;
   }
   if(w.type==='cardio'){
     const done=!!L.ex[iso+'_cardio'];
-    card.innerHTML=`
-      <div class="wk-head"><span class="badge cardio">CARDIO</span><span class="t">${w.title}</span></div>
+    card.innerHTML=`${mvBar}
+      <div class="wk-head"><span class="badge cardio">CARDIO</span><span class="t">${w.title}</span>${mvBtn}</div>
       <div class="ex ${done?'done':''}">
         <div class="ex-sub" style="margin-left:0;font-size:13px;color:var(--ink-dim)">${w.note}</div>
         <div class="ex-check" style="margin-left:0" data-cardio="1">
@@ -2103,12 +2248,13 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
         </div>
       </div>`;
     card.querySelector('[data-cardio]').onclick=()=>{L.ex[iso+'_cardio']=!L.ex[iso+'_cardio'];mark(L,'ex:'+iso+'_cardio');touch(L);save();renderToday()};
+    bindMoveUi(card);
     return;
   }
 
   // lifting
   let badge = w.title.split(' ')[0]; // FBW / UPPER / LOWER
-  let html=`<div class="wk-head"><span class="badge">${badge}</span><span class="t">${w.title}</span></div>`;
+  let html=`${mvBar}<div class="wk-head"><span class="badge">${badge}</span><span class="t">${w.title}</span>${mvBtn}</div>`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
     const key=iso+'_e'+i;
@@ -2183,6 +2329,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
     html+=`<div class="tip"><span>⚡</span><div><b>RIR 2.</b> Dobierz ciężar tak, by zostały Ci ~2 powtórzenia w zapasie. Pobiłeś górny zakres? Następnym razem +1–2.5 kg.</div></div>`;
   }
   card.innerHTML=html;
+  bindMoveUi(card);
 
   // bind inputs
   const exOf=el=>{ const x=el.closest('.ex'); return {k:x.dataset.k, n:+x.dataset.n}; };
@@ -2574,8 +2721,7 @@ function renderWater(iso, L){
 // czy dzień jest dniem treningowym w planie (sesja siłowa)?
 function isTrainingDay(iso){
   const di=dayIndexFor(iso); if(di<1||di>168) return false;
-  const wk=weekOf(di); const dow=parseISO(iso).getDay();
-  const w=workoutFor(wk,dow); return !!(w&&w.type==='lift');
+  const w=workoutOn(iso); return !!(w&&w.type==='lift');
 }
 // czy dieta danego dnia zaliczona? ≥3 z 4 posiłków ORAZ kalorie ≤ cel
 function dietMet(iso){
@@ -3360,8 +3506,16 @@ function buildCoachContext(){
   const g=macroGoalFor(S.kcalGoal||DEFAULT_KCAL);
   out.push(`Cel dzienny: ${g.kcal} kcal (szacowane utrzymanie ${estMaintenance()} kcal), białko ${g.p} g, węglowodany ${g.c} g, tłuszcz ${g.f} g. Jadłospis z aplikacji: 4 posiłki dziennie skalowane do celu.`);
   const dn=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
-  if(inPlan) out.push('Plan tego tygodnia: '+[1,2,3,4,5,6,0].map(d=>dn[d]+' '+workoutFor(wkNow,d).title).join(' | '));
-  if(inPlan && wkNow<24) out.push('Plan następnego tygodnia: '+[1,2,3,4,5,6,0].map(d=>dn[d]+' '+workoutFor(wkNow+1,d).title).join(' | '));
+  if(inPlan){
+    // plan od poniedziałku tego tygodnia do +7 dni od dziś, z przesunięciami; daty potrzebne do pola przesuniecia
+    const t0=parseISO(today), mon=new Date(t0); mon.setDate(t0.getDate()-((t0.getDay()+6)%7));
+    const last=todayISO(new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+7)), rows=[];
+    for(let d=new Date(mon); todayISO(d)<=last; d.setDate(d.getDate()+1)){
+      const k=todayISO(d), di2=dayIndexFor(k); if(di2<1||di2>168) continue;
+      rows.push(k+' ('+dn[d.getDay()]+')'+(k===today?' DZIŚ':'')+': '+workoutOn(k).title+(planSrc(k)!==k?' [przesunięty z '+planSrc(k)+']':''));
+    }
+    out.push('Plan treningów (data: trening; „[przesunięty z …]” = użytkownik już zmienił ten dzień):\n'+rows.join('\n'));
+  }
   const ws=(S.weights||[]).slice().sort((a,b)=>a.d<b.d?-1:1).slice(-45);
   out.push(ws.length?'Waga (dzień.miesiąc: kg): '+ws.map(w=>dd(w.d)+': '+w.w).join(', '):'Waga: brak pomiarów.');
   const ms=(S.measures||[]).slice().sort((a,b)=>a.d<b.d?-1:1).slice(-12);
@@ -3371,7 +3525,7 @@ function buildCoachContext(){
   const d=parseISO(today); d.setDate(d.getDate()-70);
   for(let i=0;i<=70;i++,d.setDate(d.getDate()+1)){
     const iso=todayISO(d), di=dayIndexFor(iso); if(di<1) continue;
-    const wk=weekOf(di), w=workoutFor(wk,d.getDay()), Lg=S.log[iso]||{};
+    const wk=weekOf(di), w=workoutOn(iso), Lg=S.log[iso]||{};
     const W=weeks[wk]=weeks[wk]||{gym:0,gymP:0,home:0,homeP:0,run:0,runP:0,meals:0,days:0,water:0,logged:0,hab:{}};
     if(iso>today) continue;
     W.days++;
@@ -3414,7 +3568,7 @@ function coachTargets(){
   const res={}, d=parseISO(todayISO());
   for(let i=0;i<14;i++,d.setDate(d.getDate()+1)){
     const iso=todayISO(d), di=dayIndexFor(iso); if(di<1||di>168) continue;
-    const w=workoutFor(weekOf(di), d.getDay()); if(!w||w.type!=='lift') continue;
+    const w=workoutOn(iso); if(!w||w.type!=='lift') continue;
     w.ex.forEach(e0=>{ if(res[e0.n]) return; const e=effEx(e0,iso), prev=prevSession(e.n,iso);
       const kg=e._adj&&e._adj.w>0?e._adj.w:(prev?Math.max(...prev.sets.map(x=>x.kg)):scaledStart(e));
       res[e.n]={n:e.n, txt:`${e.s}×${e.r}${kg>0?', ciężar '+kg+' kg':', masa ciała'}`+(e._adj?` (zmienione przez Trenera od ${e._adj.from})`:'')}; });
@@ -3478,7 +3632,8 @@ function propText(P){
     ...(P.zamiany_cwiczen||[]).map(x=>'zamiast '+x.z+' → '+x.na+' '+x.serie+'×'+x.powtorzenia),
     ...(P.posilki||[]).map(x=>x.posilek+' ('+daysTxt(x.dni)+') → '+x.opis+' '+x.kcal+' kcal'),
     ...(P.cel_kcal?['cel kalorii '+P.cel_kcal+' kcal/dzień']:[]),
-    ...(P.cel_krokow?['cel kroków '+P.cel_krokow+' dziennie']:[])].join('; ');
+    ...(P.cel_krokow?['cel kroków '+P.cel_krokow+' dziennie']:[]),
+    ...(P.przesuniecia||[]).map(x=>x.dzien+': trening z '+x.trening_z)].join('; ');
 }
 function propCard(m,i){
   const P=m.proposal;
@@ -3486,7 +3641,9 @@ function propCard(m,i){
     (P.zamiany_cwiczen||[]).map(x=>`<div>• <b>${esc(x.z)}</b> → <b>${esc(x.na)}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}${x.technika?'<div style="color:var(--ink-dim);font-size:13px;padding-left:12px">'+esc(x.technika)+'</div>':''}</div>`).join('')+
     (P.posilki||[]).map(x=>`<div>• <b>${esc(x.posilek)}</b> (${esc(daysTxt(x.dni))}): ${esc(x.opis)} <span style="color:var(--ink-dim)">— ${x.kcal} kcal · B ${x.bialko_g} / W ${x.wegle_g} / T ${x.tluszcz_g}</span></div>`).join('')+
     (P.cel_kcal?`<div>• <b>Cel kalorii</b>: ${P.cel_kcal} kcal/dzień</div>`:'')+
-    (P.cel_krokow?`<div>• <b>Cel kroków</b>: ${tysKrokow(P.cel_krokow)} dziennie</div>`:'');
+    (P.cel_krokow?`<div>• <b>Cel kroków</b>: ${tysKrokow(P.cel_krokow)} dziennie</div>`:'')+
+    (P.przesuniecia||[]).map(x=>{ const now=workoutOn(x.dzien), nw=workoutOn(x.trening_z);
+      return `<div>• <b>${dowOf(x.dzien)} ${dmy(x.dzien)}</b>: ${wIcon(nw)} ${esc(nw.title)} <span style="color:var(--ink-dim)">(było: ${esc(now.title)})</span></div>`; }).join('');
   const act=m.applied
     ? `<div style="color:#5fbf7a;margin-top:8px">✅ Zastosowano od ${esc(m.appliedFrom||'')}</div><button class="btn ghost" data-prop-undo="${i}" style="font-size:12px;padding:7px 10px;margin-top:6px">Cofnij</button>`
     : m.dismissed ? `<div style="color:var(--ink-faint);margin-top:8px">Odrzucono</div>`
@@ -3514,12 +3671,21 @@ function applyProposal(i){
   });
   const prevKcal=S.kcalGoal;
   if(P.cel_kcal){ S.kcalGoal=Math.min(3200,Math.max(1500,Math.round(P.cel_kcal/100)*100)); kcalSlider.value=S.kcalGoal; updateKcalHint(); }
+  const prevMoves=JSON.stringify((S.adj&&S.adj.moves)||{});
+  if(P.przesuniecia&&P.przesuniecia.length){
+    // tylko pełna wymiana dni od dziś (każdy dzień oddaje i dostaje jeden trening, żaden nie znika)
+    const t=todayISO(), days=P.przesuniecia.map(x=>x.dzien).sort().join(), froms=P.przesuniecia.map(x=>x.trening_z).sort().join();
+    if(days===froms && P.przesuniecia.every(x=>x.dzien>=t && x.trening_z>=t)){
+      const map={}; P.przesuniecia.forEach(x=>{ map[x.dzien]=x.trening_z; });
+      S.adj.moves=nextMoves(map);
+    }
+  }
   if(P.cel_krokow){
     // nowsza decyzja z tego samego dnia zastępuje starszą
     S.adj.steps=(S.adj.steps||[]).filter(y=>y.from!==from);
     S.adj.steps.push({from, goal:Math.max(3000,Math.min(30000,Math.round(P.cel_krokow/500)*500)), id});
   }
-  S.adj.log.push({id, at:id, from, summary:P.podsumowanie, ex:P.cwiczenia, swaps:P.zamiany_cwiczen||[], meals:P.posilki||[], kcal:P.cel_kcal?S.kcalGoal:0, prevKcal});
+  S.adj.log.push({id, at:id, from, summary:P.podsumowanie, ex:P.cwiczenia, swaps:P.zamiany_cwiczen||[], meals:P.posilki||[], kcal:P.cel_kcal?S.kcalGoal:0, prevKcal, prevMoves:(P.przesuniecia&&P.przesuniecia.length)?prevMoves:null});
   S._settingsM=Date.now(); save(); renderToday();
   m.applied=id; m.appliedFrom=from.slice(8,10)+'.'+from.slice(5,7); coachDecided(m); saveCoach(h); renderCoach();
 }
@@ -3530,6 +3696,7 @@ function undoProposal(i){
   if(entry && entry.kcal && S.kcalGoal===entry.kcal && entry.prevKcal){ S.kcalGoal=entry.prevKcal; kcalSlider.value=S.kcalGoal; updateKcalHint(); }
   S.adj.meals=(S.adj.meals||[]).filter(x=>x.id!==id);
   if(S.adj.steps) S.adj.steps=S.adj.steps.filter(x=>x.id!==id);
+  if(entry && entry.prevMoves!=null) S.adj.moves=JSON.parse(entry.prevMoves);   // przesunięcia sprzed tej propozycji
   S.adj.log=(S.adj.log||[]).filter(x=>x.id!==id);
   S._settingsM=Date.now(); save(); renderToday();
   m.applied=false; coachDecided(m); saveCoach(h); renderCoach();
@@ -3543,7 +3710,7 @@ async function coachSend(text, {voice=false}={}){
   try{
     const msgs=h.slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
-    const j=await cloudCall('coach',{messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki']});
+    const j=await cloudCall('coach',{messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia']});
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
     reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');
   }catch(e){
