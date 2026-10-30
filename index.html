@@ -331,7 +331,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 #coachChips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
 #coachChips button{border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:13px;color:var(--ink-dim);background:transparent}
 /* wersja aplikacji: stabilna albo beta */
-.ver-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ver-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ver-btn{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
 .ver-btn b{font-family:var(--font-disp);font-size:18px;font-weight:600}
 .ver-btn span{font-size:12px;color:var(--ink-dim)}
@@ -505,8 +505,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
       <a class="ver-btn" id="verStable" href="./"><b>Stabilna</b><span>obecny wygląd</span></a>
-      <a class="ver-btn" id="verBeta" href="beta/"><b>Beta</b><span>nowa nawigacja</span></a>
-      <a class="ver-btn" id="verZeta" href="zeta/"><b>Zeta</b><span>beta + poprawki UX</span></a>
+      <a class="ver-btn" id="verBeta" href="beta/"><b>Beta</b><span>nowa nawigacja · do testów</span></a>
     </div>
     <div class="ver-hint">Wszystkie wersje mają te same dane i synchronizację. Ikona na ekranie głównym otwiera wersję stabilną.</div>
   </div>
@@ -3501,7 +3500,7 @@ function refreshSyncUI(){
 
 // wersja aplikacji: zaznacz tę, w której jesteś
 const APP_VER=(location.pathname.match(/\/(beta|zeta)\/(index\.html)?$/)||[])[1]||"stable";
-document.getElementById({stable:"verStable",beta:"verBeta",zeta:"verZeta"}[APP_VER]).classList.add("on");
+document.getElementById(APP_VER==="stable"?"verStable":"verBeta").classList.add("on");
 
 // wipe
 document.getElementById('wipe').onclick=()=>{

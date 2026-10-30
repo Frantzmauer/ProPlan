@@ -16,7 +16,7 @@
 <style>
 :root{
   --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
-  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#5f6a72;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
   --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a;
   --r:14px; --shadow:0 8px 30px rgba(0,0,0,.4);
   --font-disp:'Barlow Condensed',sans-serif;
@@ -490,8 +490,25 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-confirm button{flex:1;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:14px}
 .wo-confirm .yes{background:var(--amber);color:#0e1114;border:none;font-family:var(--font-disp);font-weight:700;font-size:17px}
 @media (prefers-reduced-motion:reduce){.wo-ring .fg,.wo-pbar span{transition:none}}
+/* poprawki UX z testów (przyciski ≥40 px, kontrast, zwarty nagłówek) */
+.wo-setno{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wo-show{flex:none;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--steel);font-size:13px;font-weight:600}
+#guideDialog{z-index:460}   /* opis techniki ma być widoczny także nad trybem treningu */
+.sync-warn{margin-top:4px;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,122,26,.45);background:var(--amber-soft);color:var(--amber);font-size:12.5px}
+.show-btn{min-height:40px;padding:0 12px;font-size:12.5px}
+.skip-btn,.all-btn{min-height:40px;padding:0 14px;display:inline-flex;align-items:center}
+.set-row .set input{height:42px;width:44px}
+.vdot{width:34px;height:34px;font-size:14px;border-radius:9px}
+.vdots{gap:6px}
+.cal-arrow{width:44px;height:44px;border-radius:10px;font-size:20px}
+.cal-cat{min-height:38px;padding:0 14px}
+@media (max-width:400px){
+  #streakChip>span:last-child{display:none}   /* „dni serii” — liczby zostają */
+  #brandName{display:none}
+  #streakChip{padding:6px 11px}
+}
 /* wersja aplikacji: stabilna albo beta */
-.ver-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ver-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ver-btn{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
 .ver-btn b{font-family:var(--font-disp);font-size:18px;font-weight:600}
 .ver-btn span{font-size:12px;color:var(--ink-dim)}
@@ -511,6 +528,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <div class="wrap daybar" id="dayBar">
     <div class="d" id="dowName">Poniedziałek</div>
     <div class="s" id="dateLabel"></div>
+    <button class="sync-warn" id="syncWarn" style="display:none">⚠ Nie zsynchronizowano — zmiany są na razie tylko tu</button>
   </div>
 </div>
 
@@ -661,8 +679,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
       <a class="ver-btn" id="verStable" href="../"><b>Stabilna</b><span>obecny wygląd</span></a>
-      <a class="ver-btn" id="verBeta" href="./"><b>Beta</b><span>nowa nawigacja</span></a>
-      <a class="ver-btn" id="verZeta" href="../zeta/"><b>Zeta</b><span>beta + poprawki UX</span></a>
+      <a class="ver-btn" id="verBeta" href="./"><b>Beta</b><span>nowa nawigacja · do testów</span></a>
     </div>
     <div class="ver-hint">Wszystkie wersje mają te same dane i synchronizację. Ikona na ekranie głównym otwiera wersję stabilną.</div>
   </div>
@@ -3471,7 +3488,10 @@ document.getElementById('cloudToggle').onclick=async()=>{
 document.getElementById('cloudTestBtn').onclick=()=>{readCloudInputs();cloudTest();};
 document.getElementById('cloudSyncBtn').onclick=()=>{readCloudInputs();cloudPull();};
 
+// ostrzeżenie w pasku dnia: synchronizacja włączona, ale ostatnia próba się nie udała
+function updateSyncWarn(){ const b=document.getElementById('syncWarn'); if(b) b.style.display=(CLOUD.on && CLOUD.lastError)?'inline-flex':'none'; }
 function refreshCloudUI(statusOverride){
+  updateSyncWarn();
   const tgl=document.getElementById('cloudToggle');
   tgl.classList.toggle('on',!!CLOUD.on);
   const el=document.getElementById('cloudState');
@@ -3498,7 +3518,7 @@ function slugAccount(s){
 const isScriptUrl=u=>/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u||'');
 function inviteLink(code, account){
   // zaproszenie zawsze do wersji stabilnej, także gdy wysłane z bety
-  return location.origin+location.pathname.replace(/beta\/(index\.html)?$/,'')+'#invite='+encodeURIComponent(code)+'&s='+encodeURIComponent(CLOUD.url)+(account?'&n='+encodeURIComponent(account):'');
+  return location.origin+location.pathname.replace(/(beta|zeta)\/(index\.html)?$/,'')+'#invite='+encodeURIComponent(code)+'&s='+encodeURIComponent(CLOUD.url)+(account?'&n='+encodeURIComponent(account):'');
 }
 const INVITE=(()=>{
   const h=new URLSearchParams(location.hash.slice(1));
@@ -4033,7 +4053,7 @@ function refreshSyncUI(){
 
 // wersja aplikacji: zaznacz tę, w której jesteś
 const APP_VER=(location.pathname.match(/\/(beta|zeta)\/(index\.html)?$/)||[])[1]||"stable";
-document.getElementById({stable:"verStable",beta:"verBeta",zeta:"verZeta"}[APP_VER]).classList.add("on");
+document.getElementById(APP_VER==="stable"?"verStable":"verBeta").classList.add("on");
 
 // wipe
 document.getElementById('wipe').onclick=()=>{
@@ -4108,10 +4128,10 @@ function woSetDone(){
   WO.lastRest=null; tmrBuzz(30);
   if(woDone()===woTotal()){ woFinish(); return; }
   if(woCurSet(i)<0) WO.cur=woNext(i);
-  WO.phase='rest'; WO.restPlan=x.rest; WO.restStart=t; WO.restEnd=t+x.rest*1000; WO.beeped=false; WO.tStart=0; WO.tSide=1;
+  WO.phase='rest'; WO.phaseAt=t; WO.restPlan=x.rest; WO.restStart=t; WO.restEnd=t+x.rest*1000; WO.beeped=false; WO.tStart=0; WO.tSide=1;
   woSave(); woRender();
 }
-function woStartSet(){ const t=Date.now(); WO.lastRest=(t-WO.restStart)/1000; WO.lastRestPlan=WO.restPlan; WO.phase='work'; WO.setStart=t; woSave(); woRender(); }
+function woStartSet(){ const t=Date.now(); WO.lastRest=(t-WO.restStart)/1000; WO.lastRestPlan=WO.restPlan; WO.phase='work'; WO.phaseAt=t; WO.setStart=t; woSave(); woRender(); }
 function woStep(){
   if(!WO) return;
   const now=Date.now();
@@ -4156,7 +4176,7 @@ function woRender(){
   }
   const i=WO.cur, x=WO.ex[i], k=woCurSet(i)<0?x.s-1:woCurSet(i), v=x.sets[k];
   let h=`<div class="wo-name"><span class="t">${esc(x.n)}</span><div class="nv"><button id="woPrev" aria-label="Poprzednie ćwiczenie" ${i===0?'disabled':''}>‹</button><button id="woNx" aria-label="Następne ćwiczenie" ${i===WO.ex.length-1?'disabled':''}>›</button></div></div>
-    <div class="wo-setno">Seria <b>${k+1}</b> z ${x.s} · przerwa po serii ${fmtDur(x.rest)}</div>
+    <div class="wo-setno"><span>Seria <b>${k+1}</b> z ${x.s} · przerwa ${fmtDur(x.rest)}</span><button class="wo-show" id="woShow">Pokaż technikę</button></div>
     <div class="wo-dots">${x.ok.map((d,j)=>`<i class="${d?'ok':j===k?'cur':''}"></i>`).join('')}</div>`;
   if(WO.phase==='rest'){
     const nx=WO.ex[WO.cur], nk=woCurSet(WO.cur), nv=nx.sets[nk], C=2*Math.PI*90;
@@ -4179,12 +4199,15 @@ function woRender(){
   h+=`<div class="wo-list"><h4>Ćwiczenia</h4>`+WO.ex.map((y,j)=>{ const d=y.ok.filter(Boolean).length; return `<button class="${d===y.s?'ok':''} ${j===i?'cur':''}" data-wgo="${j}"><span>${esc(y.n)}</span><span>${d}/${y.s}</span></button>`; }).join('')+`</div>`;
   b.innerHTML=h;
   const on=(id,f)=>{ const el=document.getElementById(id); if(el) el.onclick=f; };
-  on('woDone', woSetDone); on('woGo', woStartSet);
-  on('woTimer', ()=>{ WO.tStart=Date.now(); WO.lastSec=null; woRender(); });
-  on('woStopUp', ()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].sets[k2].r=Math.round((Date.now()-WO.tStart)/1000); WO.tStart=0; woSetDone(); });
+  // po zmianie ekranu (seria ↔ przerwa) przez 0,6 s ignoruj przyciski zmieniające etap — podwójne stuknięcie nie pominie przerwy
+  const g=f=>()=>{ if(Date.now()-(WO.phaseAt||0)<600) return; f(); };
+  on('woDone', g(woSetDone)); on('woGo', g(woStartSet));
+  on('woTimer', g(()=>{ WO.tStart=Date.now(); WO.lastSec=null; woRender(); }));
+  on('woStopUp', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].sets[k2].r=Math.round((Date.now()-WO.tStart)/1000); WO.tStart=0; woSetDone(); }));
+  on('woShow', ()=>openGuide(x.n));   // opis techniki nad ekranem treningu
   on('woPlus', ()=>{ WO.restEnd+=15000; WO.restPlan+=15; WO.beeped=false; woSave(); woStep(); });
-  on('woSkip', ()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].ok[k2]=true; WO.ex[WO.cur].skipped=(WO.ex[WO.cur].skipped||0)+1; WO.skipped++; WO.tStart=0;
-    if(woDone()===woTotal()) return woFinish(); if(woCurSet(WO.cur)<0) WO.cur=woNext(WO.cur); WO.setStart=Date.now(); woSave(); woRender(); });
+  on('woSkip', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].ok[k2]=true; WO.ex[WO.cur].skipped=(WO.ex[WO.cur].skipped||0)+1; WO.skipped++; WO.tStart=0;
+    if(woDone()===woTotal()) return woFinish(); if(woCurSet(WO.cur)<0) WO.cur=woNext(WO.cur); WO.setStart=Date.now(); woSave(); woRender(); }));
   on('woPrev', ()=>{ if(WO.cur>0){ WO.cur--; WO.tStart=0; woRender(); } }); on('woNx', ()=>{ if(WO.cur<WO.ex.length-1){ WO.cur++; WO.tStart=0; woRender(); } });
   b.querySelectorAll('[data-wgo]').forEach(y=>y.onclick=()=>{ WO.cur=+y.dataset.wgo; WO.tStart=0; woRender(); });
   b.querySelectorAll('[data-wd]').forEach(y=>y.onclick=()=>{
@@ -4240,6 +4263,8 @@ function woResume(){
     else if(w) localStorage.removeItem(WO_LS);
   }catch(e){}
 }
+
+document.getElementById('syncWarn').onclick=()=>{ showView('set'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),200); };
 
 // init
 renderToday();
