@@ -835,6 +835,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <div class="md-card">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <div class="md-title" style="margin:0;flex:1">Zapytaj Trenera</div>
+      <button class="btn ghost" id="coachSpeak" style="font-size:15px;padding:5px 9px" aria-pressed="true" aria-label="Czytaj odpowiedzi na głos">🔊</button>
       <button class="btn ghost" id="coachClear" style="font-size:12px;padding:7px 10px">Wyczyść</button>
       <button class="btn ghost" id="coachClose" style="font-size:12px;padding:7px 10px">Zamknij</button>
     </div>
@@ -848,8 +849,10 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
       <button>Czy zmienić coś w planie treningowym?</button>
       <button>Jak dobrać ciężary na następny trening?</button>
     </div>
+    <div class="md-voice" id="coachVoice" style="display:none"></div>
     <div style="display:flex;gap:8px;margin-top:6px">
-      <textarea class="md-in" id="coachIn" rows="2" placeholder="Napisz pytanie…" style="resize:none;font-size:15px"></textarea>
+      <textarea class="md-in" id="coachIn" rows="2" placeholder="Napisz albo powiedz pytanie…" style="resize:none;font-size:15px;flex:1;min-width:0"></textarea>
+      <button class="mic" id="coachMic" type="button" aria-label="Powiedz pytanie do Trenera" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button class="btn" id="coachSend" style="align-self:stretch">Wyślij</button>
     </div>
   </div>
@@ -2436,49 +2439,57 @@ function closeMealDialog(){ voiceStop(); document.getElementById('mealDialog').c
    Chrome na Androidzie wysyła nagranie do Google; Safari używa rozpoznawania Apple.
    Bez obsługi w przeglądarce przycisk znika, a podpowiedź wskazuje mikrofon na klawiaturze. */
 const SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
-let voiceRec=null;
-function voiceMsg(t, cls){ const v=document.getElementById('mdVoice'); v.textContent=t; v.className='md-voice'+(cls?' '+cls:''); v.style.display=t?'block':'none'; }
-function voiceUi(on){ const m=document.getElementById('mdMic'); m.classList.toggle('rec',on); m.setAttribute('aria-pressed',on?'true':'false'); }
+// wspólne dyktowanie (posiłek, Trener): jedna wypowiedź, kończy się sama po chwili ciszy
+// (tryb ciągły na Androidzie powtarza tekst); o = {input, mic, msg, listening, onDone(heard), onSilence()}
+function makeDictation(o){
+  let rec=null;
+  const say=(t,cls)=>{ o.msg.textContent=t; o.msg.className='md-voice'+(cls?' '+cls:''); o.msg.style.display=t?'block':'none'; };
+  const ui=on=>{ o.mic.classList.toggle('rec',on); o.mic.setAttribute('aria-pressed',on?'true':'false'); };
+  function stop(){ if(rec){ const r=rec; rec=null; try{ r.stop(); }catch(e){} } ui(false); }
+  function start(){
+    if(rec) return;
+    const base=o.input.value.trim();
+    let r;
+    try{ r=new SpeechRec(); }catch(e){ say('Dyktowanie nie działa w tej przeglądarce — użyj mikrofonu na klawiaturze.','info'); return; }
+    r.lang='pl-PL'; r.interimResults=true; r.continuous=false;
+    let heard='';
+    r.onresult=e=>{
+      // Chrome na Androidzie podaje kolejne przybliżenia jako osobne wyniki („porcja”, „porcja kurczaka”…):
+      // wynik, który zaczyna się od poprzedniego (albo odwrotnie), zastępuje go zamiast doklejać
+      const parts=[];
+      for(let i=0;i<e.results.length;i++){
+        const t=e.results[i][0].transcript.trim(); if(!t) continue;
+        const last=parts[parts.length-1];
+        if(last && (t.startsWith(last)||last.startsWith(t))) parts[parts.length-1]= t.length>=last.length ? t : last;
+        else parts.push(t);
+      }
+      heard=parts.join(' '); o.input.value=(base?base+' ':'')+heard;
+    };
+    r.onerror=e=>{
+      if(e.error==='not-allowed'||e.error==='service-not-allowed') say('Brak dostępu do mikrofonu. Zezwól na mikrofon dla tej strony w ustawieniach przeglądarki.');
+      else if(e.error==='no-speech'){ if(o.onSilence) o.onSilence(); else say('Nic nie usłyszałem — stuknij mikrofon i spróbuj jeszcze raz.'); }
+      else if(e.error!=='aborted') say('Dyktowanie przerwane ('+e.error+'). Możesz wpisać tekst ręcznie.');
+    };
+    r.onend=()=>{ if(rec===r) rec=null; ui(false); if(heard) o.onDone(heard); };
+    rec=r; ui(true); say(o.listening);
+    try{ r.start(); }catch(e){ rec=null; ui(false); say('Nie udało się włączyć mikrofonu — stuknij 🎤, by mówić.'); }
+  }
+  if(!SpeechRec) o.mic.style.display='none';
+  o.mic.onclick=()=>{ if(rec) stop(); else start(); };
+  return {start, stop, say, active:()=>!!rec};
+}
+
+// dyktowanie opisu posiłku
+const mealVoice=makeDictation({
+  input:document.getElementById('mdTxt'), mic:document.getElementById('mdMic'), msg:document.getElementById('mdVoice'),
+  listening:'● Słucham… powiedz, co zjadłeś. Skończę sam po chwili ciszy.',
+  onDone:()=>{ mealVoice.say('✓ Gotowe — popraw tekst, jeśli trzeba, i oszacuj kalorie.','done'); document.getElementById('mdEstimate').classList.add('hi'); }
+});
 function voiceReset(){
-  voiceStop(); document.getElementById('mdEstimate').classList.remove('hi');
-  if(SpeechRec) voiceMsg('');
-  else { document.getElementById('mdMic').style.display='none'; voiceMsg('Możesz dyktować mikrofonem na klawiaturze telefonu.','info'); }
+  mealVoice.stop(); document.getElementById('mdEstimate').classList.remove('hi');
+  mealVoice.say(SpeechRec ? '' : 'Możesz dyktować mikrofonem na klawiaturze telefonu.', 'info');
 }
-function voiceStop(){ if(voiceRec){ const r=voiceRec; voiceRec=null; try{ r.stop(); }catch(e){} } voiceUi(false); }
-function voiceStart(){
-  const inp=document.getElementById('mdTxt'), base=inp.value.trim();
-  let rec;
-  try{ rec=new SpeechRec(); }catch(e){ voiceMsg('Dyktowanie nie działa w tej przeglądarce — użyj mikrofonu na klawiaturze.','info'); return; }
-  // jedna wypowiedź: kończy się sama po chwili ciszy (tryb ciągły na Androidzie powtarza tekst)
-  rec.lang='pl-PL'; rec.interimResults=true; rec.continuous=false;
-  let heard='';
-  rec.onresult=e=>{
-    // Chrome na Androidzie podaje kolejne przybliżenia jako osobne wyniki („porcja”, „porcja kurczaka”…):
-    // wynik, który zaczyna się od poprzedniego (albo odwrotnie), zastępuje go zamiast doklejać
-    const parts=[];
-    for(let i=0;i<e.results.length;i++){
-      const t=e.results[i][0].transcript.trim(); if(!t) continue;
-      const last=parts[parts.length-1];
-      if(last && (t.startsWith(last)||last.startsWith(t))) parts[parts.length-1]= t.length>=last.length ? t : last;
-      else parts.push(t);
-    }
-    heard=parts.join(' '); inp.value=(base?base+' ':'')+heard;
-  };
-  rec.onerror=e=>{
-    if(e.error==='not-allowed'||e.error==='service-not-allowed') voiceMsg('Brak dostępu do mikrofonu. Zezwól na mikrofon dla tej strony w ustawieniach przeglądarki.');
-    else if(e.error==='no-speech') voiceMsg('Nic nie usłyszałem — stuknij mikrofon i spróbuj jeszcze raz.');
-    else if(e.error!=='aborted') voiceMsg('Dyktowanie przerwane ('+e.error+'). Możesz wpisać tekst ręcznie.');
-  };
-  rec.onend=()=>{
-    if(voiceRec===rec) voiceRec=null;
-    voiceUi(false);
-    if(heard){ voiceMsg('✓ Gotowe — popraw tekst, jeśli trzeba, i oszacuj kalorie.','done'); document.getElementById('mdEstimate').classList.add('hi'); }
-  };
-  voiceRec=rec; voiceUi(true);
-  voiceMsg('● Słucham… powiedz, co zjadłeś. Skończę sam po chwili ciszy.');
-  try{ rec.start(); }catch(e){ voiceRec=null; voiceUi(false); voiceMsg('Nie udało się włączyć mikrofonu — spróbuj jeszcze raz.'); }
-}
-document.getElementById('mdMic').onclick=()=>{ if(voiceRec) voiceStop(); else voiceStart(); };
+function voiceStop(){ mealVoice.stop(); }
 function saveMealDialog(){
   const dlg=document.getElementById('mealDialog');
   const iso=dlg.dataset.iso;
@@ -3523,24 +3534,73 @@ function undoProposal(i){
   S._settingsM=Date.now(); save(); renderToday();
   m.applied=false; coachDecided(m); saveCoach(h); renderCoach();
 }
-async function coachSend(text){
+async function coachSend(text, {voice=false}={}){
   text=(text||'').trim(); if(!text||coachBusy) return;
+  coachSpeakStop();
   const h=loadCoach(); h.push({role:'user',content:text, id:coachId(), t:Date.now()}); saveCoach(h);
   coachBusy=true; document.getElementById('coachIn').value=''; renderCoach();
+  let reply='';
   try{
     const msgs=h.slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
     const j=await cloudCall('coach',{messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki']});
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
+    reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');
   }catch(e){
     const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+e.message, id:coachId(), t:Date.now()}); saveCoach(h2);
   }
   coachBusy=false; renderCoach();
   if(document.getElementById('usageSection').style.display==='block') loadUsage();
+  // pytanie głosem → odpowiedź na głos, potem Trener znów słucha (rozmowa na żywo)
+  if(voice && reply && coachSpeakOn() && coachOpen()) coachSpeak(reply, ()=>{ if(coachOpen()) coachVoice.start(); });
+  else if(voice) coachVoice.say('');
 }
-function openCoach(){ document.getElementById('coachDialog').classList.add('show'); renderCoach(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
+function openCoach(){ document.getElementById('coachDialog').classList.add('show'); renderCoach(); coachSpeakUi(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
+const coachOpen=()=>document.getElementById('coachDialog').classList.contains('show');
 document.getElementById('coachFab').onclick=openCoach;
-document.getElementById('coachClose').onclick=()=>document.getElementById('coachDialog').classList.remove('show');
+document.getElementById('coachClose').onclick=()=>{ coachVoice.stop(); coachSpeakStop(); coachVoice.say(''); document.getElementById('coachDialog').classList.remove('show'); };
+
+/* ---- rozmowa głosem z Trenerem ----
+   🎤: pytanie dyktowane i wysyłane samo po chwili ciszy. Odpowiedź czytana na głos (pl-PL, syntezator telefonu),
+   potem mikrofon włącza się ponownie — cisza kończy rozmowę. 🔊/🔇 wyłącza czytanie (zapamiętane na tym urządzeniu). */
+const coachVoice=makeDictation({
+  input:document.getElementById('coachIn'), mic:document.getElementById('coachMic'), msg:document.getElementById('coachVoice'),
+  listening:'● Słucham… zadaj pytanie. Wyślę je sam po chwili ciszy.',
+  onDone:heard=>{ coachVoice.say('Wysłano — Trener myśli…','info'); coachSend(document.getElementById('coachIn').value, {voice:true}); },
+  onSilence:()=>coachVoice.say('Rozmowa wstrzymana. Stuknij 🎤, żeby mówić dalej.','info')
+});
+document.getElementById('coachMic').addEventListener('click',()=>coachSpeakStop(), true);   // mówisz → Trener milknie
+const TTS=window.speechSynthesis||null;
+function coachSpeakOn(){ try{ return localStorage.getItem('zelazo_coach_tts')!=='off'; }catch(e){ return true; } }
+function coachSpeakUi(){
+  const b=document.getElementById('coachSpeak');
+  if(!TTS){ b.style.display='none'; return; }
+  const on=coachSpeakOn(); b.textContent=on?'🔊':'🔇'; b.setAttribute('aria-pressed',on?'true':'false');
+  b.setAttribute('aria-label', on?'Wyłącz czytanie odpowiedzi':'Włącz czytanie odpowiedzi');
+}
+document.getElementById('coachSpeak').onclick=()=>{
+  const on=!coachSpeakOn();
+  try{ localStorage.setItem('zelazo_coach_tts', on?'on':'off'); }catch(e){}
+  if(!on) coachSpeakStop();
+  coachSpeakUi();
+};
+let coachSpeakSeq=0;   // przerwane czytanie nie może włączyć mikrofonu
+function coachSpeakStop(){ coachSpeakSeq++; if(TTS) TTS.cancel(); }
+// tekst do czytania: bez znaczników, w kawałkach po zdaniach (Chrome ucina długie wypowiedzi)
+function coachSpeak(text, onEnd){
+  if(!TTS){ onEnd&&onEnd(); return; }
+  coachSpeakStop(); const seq=coachSpeakSeq;
+  const clean=String(text).replace(/\*\*|__|_|#+\s*/g,'').replace(/^\s*[-•]\s+/gm,'').replace(/\s+/g,' ').trim();
+  const parts=clean.match(/[^.!?…]+[.!?…]*\s*/g)||[clean], chunks=[];
+  parts.forEach(p=>{ const last=chunks[chunks.length-1]; if(last && (last+p).length<220) chunks[chunks.length-1]=last+p; else chunks.push(p); });
+  const voice=(TTS.getVoices()||[]).find(v=>/^pl/i.test(v.lang));
+  coachVoice.say('🔊 Trener mówi… stuknij 🎤, żeby przerwać i odpowiedzieć.','info');
+  chunks.forEach((c,i)=>{
+    const u=new SpeechSynthesisUtterance(c.trim()); u.lang='pl-PL'; if(voice) u.voice=voice;
+    if(i===chunks.length-1){ u.onend=()=>{ if(seq===coachSpeakSeq && onEnd) onEnd(); }; u.onerror=()=>{ if(!coachVoice.active()) coachVoice.say(''); }; }
+    TTS.speak(u);
+  });
+}
 document.getElementById('coachClear').onclick=()=>{ if(confirm('Wyczyścić rozmowę z Trenerem? Zniknie na wszystkich Twoich urządzeniach.')){ S.coach={clearedAt:Date.now(), msgs:[]}; save(); renderCoach(); } };
 document.getElementById('coachSend').onclick=()=>coachSend(document.getElementById('coachIn').value);
 document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); coachSend(e.target.value); } });
