@@ -725,6 +725,8 @@ function mergeState(local, inc){
         m.ex[k].ok=ok;
       }
     });
+    // pomiar treningu (tryb treningu w becie): zostaje sesja, która skończyła się później
+    if(a.session||b.session) m.session = (!b.session || (a.session && (a.session.end||0)>=(b.session.end||0))) ? a.session : b.session;
     out.log[iso]=m;
   });
 
