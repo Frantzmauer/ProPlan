@@ -2355,10 +2355,13 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   // tryb treningu: tylko dziś; po zapisanej sesji krótkie podsumowanie
   if(L.session) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}</div>`;
   const allDone=w.ex.every((e0,i)=>okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s);
-  // przyszły trening (do 7 dni): zamień z dzisiejszym dniem i od razu zacznij
-  const tdy=todayISO();
-  if(iso>tdy && iso<=addDays(tdy,7) && canMove(iso, w, L) && !dayStarted(tdy) && dayIndexFor(tdy)>=1)
+  // przyszły (do 7 dni) albo pominięty (ostatnie 7 dni, nic nieodhaczone) trening: zamień z dzisiejszym dniem i od razu zacznij
+  const tdy=todayISO(), missed=iso<tdy;
+  const nearby= missed ? iso>=addDays(tdy,-7) : (iso>tdy && iso<=addDays(tdy,7));
+  if(nearby && dayIdx>=1 && !dayStarted(iso) && !dayStarted(tdy) && dayIndexFor(tdy)>=1){
+    if(missed) html+=`<div class="wo-saved">Ten trening nie został zrobiony. Możesz go odrobić dziś zamiast dzisiejszego planu (${esc(workoutOn(tdy).title)}).</div>`;
     html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>ZACZNIJ DZIŚ</button>`;
+  }
   if(iso===todayISO() && !allDone) html+=`<button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${L.session||w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i]))?'WZNÓW TRENING':'START TRENINGU'}</button>`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
@@ -4223,7 +4226,7 @@ function woSummaryHtml(){
 // „Zacznij dziś”: ten trening zamienia się z dzisiejszym dniem (jak „Przesuń”), potem tryb treningu
 function startToday(iso){
   const t=todayISO();
-  setMoves(nextMoves({[t]:iso, [iso]:t}), `Zamieniono: ${dowOf(iso)} ${dmy(iso)} → dziś`);
+  setMoves(nextMoves({[t]:iso, [iso]:t}), `${iso<t?'Odrabiasz':'Zamieniono'}: ${dowOf(iso)} ${dmy(iso)} → dziś`);
   viewOffset=0; showView('train'); renderToday();
   woStart(t);
 }
