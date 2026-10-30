@@ -339,14 +339,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .daybar .s b{color:var(--ink);font-weight:600}
 body:not(.daily) .daybar,body:not(.daily) .dayswitch{display:none}
 .phase-line{font-size:12.5px;color:var(--ink-dim);margin-top:10px}
-.dayswitch{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom));z-index:55;display:flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+/* przełącznik dni i przycisk Trenera w jednym rzędzie: dni po lewej, Trener po prawej (jak na innych zakładkach) */
+.dayswitch{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(72px + env(safe-area-inset-bottom));z-index:55;display:flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
 .dayswitch button{height:44px;border-radius:999px;font-family:var(--font-disp);font-weight:600;color:var(--ink)}
-.dayswitch .ar{width:52px;font-size:24px}
-.dayswitch .mid{min-width:118px;padding:0 12px;white-space:nowrap;font-size:16px;letter-spacing:.03em;color:var(--amber)}
+.dayswitch .ar{width:48px;font-size:24px}
+.dayswitch .mid{min-width:84px;padding:0 8px;white-space:nowrap;font-size:16px;letter-spacing:.03em;color:var(--amber)}
 .dayswitch .mid.away{color:var(--steel)}
 .dayswitch button:active{transform:scale(.95);background:var(--line)}
 body.daily{padding-bottom:150px}
-body.daily #coachFab{bottom:calc(132px + env(safe-area-inset-bottom))}
+body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(16px,env(safe-area-inset-right));height:54px;padding:0 18px;display:flex;align-items:center;gap:6px}
 .nav button{position:relative}
 .nav-dot{position:absolute;top:2px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;border:2px solid var(--bg);display:none}
 .nav-dot.todo{display:block;background:var(--amber)}
