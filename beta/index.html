@@ -2355,6 +2355,10 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   // tryb treningu: tylko dziś; po zapisanej sesji krótkie podsumowanie
   if(L.session) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}</div>`;
   const allDone=w.ex.every((e0,i)=>okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s);
+  // przyszły trening (do 7 dni): zamień z dzisiejszym dniem i od razu zacznij
+  const tdy=todayISO();
+  if(iso>tdy && iso<=addDays(tdy,7) && canMove(iso, w, L) && !dayStarted(tdy) && dayIndexFor(tdy)>=1)
+    html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>ZACZNIJ DZIŚ</button>`;
   if(iso===todayISO() && !allDone) html+=`<button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${L.session||w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i]))?'WZNÓW TRENING':'START TRENINGU'}</button>`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
@@ -2432,6 +2436,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   card.innerHTML=html;
   bindMoveUi(card);
   const ws=card.querySelector('[data-wo-start]'); if(ws) ws.onclick=()=>woStart(iso);
+  const wt=card.querySelector('[data-wo-today]'); if(wt) wt.onclick=()=>startToday(iso);
 
   // bind inputs
   const exOf=el=>{ const x=el.closest('.ex'); return {k:x.dataset.k, n:+x.dataset.n}; };
@@ -4214,6 +4219,13 @@ function woSummaryHtml(){
     <div class="wo-rows">${s.ex.map(e=>`<div><span>${esc(e.n)} · ${e.sets}/${e.of}</span><span class="${e.avgRest>e.restPlan*1.2?'slow':''}">${e.avgRest?'przerwa '+fmtDur(e.avgRest)+' / plan '+fmtDur(e.restPlan):'—'}</span></div>`).join('')}</div>
     <div class="wo-note"><b>Trener widzi te dane.</b> Zapytaj np.: „Jak mi poszedł dzisiejszy trening?” albo „Czy moje przerwy są OK?”.</div>
     <button class="wo-save" id="woSave">ZAPISZ I ZAMKNIJ</button>`;
+}
+// „Zacznij dziś”: ten trening zamienia się z dzisiejszym dniem (jak „Przesuń”), potem tryb treningu
+function startToday(iso){
+  const t=todayISO();
+  setMoves(nextMoves({[t]:iso, [iso]:t}), `Zamieniono: ${dowOf(iso)} ${dmy(iso)} → dziś`);
+  viewOffset=0; showView('train'); renderToday();
+  woStart(t);
 }
 function woClose(){ WO=null; woSave(); clearInterval(woTick); woTick=null; woWakeLock(false); document.getElementById('woFocus').style.display='none'; renderToday(); }
 document.getElementById('woEnd').onclick=()=>{ if(!WO) return; if(WO.phase==='summary'){ woClose(); return; } WO.prevPhase=WO.phase; WO.phase='confirm'; woRender(); };
