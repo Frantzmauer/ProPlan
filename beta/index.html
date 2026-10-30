@@ -508,8 +508,25 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .fc-cue{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5}
 .fc-yt{font-size:13px;color:var(--steel)}
 .fc-hist{display:flex;flex-direction:column;gap:6px}
-.fc-hist div{display:flex;gap:10px;justify-content:space-between;font-size:13px;color:var(--ink-dim);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-.fc-hist b{font-weight:600}
+.fc-hist button{display:flex;gap:10px;align-items:center;width:100%;min-height:48px;text-align:left;font-size:13px;color:var(--ink-dim);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.fc-hist b{font-weight:600;white-space:nowrap}
+.fc-hist b.g0{color:var(--green)} .fc-hist b.g1{color:var(--amber)} .fc-hist b.g2{color:var(--red)}
+.fc-hist .fx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc-hist .go{color:var(--ink-faint);font-size:18px}
+.fc-thumbs canvas{height:110px;width:auto;border-radius:8px;border:1px solid var(--line);flex:none;cursor:zoom-in}
+.fc-thumbs canvas.bad{border-color:var(--amber)}
+#fcZoom{position:fixed;inset:0;z-index:490;background:#000;flex-direction:column;padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px,env(safe-area-inset-left))}
+.fz-top{display:flex;justify-content:space-between;align-items:center;min-height:52px;color:var(--ink-dim);font-size:14px}
+.fz-top button{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;color:var(--ink)}
+.fz-img{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.fz-img canvas{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+.fz-notes{display:flex;flex-direction:column;gap:6px;padding:10px 0;font-size:14px;color:var(--ink-dim);max-height:30vh;overflow-y:auto}
+.fz-notes div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
+.fz-notes b{color:#ff9a4a;font-weight:600}
+.fz-notes span{color:var(--green)}
+.fz-notes .ok{color:var(--green)}
+.fz-nav{display:flex;gap:8px;padding-bottom:10px}
+.fz-nav button{flex:1;min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:15px}
 /* analiza techniki z nagrania */
 .wo-cam{min-height:48px;width:100%;border-radius:14px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:15px;font-weight:600}
 #formDialog{position:fixed;inset:0;z-index:470;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center}
@@ -1091,6 +1108,12 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="fc-title" id="fcTitle">Sprawdź technikę</div>
     <div id="fcBody"></div>
   </div>
+</div>
+<div id="fcZoom" style="display:none" role="dialog" aria-modal="true" aria-label="Powiększona klatka">
+  <div class="fz-top"><span id="fzCap"></span><button id="fzClose">Zamknij</button></div>
+  <div class="fz-img" id="fzImg"></div>
+  <div class="fz-notes" id="fzNotes"></div>
+  <div class="fz-nav"><button id="fzPrev">‹ Poprzednia</button><button id="fzNext">Następna ›</button></div>
 </div>
 <input type="file" id="fcRec" accept="video/*" capture="environment" style="display:none">
 <input type="file" id="fcPick" accept="video/*" style="display:none">
@@ -4363,7 +4386,7 @@ function openFormCheck(name, setInfo, opts){
   const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' technika');
   const head=lib ? `${cue?`<div class="fc-cue">${esc(cue)}</div>`:''}<a class="fc-yt" href="${yt}" target="_blank" rel="noopener">▶ Filmy z techniką (YouTube)</a>` : '';
   const hist=formHistory(name);
-  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>Twoje oceny (${hist.length})</h4><div class="fc-hist">`+hist.slice(0,6).map(m=>`<div><span>${new Date(m.t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})}</span><b>${esc(m.grade||'')}</b><span>${esc((m.fix||'').slice(0,40))}</span></div>`).join('')+`</div></div>` : '';
+  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>Twoje oceny (${hist.length})</h4><div class="fc-hist">`+hist.slice(0,8).map(m=>`<button data-fh="${esc(m.id)}"><span>${new Date(m.t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})}</span><b class="g${FC_GRADE[m.grade]??3}">${esc(m.grade||'')}</b><span class="fx">${esc((m.fix||'').slice(0,60))}</span><span class="go">›</span></button>`).join('')+`</div></div>` : '';
   if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
     fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
@@ -4380,6 +4403,7 @@ function openFormCheck(name, setInfo, opts){
       <button class="fc-btn" id="fcPickBtn">Wybierz film z galerii</button>
       <button class="fc-btn ghost" data-fc-close>${lib?'Zamknij':'Anuluj'}</button>
     </div>${histHtml}`);
+  document.querySelectorAll('[data-fh]').forEach(b=>b.onclick=()=>fcOpenSaved(b.dataset.fh));
   document.getElementById('fcRecBtn').onclick=()=>{ const i=document.getElementById('fcRec'); i.value=''; i.click(); };
   document.getElementById('fcPickBtn').onclick=()=>{ const i=document.getElementById('fcPick'); i.value=''; i.click(); };
   document.querySelector('[data-fc-close]').onclick=fcClose;
@@ -4477,12 +4501,19 @@ async function fcRun(file){
     const pick=new Set(bottoms.slice(0,4).map(t=>frames.findIndex(f=>f.t===t)).filter(i=>i>=0));
     for(let i=0;pick.size<10 && i<frames.length;i+=Math.max(1,Math.floor(frames.length/10))) pick.add(i);
     const chosen=[...pick].sort((a,b)=>a-b).slice(0,10).map(i=>frames[i]);
+    // surowe klatki + punkty sylwetki zostają na telefonie (do powiększania i rysowania wzorca)
+    const rec={ex:FC.ex, raw:chosen.map(f=>f.c.toDataURL('image/jpeg',0.72)), lms:chosen.map(f=>f.lm||null), w, h};
+    const flat=fcIssues(rec).flat();
+    if(flat.length && metrics && typeof metrics==='object'){
+      const worst={}; flat.forEach(x=>{ if(!worst[x.joint]||x.delta>worst[x.joint].delta) worst[x.joint]=x; });
+      metrics.odchylenia_od_wzorca=Object.values(worst).map(x=>x.label+' ('+x.hint+')');
+    }
     chosen.forEach(f=>fcDraw(f.c, f.lm));
     const jpg=chosen.map(f=>f.c.toDataURL('image/jpeg',0.72));
     fcProgress(2, 'zwykle 10–30 s');
     const j=await cloudCall('form', {exercise:FC.ex, set:FC.set, view:camView(FC.ex), metrics, frames:jpg.map(d=>d.split(',')[1])});
     FC.busy=false;
-    fcResult(j.result, metrics, jpg);
+    fcSaveAndShow(j.result, metrics, rec);
   }catch(e){
     FC.busy=false;
     const msg=/Failed to fetch|NetworkError|Load failed/i.test(e.message)?'Brak połączenia — spróbuj ponownie, gdy złapiesz zasięg.':e.message==='timeout'?'Nie udało się odczytać nagrania. Spróbuj krótszego filmu albo nagraj ponownie.':e.message;
@@ -4523,9 +4554,105 @@ function renderExLib(){
   box.querySelectorAll('[data-lib]').forEach(b=>b.onclick=()=>openFormCheck(b.dataset.lib,'',{lib:true}));
 }
 document.getElementById('libSearch').addEventListener('input', renderExLib);
-function fcResult(r, metrics, jpg){
-  const g=FC_GRADE[r.ocena]??3;
-  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}</p>
+/* ---- wzorzec ruchu: docelowe kąty dla typu ćwiczenia (widok z boku; z przodu nie oceniamy kątów) ---- */
+function formKind(n){
+  if(/suwnic/i.test(n)) return 'legpress';
+  if(/przysiad/i.test(n)) return 'squat';
+  if(/wypad|wykrok/i.test(n)) return 'lunge';
+  if(/martwy|RDL|swing/i.test(n)) return 'hinge';
+  if(/wiosł/i.test(n)) return 'row';
+  if(/żołnierskie|siedząc \(barki\)/i.test(n)) return 'overhead';
+  if(/brzusz|unoszenie nóg/i.test(n)) return 'other';
+  if(/wyciskanie (sztangi|hantli) —|pompk/i.test(n)) return 'bench';
+  return 'other';
+}
+const fcLeft=lm=>[11,13,23,25,27].reduce((a,i)=>a+(lm[i].visibility||0),0)>=[12,14,24,26,28].reduce((a,i)=>a+(lm[i].visibility||0),0);
+function fcPts(lm,w,h){ const I=fcLeft(lm)?{sh:11,el:13,wr:15,hip:23,kn:25,an:27}:{sh:12,el:14,wr:16,hip:24,kn:26,an:28}; const P=i=>({x:lm[i].x*w,y:lm[i].y*h}); return {sh:P(I.sh),el:P(I.el),wr:P(I.wr),hip:P(I.hip),kn:P(I.kn),an:P(I.an)}; }
+const fcLean=(sh,hip)=>Math.round(Math.abs(Math.atan2(sh.x-hip.x, hip.y-sh.y))*180/Math.PI);
+// obróć odcinek pivot→end tak, by kąt (fn) osiągnął wartość docelową; zwraca położenie końca „jak powinno być”
+function fcRotTo(pivot, end, fn, target){
+  const dx=end.x-pivot.x, dy=end.y-pivot.y, L=Math.hypot(dx,dy), a0=Math.atan2(dy,dx); let best=null;
+  for(let d=-180; d<=180; d++){ const a=a0+d*Math.PI/180, q={x:pivot.x+L*Math.cos(a), y:pivot.y+L*Math.sin(a)}, err=Math.abs(fn(q)-target)+Math.abs(d)*0.01; if(!best||err<best.err) best={q,err}; }
+  return best.q;
+}
+// odchylenia od wzorca dla każdej klatki: {joint, delta, label, hint, pivot, to}
+function fcIssues(rec){
+  const kind=formKind(rec.ex||''), out=rec.lms.map(()=>[]);
+  const fr=rec.lms.map((lm,i)=>{ if(!lm) return null; const p=fcPts(lm,rec.w,rec.h);
+    return {i,p, knee:fcAngle(p.hip,p.kn,p.an), hipA:fcAngle(p.sh,p.hip,p.kn), elbow:fcAngle(p.sh,p.el,p.wr), lean:fcLean(p.sh,p.hip), front:Math.min(lm[11].visibility||0,lm[12].visibility||0)>0.5 && Math.abs(lm[11].x-lm[12].x)>0.12}; })   // z przodu tylko, gdy oba barki dobrze widoczne i rozstawione
+    .filter(f=>f && !f.front);
+  if(!fr.length) return out;
+  const ext=(k,dir)=>fr.reduce((a,f)=>(dir<0?f[k]<a[k]:f[k]>a[k])?f:a, fr[0]);
+  const add=(f,joint,val,target,cmp,name,hint,pivot,end,fn)=>{
+    const off = cmp==='max' ? val-target : target-val; if(off<=3) return;
+    out[f.i].push({joint, delta:off, label:`${name} ${val}° → cel ${cmp==='max'?'≤':'≥'}${target}°`, hint:`${hint} o ${off}°`, pivot, to:fcRotTo(pivot,end,fn,target)});
+  };
+  const knee=(f,t,h)=>add(f,'kolano',f.knee,t,'max','Kolano',h,f.p.kn,f.p.hip,q=>fcAngle(q,f.p.kn,f.p.an));
+  const leanMax=(f,t,h)=>add(f,'tułów',f.lean,t,'max','Tułów (od pionu)',h,f.p.hip,f.p.sh,q=>fcLean(q,f.p.hip));
+  const leanMin=(f,t,h)=>add(f,'tułów',f.lean,t,'min','Tułów (od pionu)',h,f.p.hip,f.p.sh,q=>fcLean(q,f.p.hip));
+  const elbowMax=(f,t,h)=>add(f,'łokieć',f.elbow,t,'max','Łokieć',h,f.p.el,f.p.wr,q=>fcAngle(f.p.sh,f.p.el,q));
+  const elbowMin=(f,t,h)=>add(f,'łokieć',f.elbow,t,'min','Łokieć',h,f.p.el,f.p.wr,q=>fcAngle(f.p.sh,f.p.el,q));
+  const hipMin=(f,t,h)=>add(f,'biodro',f.hipA,t,'min','Biodro',h,f.p.hip,f.p.sh,q=>fcAngle(q,f.p.hip,f.p.kn));
+  if(kind==='squat'){ knee(ext('knee',-1),95,'zejdź niżej'); fr.filter(f=>f.knee<130).forEach(f=>leanMax(f,45,'wyprostuj tułów')); }
+  else if(kind==='legpress') knee(ext('knee',-1),95,'opuść platformę niżej');
+  else if(kind==='lunge'){ knee(ext('knee',-1),100,'zejdź niżej'); fr.filter(f=>f.knee<130).forEach(f=>leanMax(f,20,'wyprostuj tułów')); }
+  else if(kind==='hinge'){ if(/swing/i.test(rec.ex)) hipMin(ext('hipA',1),165,'dopchnij biodra na górze'); else fr.forEach(f=>leanMax(f,80,'nie schodź tułowiem poniżej poziomu')); }
+  else if(kind==='row') fr.forEach(f=>leanMin(f,30,'pochyl tułów bardziej'));
+  else if(kind==='bench') elbowMax(ext('elbow',-1),95,'opuść ciężar niżej');
+  else if(kind==='overhead'){ elbowMin(ext('elbow',1),165,'wyprostuj ręce do końca'); fr.forEach(f=>leanMax(f,12,'nie odchylaj się do tyłu')); }
+  return out;
+}
+// wzorzec na klatce: zielony przerywany odcinek „jak powinno być” + etykieta z kątem i kierunkiem poprawki
+function fcDrawGuides(c, issues){
+  const g=c.getContext('2d'), s=c.width/360, placed=[];
+  issues.forEach((it,k)=>{
+    g.save(); g.setLineDash([8*s,6*s]); g.lineWidth=Math.max(3,4*s); g.strokeStyle='#4ec97e';
+    g.beginPath(); g.moveTo(it.pivot.x,it.pivot.y); g.lineTo(it.to.x,it.to.y); g.stroke(); g.setLineDash([]);
+    g.fillStyle='#4ec97e'; g.beginPath(); g.arc(it.to.x,it.to.y,5*s,0,7); g.fill();
+    const fs=Math.max(10,Math.round(12*s)), pad=6*s, lines=[it.label, '→ '+it.hint];
+    g.font=`600 ${fs}px Inter, system-ui, sans-serif`; const tw=Math.max(...lines.map(l=>g.measureText(l).width)), bh=fs*2.5+pad;
+    const bw=tw+pad*2, x=Math.min(Math.max(it.pivot.x+12*s, pad), c.width-bw-pad);
+    // etykiety nie mogą na siebie nachodzić: przesuwaj w dół (a gdy brak miejsca — w górę) aż do wolnego miejsca
+    const hit=yy=>placed.some(r=>x<r.x+r.w && x+bw>r.x && yy<r.y+r.h+4*s && yy+bh+4*s>r.y);
+    let y=Math.max(pad, Math.min(it.pivot.y-bh/2, c.height-bh-pad));
+    for(let n=0; hit(y) && n<20; n++){ y+=bh/2; if(y>c.height-bh-pad){ y=pad; } }
+    placed.push({x,y,w:bw,h:bh});
+    g.fillStyle='rgba(14,17,20,.85)'; g.fillRect(x,y,bw,bh);
+    g.fillStyle='#ff9a4a'; g.fillText(lines[0], x+pad, y+pad/2+fs);
+    g.fillStyle='#4ec97e'; g.fillText(lines[1], x+pad, y+pad/2+fs*2.15);
+    g.restore();
+  });
+}
+const fcImg=src=>new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; });
+async function fcRenderFrame(rec, i, issues){
+  const im=await fcImg(rec.raw[i]), c=document.createElement('canvas'); c.width=rec.w; c.height=rec.h;
+  c.getContext('2d').drawImage(im,0,0,rec.w,rec.h); fcDraw(c, rec.lms[i]); fcDrawGuides(c, (issues&&issues[i])||[]); return c;
+}
+/* ---- klatki tylko na tym telefonie (IndexedDB), wynik oceny w rozmowie z Trenerem (synchronizowany) ---- */
+function fcDB(){ return new Promise((res,rej)=>{ const r=indexedDB.open('zelazo_forms',1); r.onupgradeneeded=()=>r.result.createObjectStore('f'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function fcPut(id, rec){
+  try{ const db=await fcDB();
+    await new Promise((res,rej)=>{ const tx=db.transaction('f','readwrite'), st=tx.objectStore('f'); st.put(rec,id);
+      // trzymaj 30 ostatnich nagrań (id rosną z czasem)
+      const q=st.getAllKeys(); q.onsuccess=()=>{ const ks=q.result.map(String).sort(); ks.slice(0,Math.max(0,ks.length-30)).forEach(k=>st.delete(k)); };
+      tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  }catch(e){}
+}
+async function fcGet(id){ try{ const db=await fcDB(); return await new Promise(res=>{ const q=db.transaction('f').objectStore('f').get(id); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; } }
+function fcSaveAndShow(r, metrics, rec){
+  const hh=loadCoach(), t=Date.now(), rid=coachId();
+  const txt=`**Ocena techniki: ${r.ocena}.** ${r.podsumowanie}`+(r.bezpieczenstwo?`\n⚠ ${r.bezpieczenstwo}`:'')+
+    r.poprawki.map(p=>`\n- ${p.problem} → ${p.jak_poprawic}`).join('')+(r.mocne_strony.length?`\n- Dobrze: ${r.mocne_strony.join('; ')}`:'')+`\n_${fcMeasLine(metrics)}_`;
+  hh.push({role:'user', content:`📹 Sprawdź technikę: ${FC.ex}${FC.set?' ('+FC.set+')':''}`, id:coachId(), t});
+  hh.push({role:'assistant', content:txt, id:rid, t:t+1, kind:'form', ex:FC.ex, set:FC.set, grade:r.ocena, fix:(r.poprawki[0]&&r.poprawki[0].problem)||'', res:r, metrics});
+  saveCoach(hh); fcPut(rid, rec); renderExLib();
+  if(WO){ WO.forms=WO.forms||[]; WO.forms.push({ex:FC.ex, ocena:r.ocena, at:t}); woSave(); }
+  fcResultView(r, metrics, rec, null);
+}
+// wynik (świeży albo z historii): ocena, poprawki, pomiary i klatki ze szkieletem i wzorcem — stuknij, by powiększyć
+function fcResultView(r, metrics, rec, savedAt){
+  const g=FC_GRADE[r.ocena]??3, issues=rec?fcIssues(rec):[], nIss=issues.flat().length;
+  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}${savedAt?' · '+new Date(savedAt).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
     <span class="fc-grade g${g}">${esc(r.ocena)}</span>
     <p class="fc-sub" style="color:var(--ink)">${esc(r.podsumowanie)}</p>
     ${r.bezpieczenstwo?`<div class="fc-warn">⚠ ${esc(r.bezpieczenstwo)}</div>`:''}
@@ -4533,18 +4660,35 @@ function fcResult(r, metrics, jpg){
     ${r.mocne_strony.length?`<div class="fc-sec"><h4>Dobrze</h4><ul class="fc-tips">${r.mocne_strony.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
     ${r.nagranie?`<p class="fc-meas">📹 ${esc(r.nagranie)}</p>`:''}
     <p class="fc-meas">${esc(fcMeasLine(metrics))}</p>
-    <div class="fc-thumbs">${jpg.map(d=>`<img src="${d}" alt="">`).join('')}</div>
-    <div class="fc-btns">${TTS?'<button class="fc-btn" id="fcRead">🔊 Przeczytaj</button>':''}<button class="fc-btn main" data-fc-close>OK</button></div>`);
+    <div class="fc-sec"><h4>Klatki${rec?` · stuknij, by powiększyć${nIss?' · zielony = jak powinno być':''}`:''}</h4>
+      ${rec?'<div class="fc-thumbs" id="fcThumbs"></div>':'<p class="fc-meas">Klatki z tego nagrania są na telefonie, na którym je nagrano.</p>'}</div>
+    <div class="fc-btns">${TTS?'<button class="fc-btn" id="fcRead">🔊 Przeczytaj</button>':''}
+      ${savedAt?'<button class="fc-btn" id="fcBack">← Wróć do ćwiczenia</button>':''}<button class="fc-btn main" data-fc-close>OK</button></div>`);
   document.querySelector('[data-fc-close]').onclick=()=>{ if(TTS) TTS.cancel(); fcClose(); };
+  const bk=document.getElementById('fcBack'); if(bk) bk.onclick=()=>openFormCheck(FC.ex,'',{lib:true});
   const rd=document.getElementById('fcRead'); if(rd) rd.onclick=()=>coachSpeak(r.podsumowanie+' '+r.poprawki.map(p=>p.problem+'. '+p.jak_poprawic).join(' ')+(r.bezpieczenstwo?' Uwaga: '+r.bezpieczenstwo:''));
-  // zapis: do rozmowy z Trenerem (synchronizowana, Trener ją pamięta) i do sesji treningu
-  const txt=`**Ocena techniki: ${r.ocena}.** ${r.podsumowanie}`+(r.bezpieczenstwo?`\n⚠ ${r.bezpieczenstwo}`:'')+
-    r.poprawki.map(p=>`\n- ${p.problem} → ${p.jak_poprawic}`).join('')+(r.mocne_strony.length?`\n- Dobrze: ${r.mocne_strony.join('; ')}`:'')+`\n_${fcMeasLine(metrics)}_`;
-  const hh=loadCoach(), t=Date.now();
-  hh.push({role:'user', content:`📹 Sprawdź technikę: ${FC.ex}${FC.set?' ('+FC.set+')':''}`, id:coachId(), t});
-  hh.push({role:'assistant', content:txt, id:coachId(), t:t+1, kind:'form', ex:FC.ex, grade:r.ocena, fix:(r.poprawki[0]&&r.poprawki[0].problem)||''});
-  saveCoach(hh); renderExLib();
-  if(WO){ WO.forms=WO.forms||[]; WO.forms.push({ex:FC.ex, ocena:r.ocena, at:t}); woSave(); }
+  if(rec){ const box=document.getElementById('fcThumbs');
+    rec.raw.forEach((_,i)=>fcRenderFrame(rec,i,issues).then(c=>{ c.className='fc-th'+((issues[i]||[]).length?' bad':''); c.setAttribute('role','button'); c.setAttribute('aria-label','Klatka '+(i+1)); c.onclick=()=>fcZoom(rec,issues,i); c.style.order=i; box.appendChild(c); }).catch(()=>{})); }
+}
+// powiększenie klatki: pełny ekran, ‹ › między klatkami, lista odchyleń pod spodem
+async function fcZoom(rec, issues, i){
+  const z=document.getElementById('fcZoom'); z.style.display='flex';
+  const n=rec.raw.length; i=(i+n)%n;
+  document.getElementById('fzCap').textContent=`Klatka ${i+1} z ${n}`;
+  const c=await fcRenderFrame(rec,i,issues), box=document.getElementById('fzImg'); box.innerHTML=''; box.appendChild(c);
+  const it=issues[i]||[];
+  document.getElementById('fzNotes').innerHTML= !rec.lms[i] ? 'Na tej klatce nie rozpoznano sylwetki.'
+    : it.length ? it.map(x=>`<div><b>${esc(x.label)}</b><span>→ ${esc(x.hint)}</span></div>`).join('') : '<div class="ok">Na tej klatce kąty mieszczą się we wzorcu.</div>';
+  document.getElementById('fzPrev').onclick=()=>fcZoom(rec,issues,i-1);
+  document.getElementById('fzNext').onclick=()=>fcZoom(rec,issues,i+1);
+}
+document.getElementById('fzClose').onclick=()=>{ document.getElementById('fcZoom').style.display='none'; };
+// ocena z historii ćwiczenia
+async function fcOpenSaved(id){
+  const m=loadCoach().find(x=>x.id===id); if(!m) return;
+  FC.ex=m.ex||FC.ex; FC.set=m.set||'';
+  if(!m.res){ fcShow(`<div class="fc-cue">${coachMd(m.content)}</div><div class="fc-btns"><button class="fc-btn" id="fcBack">← Wróć do ćwiczenia</button></div>`); document.getElementById('fcBack').onclick=()=>openFormCheck(FC.ex,'',{lib:true}); return; }
+  fcResultView(m.res, m.metrics||{}, await fcGet(id), m.t);
 }
 
 // init
