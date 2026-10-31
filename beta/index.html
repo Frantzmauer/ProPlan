@@ -496,6 +496,17 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .coach-att button{min-width:36px;min-height:36px;border-radius:999px;color:var(--ink-dim);font-size:16px}
 .coach-ask-vid{margin-top:6px;min-height:40px;padding:0 12px;border-radius:10px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:13px}
 .coach-b .att{display:block;font-size:12px;opacity:.8;margin-top:4px}
+/* reset treningu: pomarańczowy kwadrat obok „Wznów” */
+.wo-row{display:flex;gap:8px;margin:12px 14px}
+.wo-row .wo-start{margin:0;width:auto;flex:1}
+.wo-reset{width:56px;height:56px;flex:none;border-radius:14px;background:var(--amber);display:grid;place-items:center}
+.wo-reset svg{width:24px;height:24px;stroke:#0e1114;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wo-reset:active{transform:scale(.95)}
+#woResetDialog{position:fixed;inset:0;z-index:420;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+#woResetDialog .md-card{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
+.wr-btns{display:flex;gap:8px}
+.wr-btns button{flex:1;min-height:48px;border-radius:12px;font-size:15px}
+.wr-yes{border:1px solid rgba(226,84,58,.6);background:#2a1512;color:#ff9b87;font-weight:600}
 /* menu Więcej */
 .more-menu{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .more-menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);text-align:left;color:var(--ink)}
@@ -1160,6 +1171,16 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   </div>
   <div class="wo-body" id="woBody"></div>
 </div>
+
+<!-- reset dzisiejszego treningu: potwierdzenie -->
+<div id="woResetDialog" style="display:none">
+  <div class="md-card" role="dialog" aria-modal="true" aria-labelledby="wrTitle">
+    <div class="md-title" id="wrTitle">Zresetować dzisiejszy trening?</div>
+    <div class="md-hint" id="wrText" style="margin:6px 0 14px"></div>
+    <div class="wr-btns"><button class="btn ghost" id="wrNo">Anuluj</button><button class="wr-yes" id="wrYes">Resetuj</button></div>
+  </div>
+</div>
+<div class="mv-toast" id="woToast" style="display:none"><span id="woToastTxt"></span><button id="woUndo">Cofnij</button></div>
 
 <!-- przesuwanie treningu: wybór dnia -->
 <div id="moveDialog">
@@ -2497,7 +2518,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   let badge = w.title.split(' ')[0]; // FBW / UPPER / LOWER
   let html=`${mvBar}<div class="wk-head"><span class="badge">${badge}</span><span class="t">${w.title}</span>${mvBtn}</div>`;
   // tryb treningu: tylko dziś; po zapisanej sesji krótkie podsumowanie
-  if(L.session) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}</div>`;
+  if(hasSession(L)) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}</div>`;
   const allDone=w.ex.every((e0,i)=>okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s);
   // przyszły (do 7 dni) albo pominięty (ostatnie 7 dni, nic nieodhaczone) trening: zamień z dzisiejszym dniem i od razu zacznij
   const tdy=todayISO(), missed=iso<tdy;
@@ -2506,7 +2527,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
     if(missed) html+=`<div class="wo-saved">Ten trening nie został zrobiony. Możesz go odrobić dziś zamiast dzisiejszego planu (${esc(workoutOn(tdy).title)}).</div>`;
     html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>ZACZNIJ DZIŚ</button>`;
   }
-  if(iso===todayISO() && !allDone) html+=`<button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${L.session||w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i]))?'WZNÓW TRENING':'START TRENINGU'}</button>`;
+  if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${hasSession(L)||w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i]))?'WZNÓW TRENING':'START TRENINGU'}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="Resetuj dzisiejszy trening"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
     const key=iso+'_e'+i;
@@ -2583,6 +2604,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   card.innerHTML=html;
   bindMoveUi(card);
   const ws=card.querySelector('[data-wo-start]'); if(ws) ws.onclick=()=>woStart(iso);
+  const wr=card.querySelector('[data-wo-reset]'); if(wr) wr.onclick=()=>woResetAsk(iso);
   const wt=card.querySelector('[data-wo-today]'); if(wt) wt.onclick=()=>startToday(iso);
 
   // bind inputs
@@ -3841,7 +3863,7 @@ function buildCoachContext(){
   out.push(exRows.length?'Historia ćwiczeń (ostatnie sesje, kg×powtórzenia):\n'+exRows.join('\n'):'Historia ćwiczeń: brak zapisanych serii.');
   if(meals.length) out.push('Własne posiłki spoza planu (ostatnie):\n'+meals.slice(-12).join('\n'));
   // treningi zmierzone w trybie treningu (czas, przerwy vs plan) — ostatnie 8
-  { const ss=Object.keys(S.log).sort().filter(k=>k<=today && S.log[k].session).slice(-8).map(k=>{ const x=S.log[k].session, f=t=>fmtDur(t);
+  { const ss=Object.keys(S.log).sort().filter(k=>k<=today && hasSession(S.log[k])).slice(-8).map(k=>{ const x=S.log[k].session, f=t=>fmtDur(t);
       return '- '+dd(k)+' '+(x.title||'trening')+': '+f(x.dur)+' (praca '+f(x.work)+'), przerwy śr. '+f(x.avgRest)+(x.avgRestPlan?' przy planie '+f(x.avgRestPlan):'')+', serie '+x.done+'/'+x.total+(x.skipped?' (pominięte '+x.skipped+')':'')
         +((x.ex||[]).filter(e=>e.avgRest&&e.avgRest>e.restPlan*1.2).map(e=>'; '+e.n+' przerwa '+f(e.avgRest)+' vs '+f(e.restPlan)).join('')); });
     if(ss.length) out.push('Treningi z pomiarem czasu (tryb treningu):\n'+ss.join('\n')); }
@@ -4445,6 +4467,47 @@ function startToday(iso){
   viewOffset=0; showView('train'); renderToday();
   woStart(t);
 }
+/* ---- reset dzisiejszego treningu: odhaczone serie, „Pomiń”, zmierzony czas i trwający tryb treningu ----
+   Ciężary i powtórzenia w polach zostają. Sesja dostaje znacznik {cleared, end}, żeby starszy zapis z innego urządzenia nie wrócił. */
+const hasSession=L=>!!(L && L.session && !L.session.cleared);
+function woCanReset(iso, w, L){
+  return hasSession(L) || (WO && WO.iso===iso) || w.ex.some((e0,i)=>{ const r=L.ex[iso+'_e'+i]; return exAny(r) || (r&&r.skip); });
+}
+function woResetAsk(iso){
+  const w=workoutOn(iso), L=log(iso);
+  const n=w.ex.reduce((a,e0,i)=>a+okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s),0);
+  const bits=[]; if(n) bits.push(n+' odhaczon'+(n===1?'ą serię':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'e serie':'ych serii'));
+  if(hasSession(L)) bits.push('zmierzony czas ('+fmtDur(L.session.dur)+')');
+  if(WO && WO.iso===iso) bits.push('trwający tryb treningu');
+  document.getElementById('wrText').textContent=(bits.length?'Usunę '+bits.join(', ')+'. ':'')+'Ciężary i powtórzenia wpisane w pola zostają.';
+  document.getElementById('woResetDialog').style.display='flex';
+  document.getElementById('wrYes').onclick=()=>{ document.getElementById('woResetDialog').style.display='none'; woReset(iso); };
+}
+document.getElementById('wrNo').onclick=()=>{ document.getElementById('woResetDialog').style.display='none'; };
+document.getElementById('woResetDialog').addEventListener('click',e=>{ if(e.target.id==='woResetDialog') e.currentTarget.style.display='none'; });
+let woUndoSnap=null, woToastTimer=null;
+function woReset(iso){
+  const w=workoutOn(iso), L=log(iso), keys=w.ex.map((e0,i)=>iso+'_e'+i);
+  woUndoSnap={iso, ex:JSON.parse(JSON.stringify(keys.map(k=>[k,L.ex[k]]))), session:L.session?JSON.parse(JSON.stringify(L.session)):null, wo:WO&&WO.iso===iso?JSON.parse(JSON.stringify(WO)):null};
+  w.ex.forEach((e0,i)=>{ const k=keys[i], n=effEx(e0,iso).s, r=L.ex[k]; if(!r) return;
+    for(let s=1;s<=n;s++) if(setOk(r,s)) exTick(L,k,n,s,false);
+    if(L.ex[k].skip){ L.ex[k].skip=false; mark(L,'skip:'+k); } });
+  if(L.session) L.session={cleared:true, end:Date.now()};
+  if(WO && WO.iso===iso){ clearInterval(woTick); woTick=null; WO=null; woSave(); woWakeLock(false); document.getElementById('woFocus').style.display='none'; }
+  touch(L); save(); renderToday();
+  const t=document.getElementById('woToast'); document.getElementById('woToastTxt').textContent='Trening zresetowany'; t.style.display='flex';
+  clearTimeout(woToastTimer); woToastTimer=setTimeout(()=>{ t.style.display='none'; woUndoSnap=null; }, 6000);
+}
+// „Cofnij”: przywróć serie i pomiar; nowe znaczniki czasu, żeby wygrały przy synchronizacji
+document.getElementById('woUndo').onclick=()=>{
+  const u=woUndoSnap; if(!u) return; woUndoSnap=null;
+  const L=log(u.iso);
+  u.ex.forEach(([k,r])=>{ if(r===undefined) return; L.ex[k]=r; mark(L,'ex:'+k); mark(L,'skip:'+k); if(r&&r.ok) Object.keys(r.ok).forEach(s=>mark(L,'ok:'+k+':'+s)); });
+  if(u.session){ L.session=Object.assign({}, u.session, {end:Date.now()}); }
+  if(u.wo){ WO=u.wo; woSave(); }
+  touch(L); save(); renderToday();
+  document.getElementById('woToast').style.display='none';
+};
 function woClose(){ WO=null; woSave(); clearInterval(woTick); woTick=null; woWakeLock(false); document.getElementById('woFocus').style.display='none'; renderToday(); }
 document.getElementById('woEnd').onclick=()=>{ if(!WO) return; if(WO.phase==='summary'){ woClose(); return; } WO.prevPhase=WO.phase; WO.phase='confirm'; woRender(); };
 // trwający trening po ponownym otwarciu aplikacji (do 5 h, ten sam dzień)
