@@ -17,7 +17,7 @@
 :root{
   --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
   --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
-  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --gold:#ffc94a;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --gold:#ffc94a; --plum:#c58bd6;
   --r:14px; --shadow:0 8px 30px rgba(0,0,0,.4);
   --font-disp:'Barlow Condensed',sans-serif;
   --font-body:'Inter',system-ui,sans-serif;
@@ -763,6 +763,41 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-light{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(95,168,211,.1);border:1px solid rgba(95,168,211,.4);border-radius:12px;padding:6px 6px 6px 12px;font-size:13.5px}
 .wo-light b{color:var(--steel)}
 .wo-light button{color:var(--steel);font-weight:600;font-size:13px;min-height:40px;padding:0 8px;white-space:nowrap}
+/* cykl i samopoczucie */
+.cy-box{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0}
+.cy-box:empty{display:none}
+.cy-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--plum);background:rgba(197,139,214,.1);border:1px solid rgba(197,139,214,.35);border-radius:999px;padding:5px 11px}
+.cy-start{min-height:40px;padding:0 14px;border-radius:999px;border:1px dashed rgba(197,139,214,.6);color:var(--plum);font-weight:600;font-size:13.5px}
+.cy-flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--ink-dim);width:100%}
+.cy-flow button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--ink-dim)}
+.cy-flow button.on{border-color:var(--plum);color:var(--ink);background:rgba(197,139,214,.12)}
+.cy-flow .cy-end{border-style:dashed;color:var(--plum)}
+.cy-move{margin:12px 14px 0;background:var(--panel2);border:1px solid rgba(197,139,214,.35);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
+.cy-move b{color:var(--ink);font-size:15px}
+.cy-move button{align-self:flex-start;color:var(--steel);font-weight:600;font-size:13.5px;min-height:40px}
+.ci-ctx{font-size:13px;color:var(--plum);background:rgba(197,139,214,.08);border:1px solid rgba(197,139,214,.3);border-radius:12px;padding:8px 12px}
+.ci-sym{display:flex;flex-wrap:wrap;gap:6px}
+.ci-sym button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--ink-dim)}
+.ci-sym button.on{border-color:var(--plum);background:rgba(197,139,214,.12);color:var(--ink)}
+.ci-ask{font-size:13px;color:var(--ink-dim);text-align:center}
+.ci-ask button{color:var(--steel);font-weight:600;font-size:13px;min-height:36px}
+.cy-wnote{margin-top:10px;font-size:13px;color:var(--ink-dim);background:rgba(197,139,214,.08);border:1px solid rgba(197,139,214,.3);border-radius:12px;padding:9px 12px}
+.cy-wnote b{color:var(--ink)}
+#cySheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
+#cySheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#cySheet .pn{position:relative;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px;animation:ehup .25s ease-out}
+#cySheet .eh-head{margin-bottom:0}
+.cy-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.cy-row b{font-size:15px;display:block}
+.cy-row small{display:block;font-size:12.5px;color:var(--ink-dim)}
+.cy-sw{width:52px;height:30px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);position:relative;flex:none}
+.cy-sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ink-faint);transition:.2s}
+.cy-sw.on{background:var(--plum);border-color:var(--plum)}
+.cy-sw.on::after{left:25px;background:#0e1114}
+.cy-opts{display:flex;flex-direction:column;gap:6px}
+.cy-opts button{display:flex;flex-direction:column;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.cy-opts button small{color:var(--ink-dim);font-size:12.5px}
+.cy-opts button.on{border-color:var(--plum);background:rgba(197,139,214,.1)}
 #rsToast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:480;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-size:13.5px;display:none;width:max-content;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 /* brak internetu */
 #netPill{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 6px);z-index:490;display:none;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--ink-dim);box-shadow:var(--shadow);white-space:nowrap;max-width:calc(100% - 32px)}
@@ -814,6 +849,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <div class="view on" id="v-train">
   <div class="week" id="weekStrip" aria-label="Tydzień"></div>
   <div class="phase-line" id="phaseLine"></div>
+  <div class="cy-box" id="cyBox"></div>
   <div class="section">
     <div class="eyebrow">Trening dnia</div>
     <div class="panel" id="workoutCard"></div>
@@ -889,6 +925,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
         <div class="b"><div class="n down" id="wDelta">—</div><div class="l">Zmiana</div></div>
       </div>
       <canvas class="chart" id="wChart"></canvas>
+      <div class="cy-wnote" id="wCycleNote" style="display:none"></div>
       <div class="empty" id="wEmpty">Zapisz pierwszą wagę, żeby zobaczyć trend.</div>
     </div>
   </div>
@@ -960,6 +997,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <!-- menu Więcej: każda pozycja otwiera tylko swoją część ustawień -->
   <nav class="more-menu" id="moreMenu" aria-label="Ustawienia">
     <button data-more="cw"><span class="ic">🎥</span><span class="tx"><b>Ćwiczenia · nauka techniki</b><small id="mmCw"></small></span><span class="go">›</span></button>
+    <button data-cycle id="mmCycleBtn"><span class="ic">🌙</span><span class="tx"><b>Cykl i samopoczucie</b><small id="mmCycle"></small></span><span class="go">›</span></button>
     <button data-rest-list><span class="ic">⏱</span><span class="tx"><b>Przerwy między seriami</b><small id="mmRest"></small></span><span class="go">›</span></button>
     <button data-more="prof"><span class="ic">👤</span><span class="tx"><b>Profil i plan</b><small id="mmProf"></small></span><span class="go">›</span></button>
     <button data-more="sync"><span class="ic">☁️</span><span class="tx"><b>Synchronizacja i konta</b><small id="mmSync"></small></span><span class="go">›</span></button>
@@ -1368,6 +1406,8 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <!-- przerwy między seriami -->
 <div id="rsSheet"><div class="bd" data-rsclose></div><div class="pn" id="rsPanel" role="dialog" aria-modal="true" aria-labelledby="rsTitle"></div></div>
 <div id="rsToast" role="status"></div>
+<!-- cykl i samopoczucie -->
+<div id="cySheet"><div class="bd" data-cyclose></div><div class="pn" id="cyPanel" role="dialog" aria-modal="true" aria-labelledby="cyTitle"></div></div>
 <!-- check-in przed treningiem -->
 <div id="ciSheet"><div class="bd" data-ciclose></div><div class="pn" id="ciPanel" role="dialog" aria-modal="true" aria-labelledby="ciTitle"></div></div>
 
@@ -2125,6 +2165,8 @@ function mergeState(local, inc){
     out.shopT[k]=Math.max(lt[k]||0, it[k]||0);
   });
 
+  // --- cykl (tylko gdy użytkowniczka włączyła synchronizację): nowsza kopia wygrywa, {off:true} usuwa ---
+  if(inc.cyc && (!local.cyc || (inc.cyc.at||0)>(local.cyc.at||0))) out.cyc=inc.cyc;
   // --- ustawienia / startDate: nowsze wg _settingsM ---
   const ls=local._settingsM||0, is=inc._settingsM||0;
   if(is>ls){
@@ -2375,7 +2417,7 @@ function renderWeekStrip(iso){
 }
 
 function renderToday(){
-  exIdxCache=null;   // dane mogły przyjść z synchronizacji
+  exIdxCache=null; CYC=null;   // dane mogły przyjść z synchronizacji
   const iso=viewDateISO();
   const dObj=parseISO(iso);
   const dow=dObj.getDay();
@@ -2401,6 +2443,7 @@ function renderToday(){
 
   // ---- workout ----
   renderWorkout(iso, wk, dow, dayIdx, L);
+  cyRenderBox(iso);
   // ---- meals ----
   renderMeals(iso, dow, L, wk);
   // ---- habits ----
@@ -2740,7 +2783,8 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
     if(missed) html+=`<div class="wo-saved">Ten trening nie został zrobiony. Możesz go odrobić dziś zamiast dzisiejszego planu (${esc(workoutOn(tdy).title)}).</div>`;
     html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>ZACZNIJ DZIŚ</button>`;
   }
-  if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${woStartLabel(iso,w,L)}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="Resetuj dzisiejszy trening"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>${hasSession(L)&&!(WO&&WO.iso===iso)?`<div class="wo-cont">Czas liczy się dalej od ${fmtDur(L.session.dur)} — przerwa do teraz się nie wlicza.</div>`:''}`;
+  if(iso===todayISO() && !allDone && L.checkin && L.checkin.plan==='move') html+=cyMoveHtml();
+  else if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${woStartLabel(iso,w,L)}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="Resetuj dzisiejszy trening"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>${hasSession(L)&&!(WO&&WO.iso===iso)?`<div class="wo-cont">Czas liczy się dalej od ${fmtDur(L.session.dur)} — przerwa do teraz się nie wlicza.</div>`:''}`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
     const key=iso+'_e'+i;
@@ -2824,6 +2868,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   bindMoveUi(card);
   const ws=card.querySelector('[data-wo-start]'); if(ws) ws.onclick=()=>ciStartOrAsk(iso);
   const cic=card.querySelector('[data-ci-edit]'); if(cic) cic.onclick=()=>openCheckin(iso, 'edit');
+  const cyt=card.querySelector('[data-cytrain]'); if(cyt) cyt.onclick=()=>{ L.checkin=Object.assign({}, L.checkin, {plan:'normal', at:Date.now()}); touch(L); save(); renderToday(); woStart(iso); };
   const wr=card.querySelector('[data-wo-reset]'); if(wr) wr.onclick=()=>woResetAsk(iso);
   const wt=card.querySelector('[data-wo-today]'); if(wt) wt.onclick=()=>startToday(iso);
   card.querySelectorAll('[data-hist]').forEach(b=>b.onclick=()=>openExHist(decodeURIComponent(b.dataset.hist)));
@@ -3420,6 +3465,7 @@ function renderWeight(){
   if(now&&start){const dv=now-start;dEl.textContent=(dv>0?'+':'')+dv.toFixed(1);dEl.className='n '+(dv<=0?'down':'');}
   else{dEl.textContent='—';dEl.className='n'}
   drawChart(ws);
+  cyWeightNote();
   document.getElementById('wEmpty').style.display=ws.length?'none':'block';
   renderMeasures();
 }
@@ -3496,6 +3542,7 @@ function drawChart(ws, canvasId){
   const Y=v=>pad.t+(H-pad.t-pad.b)*(1-(v-minY)/(maxY-minY));
   // grid
   ctx.strokeStyle='#2a3138';ctx.lineWidth=1;ctx.fillStyle='#5f6a72';ctx.font='10px Inter';ctx.textAlign='right';
+  if(!canvasId) cyChartBands(ctx, XT, t0, span, pad, W, H);   // dni okresu i tydzień przed nim
   for(let g=0;g<=3;g++){const v=minY+(maxY-minY)*g/3;const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillText(v.toFixed(1),pad.l-6,y+3)}
   // daty pod osią: co 1/2/4… tygodnie, tak by zmieściło się ~5 etykiet
   const days=span/DAY, stepW=[1,2,4,8,13].find(s=>days/(7*s)<=5)||26;
@@ -3712,6 +3759,9 @@ function moreStatus(){
   set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
   set('mmVer', APP_VER==='stable' ? 'Stabilna · v1.1' : 'Beta');
+  { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
+    if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
+    set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?' · synchronizowane':' · tylko na tym telefonie') : 'Wyłączone · dobrowolne'); }
   { const r=Object.values((S.adj&&S.adj.rest)||{}); set('mmRest', r.length ? 'Zmienione: '+r.length+(r.some(x=>x.by==='tr')?' (także od Trenera)':'') : 'Z planu · zmień przy ćwiczeniu'); }
   const n=exLibrary().reduce((a,g)=>a+g.ex.length,0), last=loadCoach().filter(m=>m.kind==='form').pop();
   const pl=n===1?'ćwiczenie':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'ćwiczenia':'ćwiczeń';
@@ -3720,6 +3770,7 @@ function moreStatus(){
 document.getElementById('moreBack').onclick=()=>{ if(history.state&&history.state.more) history.back(); else moreOpen(''); };
 document.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>moreOpen(b.dataset.more));
 document.querySelectorAll('#moreMenu [data-rest-list]').forEach(b=>b.onclick=()=>openRestList(todayISO()));
+document.querySelectorAll('#moreMenu [data-cycle]').forEach(b=>b.onclick=()=>openCycle());
 window.addEventListener('popstate',()=>{ const v=document.getElementById('v-set'); if(v.dataset.sec) moreOpen('', true); });
 function showView(v){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('on', x.dataset.v===v));
@@ -4100,8 +4151,9 @@ function buildCoachContext(){
   { const rows=Object.values(exIndex()).map(h=>{ const st=restStats(h.n), o=restOverride(h.n); if(!st && !o) return '';
       return '- '+h.n+': '+fmtDur(restCurrent(h.n, h.timed))+' ('+(o?(o.by==='tr'?'ustawił Trener':'ustawił użytkownik'):'z planu')+')'+(st?', średnio '+fmtDur(st.avg)+' z '+st.sessions+' tren.':''); }).filter(Boolean);
     if(rows.length) out.push('Przerwy między seriami (ustawione; średnio faktycznie):\n'+rows.join('\n')); }
+  { const cc=cyCoachContext(today); if(cc) out.push(cc); }
   // samopoczucie przed treningiem (check-in) — ostatnie 14 dni
-  { const since=addDays(today,-14), lv=['słabo','OK','dobrze'], sr=['mocne','lekkie','brak'], en=['niska','OK','wysoka'], pl={normal:'trening wg planu', light:'lżej (−10%)', light2:'lżej (−10%, seria mniej)', moved:'przesunięty', skip:'pominięty check-in'};
+  { const since=addDays(today,-14), lv=['słabo','OK','dobrze'], sr=['mocne','lekkie','brak'], en=['niska','OK','wysoka'], pl={normal:'trening wg planu', light:'lżej (−10%)', light2:'lżej (−10%, seria mniej)', moved:'przesunięty', move:'lekki ruch zamiast treningu', skip:'pominięty check-in'};
     const rows=Object.keys(S.log).filter(k=>k>=since && k<=today && S.log[k].checkin && S.log[k].checkin.plan!=='skip').sort().map(k=>{ const c=S.log[k].checkin;
       return '- '+dd(k)+': sen '+lv[c.sleep]+', zakwasy '+sr[c.sore]+', energia '+en[c.energy]+' → '+(pl[c.plan]||c.plan); });
     if(rows.length) out.push('Samopoczucie przed treningiem (check-in):\n'+rows.join('\n')); }
@@ -4936,7 +4988,7 @@ function swapUndo(i, iso){
 function woSwapRebuild(i){
   const w=workoutOn(WO.iso), e0=w.ex[i], e=effEx(e0,WO.iso), ts=timedSpec(e,e0), old=WO.ex[i];
   const kg=swapRecKg(e, WO.iso), noKg=!(kg>0) && (ts || swapAlts(e.n).length && (SG().some(g=>g.m.some(m=>m[0]===e.n.trim() && m[1]===0))));
-  WO.ex[i]=Object.assign({}, old, {n:e.n, s:e.s, timed:!!ts, secs:ts?ts.secs:0, sides:ts?ts.sides:1, up:ts?ts.up:false, step:progStep(e), rest:restFor(e,ts),
+  WO.ex[i]=Object.assign({}, old, {n:e.n, s:e.s, timed:!!ts, secs:ts?ts.secs:0, sides:ts?ts.sides:1, up:ts?ts.up:false, step:progStep(e), rest:restFor(e,ts)+ciRestPlus(WO.iso),
     sets:old.sets.map((v,j)=>old.ok[j]?v:{kg:noKg?null:kg, r:e.rp||0}), prPopped:false});
   WO.tStart=0; woSave(); woRender();
 }
@@ -4996,7 +5048,7 @@ function restSet(name, sec, by){
 function restApplyLive(name){
   if(!WO) return;
   WO.ex.forEach((x,i)=>{ if(x.n.trim()!==name) return;
-    const nr=restCurrent(x.n, x.timed);
+    const nr=restCurrent(x.n, x.timed)+ciRestPlus(WO.iso);
     if(WO.phase==='rest' && !WO.trans && i===WO.cur && WO.restPlan!==nr){ WO.restEnd+=(nr-WO.restPlan)*1000; WO.restPlan=nr; WO.beeped=false; }
     x.rest=nr; });
   woSave(); if(document.getElementById('woFocus').style.display==='flex'){ woRender(); woStep(); }
@@ -5077,17 +5129,22 @@ var CI_Q=[
   {k:'energy', l:'Energia teraz?', o:[['🪫','Niska'],['⚡','OK'],['🚀','Wysoka']]}
 ];
 function ciLight(L){ const c=L && L.checkin; return !!(c && (c.plan==='light' || c.plan==='light2')); }
-function ciVerdict(a){
+function ciVerdict(a, iso, sym){
   if(['sleep','sore','energy'].some(k=>a[k]==null)) return null;
-  const s=a.sleep+a.sore+a.energy;
-  if(s>=4) return {c:'ok', plan:'normal', t:'Dobra forma', d:'Trenujesz według planu.'};
+  const s=a.sleep+a.sore+a.energy, inf=cyInfo(iso||todayISO()), sy=new Set(sym||[]);
+  // cykl: decydują objawy; faza to tylko kontekst
+  if(inf && inf.sit!=='preg'){
+    if(inf.inPeriod && (sy.has('Skurcze')||sy.has('Obfite krwawienie')) && s<=3) return {c:'low', plan:'light', move:true, rest:true, t:'Okres z objawami', d:'Do wyboru: lżejszy trening (−10%, przerwy +30 s, bez mocnego obciążania brzucha) albo lekki ruch — 20–30 min spaceru i mobilności często łagodzi skurcze.'};
+    if(inf.phase==='lut' && (sy.size>=2 || s<=3)) return {c:'mid', plan:'light', rest:true, t:'Gorsze dni przed okresem', d:'Proponuję lżej: ciężar −10% i przerwy dłuższe o 30 s. Ten tydzień bywa trudniejszy — to normalne i przejściowe.'};
+  }
+  if(s>=4) return {c:'ok', plan:'normal', t:'Dobra forma', d:inf && inf.phase==='foll' ? 'Trenujesz według planu. U wielu kobiet to dobry moment na mocniejszy trening — jeśli czujesz moc, spróbuj rekordu.' : 'Trenujesz według planu.'};
   if(s>=2) return {c:'mid', plan:'light', t:'Gorszy dzień', d:'Proponuję lżej: ciężar −10%, serie bez zmian. Technika i ruch są dziś ważniejsze niż rekordy.'};
   return {c:'low', plan:'light2', t:'Mocne zmęczenie', d:'Proponuję lżej: ciężar −10% i jedna seria mniej w każdym ćwiczeniu — albo przesuń trening na inny dzień.'};
 }
 function ciIcons(c){ return CI_Q.map(q=>c[q.k]!=null?q.o[c[q.k]][0]:'').join(''); }
 function ciChip(L, iso){
   const c=L.checkin; if(!c || c.plan==='skip') return '';
-  const what=c.plan==='light2'?'lżejszy dzień (−10%, seria mniej)':c.plan==='light'?'lżejszy dzień (−10%)':c.plan==='moved'?'trening przesunięty':'wg planu';
+  const what=(c.plan==='light2'?'lżejszy dzień (−10%, seria mniej)':c.plan==='light'?'lżejszy dzień (−10%)':c.plan==='moved'?'trening przesunięty':c.plan==='move'?'lekki ruch zamiast treningu':'wg planu')+(c.restPlus?', przerwy +30 s':'');
   return `<div class="ci-chip">Samopoczucie: <b>${ciIcons(c)}</b> · <span class="${ciLight(L)?'lt':''}">${what}</span>${iso===todayISO()?' <button data-ci-edit>zmień</button>':''}</div>`;
 }
 // START TRENINGU: przy pierwszym starcie dnia najpierw check-in; WZNÓW / DOKOŃCZ startuje od razu
@@ -5099,29 +5156,37 @@ function ciStartOrAsk(iso){
 var CI=null;
 function openCheckin(iso, mode){
   const c=log(iso).checkin||{};
-  CI={iso, mode, a:{sleep:c.sleep, sore:c.sore, energy:c.energy}};
+  CI={iso, mode, a:{sleep:c.sleep, sore:c.sore, energy:c.energy}, sym:new Set(cySym(iso))};
   renderCheckin(); document.getElementById('ciSheet').style.display='flex'; document.getElementById('ciPanel').scrollTop=0;
 }
 function closeCheckin(){ document.getElementById('ciSheet').style.display='none'; }
 function renderCheckin(){
-  const v=ciVerdict(CI.a), hard=CI.a.sore===0, start=CI.mode==='start';
+  const v=ciVerdict(CI.a, CI.iso, [...CI.sym]), hard=CI.a.sore===0, start=CI.mode==='start';
+  const inf=cyInfo(CI.iso), symList=inf && inf.sit==='meno' ? CY_SYM_MENO : CY_SYM;
+  const ask=!cyGet().on && !cyGet().asked && S.profile && S.profile.sex==='f';
   const go=t=>start?'▶ '+t:t;
   document.getElementById('ciPanel').innerHTML=`<div class="eh-grab"></div>
     <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${start?'Zanim zaczniesz · 3 stuknięcia':'Samopoczucie dziś'}</div><h2 id="ciTitle">Jak się dziś czujesz?</h2></div><button class="eh-x" data-ciclose aria-label="Zamknij">✕</button></div>
+    ${inf && inf.day && (inf.sit==='natural' || inf.inPeriod) ? `<div class="ci-ctx">${inf.sit==='natural'?'Dzień '+inf.day+' cyklu · ':''}${CY_PH[inf.phase]||'okres'}</div>`:''}
     ${CI_Q.map(q=>`<div class="ci-q"><span class="l">${q.l}</span><div class="ci-seg">${q.o.map(([ic,l],j)=>`<button data-cia="${q.k}:${j}" class="${CI.a[q.k]===j?'on '+(j===0?'lo':j===2?'hi':''):''}" aria-pressed="${CI.a[q.k]===j}"><i>${ic}</i>${l}</button>`).join('')}</div></div>`).join('')}
-    ${v?`<div class="ci-verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${hard?'<small>Mocne zakwasy: dłuższa rozgrzewka (5–8 min) i pierwsza seria lżej.</small>':''}</div>`:''}
+    ${inf && inf.sit!=='preg' ? `<div class="ci-q"><span class="l">Coś jeszcze? <span style="color:var(--ink-faint);font-weight:500">(opcjonalnie)</span></span><div class="ci-sym">${symList.map(x=>`<button data-cisym="${x}" class="${CI.sym.has(x)?'on':''}" aria-pressed="${CI.sym.has(x)}">${x}</button>`).join('')}</div></div>`:''}
+    ${v?`<div class="ci-verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${hard?'<small>Mocne zakwasy: dłuższa rozgrzewka (5–8 min) i pierwsza seria lżej.</small>':''}${CI.sym.has('Obfite krwawienie')?'<small>Przy obfitym krwawieniu warto dziś zjeść coś z żelazem: wołowina, soczewica, szpinak z cytrusami.</small>':''}</div>`:''}
     ${!v?`<button class="wo-save" disabled style="opacity:.35">ODPOWIEDZ NA 3 PYTANIA</button>`
       : v.c==='ok'?`<button class="wo-save" data-ciplan="normal">${go('START TRENINGU').replace('START TRENINGU',start?'START TRENINGU':'ZAPISZ')}</button>`
-      : `<button class="wo-save" data-ciplan="${v.plan}">${start?'▶ TRENUJ LŻEJ':'LŻEJSZY DZIEŃ'}</button><button class="ci-alt" data-ciplan="normal">${start?'Trenuj normalnie':'Według planu'}</button>${v.c==='low'?'<button class="ci-alt" data-cimove>Przesuń trening na inny dzień</button>':''}`}
-    ${start?'<button class="sw-ask" data-ciplan="skip">Pomiń — od razu start</button>':''}`;
+      : `<button class="wo-save" data-ciplan="${v.plan}">${start?'▶ TRENUJ LŻEJ':'LŻEJSZY DZIEŃ'}</button>${v.move?'<button class="ci-alt" data-ciplan="move">Lekki ruch zamiast treningu</button>':''}<button class="ci-alt" data-ciplan="normal">${start?'Trenuj normalnie':'Według planu'}</button>${v.c==='low'&&!v.move?'<button class="ci-alt" data-cimove>Przesuń trening na inny dzień</button>':''}`}
+    ${start?'<button class="sw-ask" data-ciplan="skip">Pomiń — od razu start</button>':''}
+    ${ask?'<div class="ci-ask">Chcesz, żeby trening uwzględniał cykl? <button data-ciopency>Włącz śledzenie cyklu</button> · <button data-cinoask>Nie, dziękuję</button></div>':''}`;
 }
 function ciSave(plan){
   const iso=CI.iso, L=log(iso);
+  const v=ciVerdict(CI.a, iso, [...CI.sym]);
   L.checkin=Object.assign(plan==='skip'?{}:{sleep:CI.a.sleep, sore:CI.a.sore, energy:CI.a.energy}, {plan, at:Date.now()});
+  if(v && v.rest && (plan==='light'||plan==='light2')) L.checkin.restPlus=30;
   touch(L); save(); closeCheckin();
+  if(cyTracking() && plan!=='skip') cySetSym(iso, [...CI.sym]);   // objawy tylko w danych o cyklu (prywatność)
   if(iso===todayISO()) viewOffset=0;   // karta dzisiejszego dnia musi mieć nowe ciężary, zanim tryb treningu je odczyta
   renderToday();
-  if(CI.mode==='start') woStart(iso);
+  if(CI.mode==='start' && plan!=='move') woStart(iso);
   else if(WO && WO.iso===iso) woRefreshFromCard();
 }
 // tryb treningu po zmianie check-inu (albo „Wróć do planu”): niezrobione serie dostają ciężary i liczbę serii z karty
@@ -5139,13 +5204,162 @@ function woLightBanner(){
   return `<div class="wo-light"><span><b>Lżejszy dzień</b> · ciężar −10%${L.checkin.plan==='light2'?', seria mniej':''}</span><button id="woLightOff">Wróć do planu</button></div>`;
 }
 document.getElementById('ciSheet').addEventListener('click', ev=>{
-  const t=ev.target.closest('[data-ciclose],[data-cia],[data-ciplan],[data-cimove]'); if(!t) return;
+  const t=ev.target.closest('[data-ciclose],[data-cia],[data-cisym],[data-ciplan],[data-cimove],[data-ciopency],[data-cinoask]'); if(!t) return;
   const d=t.dataset;
   if('ciclose' in d) closeCheckin();
   else if(d.cia){ const [k,v]=d.cia.split(':'); CI.a[k]=+v; renderCheckin(); }
+  else if(d.cisym){ CI.sym.has(d.cisym)?CI.sym.delete(d.cisym):CI.sym.add(d.cisym); renderCheckin(); }
+  else if('ciopency' in d){ closeCheckin(); openCycle(); }
+  else if('cinoask' in d){ const c=Object.assign({}, cyGet(), {asked:true}); cySave(c); renderCheckin(); }
   else if(d.ciplan) ciSave(d.ciplan);
   else { const iso=CI.iso, L=log(iso); L.checkin={sleep:CI.a.sleep, sore:CI.a.sore, energy:CI.a.energy, plan:'moved', at:Date.now()}; touch(L); save(); closeCheckin(); openMove(iso); }
 });
+
+/* ---- cykl i samopoczucie (dobrowolne) ----
+   Dane o cyklu są wrażliwe: domyślnie tylko w localStorage (zelazo_cycle). Po włączeniu synchronizacji
+   kopia w S.cyc = {at, data} (nowsza wygrywa; wyłączenie zostawia {at, off:true}, żeby zniknęły z serwera).
+   Dopasowanie treningu wynika z objawów, dzień cyklu jest kontekstem (badania: różnice indywidualne są duże). */
+var CY_LS='zelazo_cycle', CYC=null;
+var CY_SIT=[
+  ['natural','Naturalny cykl','dzień i faza cyklu, prognoza okresu'],
+  ['hormonal','Antykoncepcja hormonalna','bez faz — tylko krwawienie i objawy'],
+  ['irregular','Nieregularny cykl / PCOS','bez prognoz — zapisane okresy i objawy'],
+  ['meno','Okołomenopauza / menopauza','objawy: uderzenia gorąca, sen, nastrój'],
+  ['preg','Ciąża / po porodzie','trening tylko za zgodą lekarza; aplikacja nie dopasowuje planu']
+];
+var CY_SYM=['Skurcze','Ból głowy','Wzdęcia','Obniżony nastrój','Ból piersi','Obfite krwawienie','Trawienie'];
+var CY_SYM_MENO=['Uderzenia gorąca','Gorszy sen','Obniżony nastrój','Ból stawów','Ból głowy'];
+function cyGet(){
+  if(CYC) return CYC;
+  let l={}; try{ l=JSON.parse(localStorage.getItem(CY_LS)||'null')||{}; }catch(e){}
+  const r=S.cyc;
+  if(r && (r.at||0)>(l.at||0)){
+    l = r.off ? Object.assign({}, l, {sync:false, at:r.at}) : (r.data||l);
+    try{ localStorage.setItem(CY_LS, JSON.stringify(l)); }catch(e){}
+  }
+  return CYC=l;
+}
+function cySave(c){
+  c.at=Date.now(); CYC=c;
+  try{ localStorage.setItem(CY_LS, JSON.stringify(c)); }catch(e){}
+  if(c.sync){ S.cyc={at:c.at, data:c}; save(); }
+  else if(S.cyc && !S.cyc.off){ S.cyc={at:c.at, off:true}; save(); }   // usuń kopię z serwera
+}
+function cyTracking(){ const c=cyGet(); return !!(c.on && c.sit && c.sit!=='none'); }
+function cyDiff(a,b){ return Math.round((parseISO(b)-parseISO(a))/864e5); }
+function cyPeriods(){ return ((cyGet().periods)||[]).slice().sort((a,b)=>a.s<b.s?-1:1); }
+function cyLen(){
+  const s=cyPeriods().map(p=>p.s), d=[];
+  for(let i=1;i<s.length;i++){ const x=cyDiff(s[i-1],s[i]); if(x>=15 && x<=60) d.push(x); }
+  const last=d.slice(-6); return last.length ? Math.round(last.reduce((a,b)=>a+b,0)/last.length) : 28;
+}
+var CY_PH={period:'okres', foll:'faza folikularna', ov:'okolice owulacji', lut:'faza lutealna'};
+function cyInfo(iso){
+  if(!cyTracking()) return null;
+  const c=cyGet(), ps=cyPeriods().filter(p=>p.s<=iso), p=ps[ps.length-1];
+  if(!p) return {day:null, phase:null, inPeriod:false, sit:c.sit};
+  const day=cyDiff(p.s, iso)+1, inPeriod=p.e ? iso<=p.e : day<=7, L=cyLen();
+  let phase=null;
+  if(c.sit==='natural' && day<=L+10) phase = inPeriod ? 'period' : day<=L-16 ? 'foll' : day<=L-12 ? 'ov' : 'lut';
+  else if(inPeriod) phase='period';
+  return {day, phase, inPeriod, p, len:L, sit:c.sit};
+}
+function cySym(iso){ return ((cyGet().sym||{})[iso])||[]; }
+function cySetSym(iso, list){ const c=Object.assign({}, cyGet()); c.sym=Object.assign({}, c.sym||{}); if(list.length) c.sym[iso]=list; else delete c.sym[iso]; cySave(c); }
+function cyPeriodStart(iso){ const c=Object.assign({}, cyGet()); c.periods=cyPeriods().filter(p=>p.s!==iso); c.periods.push({s:iso, e:null, flow:{}}); cySave(c); }
+function cyPeriodEnd(iso){ const c=Object.assign({}, cyGet()); const ps=cyPeriods(), p=ps.filter(q=>q.s<=iso).pop(); if(p){ p.e=iso; c.periods=ps; cySave(c); } }
+function cyFlow(iso, f){ const c=Object.assign({}, cyGet()); const ps=cyPeriods(), p=ps.filter(q=>q.s<=iso).pop(); if(p){ p.flow=Object.assign({}, p.flow||{}, {[iso]:f}); c.periods=ps; cySave(c); } }
+// pasek nad treningiem: dzień cyklu i jedno stuknięcie „okres się zaczął”
+function cyRenderBox(iso){
+  const box=document.getElementById('cyBox'); if(!box) return;
+  const inf=cyInfo(iso);
+  if(!inf || inf.sit==='preg'){ box.innerHTML=''; return; }
+  const today=iso===todayISO(), fl=inf.inPeriod && inf.p && inf.p.flow ? inf.p.flow[iso] : null;
+  let h='';
+  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) h+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${CY_PH[inf.phase]||(inf.inPeriod?'okres':'')}</span>`;
+  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>Krwawienie:</span>${[['light','Lekkie'],['medium','Średnie'],['heavy','Obfite']].map(([k,t])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${t}</button>`).join('')}<button class="cy-end" data-cyend>Okres się skończył</button></div>`;
+  else if(today && inf.sit!=='meno') h+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
+  box.innerHTML=h;
+  box.querySelectorAll('[data-cyflow]').forEach(b=>b.onclick=()=>{ cyFlow(iso, b.dataset.cyflow); cyRenderBox(iso); });
+  const e=box.querySelector('[data-cyend]'); if(e) e.onclick=()=>{ cyPeriodEnd(iso); cyRenderBox(iso); restToast('Zapisano koniec okresu'); };
+  const st=box.querySelector('[data-cystart]'); if(st) st.onclick=()=>{ cyPeriodStart(iso); cyRenderBox(iso); restToast('Zapisano: dzień 1 cyklu'); };
+}
+function cyMoveHtml(){
+  return `<div class="cy-move"><b>Lekki ruch · ok. 25 min</b><span>Spacer 15 min · krążenia bioder i koci grzbiet 5 min · rozciąganie dolnej części pleców 5 min. Ruch często łagodzi skurcze.</span><button data-cytrain>Jednak trenuję</button></div>`;
+}
+// dodatkowe 30 s przerwy w dni z objawami (check-in)
+function ciRestPlus(iso){ const c=S.log[iso] && S.log[iso].checkin; return (c && c.restPlus) || 0; }
+// Więcej → Cykl i samopoczucie
+var CYS=null;
+function openCycle(){ CYS={del:false}; renderCycle(); document.getElementById('cySheet').style.display='flex'; document.getElementById('cyPanel').scrollTop=0; }
+function closeCycle(){ document.getElementById('cySheet').style.display='none'; }
+function renderCycle(){
+  const c=cyGet(), last=cyPeriods().pop();
+  const sw=(k,on,label)=>`<button class="cy-sw ${on?'on':''}" data-cyt="${k}" aria-pressed="${on}" aria-label="${label}"></button>`;
+  document.getElementById('cyPanel').innerHTML=`<div class="eh-grab"></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Dobrowolne</div><h2 id="cyTitle">Cykl i samopoczucie</h2></div><button class="eh-x" data-cyclose aria-label="Zamknij">✕</button></div>
+    <div class="cy-row"><div><b>Śledzenie cyklu</b><small>Dopasuje trening, check-in i komentarze do wagi do Twojego cyklu i samopoczucia.</small></div>${sw('on', !!c.on, 'Śledzenie cyklu')}</div>
+    ${c.on?`<div class="sw-lab">Twoja sytuacja</div>
+      <div class="cy-opts">${CY_SIT.map(([k,t,d])=>`<button class="${c.sit===k?'on':''}" data-cysit="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}<button class="${c.sit==='none'?'on':''}" data-cysit="none"><b>Wolę nie śledzić</b><small>zwykły check-in, nic się nie zmienia</small></button></div>
+      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Ostatni okres zaczął się</div><input type="date" class="md-in" id="cyLast" value="${last?last.s:''}" max="${todayISO()}">`:''}
+      <div class="sw-lab">Prywatność</div>
+      <div class="cy-row"><div><b>Tylko na tym telefonie</b><small>${c.sync?'Synchronizacja włączona — dane o cyklu trafiają na serwer aplikacji razem z resztą. Administrator aplikacji technicznie ma do nich dostęp.':'Dane o cyklu nie są wysyłane na serwer ani na inne urządzenia.'}</small></div>${sw('local', !c.sync, 'Tylko na tym telefonie')}</div>
+      <div class="cy-row"><div><b>Trener może z tego korzystać</b><small>Dzień cyklu i objawy idą do Trenera tylko razem z Twoim pytaniem.</small></div>${sw('coach', c.coach!==false, 'Trener może korzystać z danych o cyklu')}</div>
+      <button class="ci-alt" data-cydel style="color:var(--red)">${CYS.del?'Na pewno? Stuknij jeszcze raz, żeby usunąć':'Usuń historię cyklu'}</button>`:''}
+    <div class="rs-hint">Nigdy nie włącza się sama. Dopasowanie treningu zawsze jest propozycją — decyzja należy do Ciebie. Aplikacja nie stawia diagnoz.</div>`;
+  const li=document.getElementById('cyLast');
+  if(li) li.onchange=()=>{ if(!li.value) return; const c2=Object.assign({}, cyGet()), ps=cyPeriods(); if(!ps.some(p=>p.s===li.value)){ ps.push({s:li.value, e:null, flow:{}}); c2.periods=ps; cySave(c2); } renderToday(); renderCycle(); };
+}
+document.getElementById('cySheet').addEventListener('click', ev=>{
+  const t=ev.target.closest('[data-cyclose],[data-cyt],[data-cysit],[data-cydel]'); if(!t) return;
+  const d=t.dataset, c=Object.assign({}, cyGet());
+  if('cyclose' in d){ closeCycle(); return; }
+  if(d.cyt==='on'){ c.on=!c.on; if(c.on && !c.sit) c.sit='natural'; if(c.coach==null) c.coach=true; }
+  else if(d.cyt==='local') c.sync=!c.sync;
+  else if(d.cyt==='coach') c.coach=c.coach===false;
+  else if(d.cysit) c.sit=d.cysit;
+  else if('cydel' in d){ if(!CYS.del){ CYS.del=true; renderCycle(); return; } c.periods=[]; c.sym={}; CYS.del=false; restToast('Usunięto historię cyklu'); }
+  cySave(c); renderCycle(); renderToday(); if(document.getElementById('v-progress').classList.contains('on')) renderWeight(); moreStatus();
+});
+// wykres wagi: dni okresu i tydzień przed nim (tylko naturalny cykl)
+function cyChartBands(ctx, XT, t0, span, pad, W, H){
+  const inf=cyTracking() && cyGet().sit==='natural'; if(!inf) return;
+  const DAY=864e5, L=cyLen(), starts=cyPeriods().map(p=>p.s), now=todayISO();
+  const next=starts.length ? addDays(starts[starts.length-1], L) : null;
+  const band=(a,b,alpha)=>{ const ta=parseISO(a).getTime(), tb=parseISO(b).getTime()+DAY; if(tb<t0 || ta>t0+span) return;
+    const x1=Math.max(pad.l, XT(ta)), x2=Math.min(W-pad.r, XT(tb)); if(x2<=x1) return;
+    ctx.fillStyle=`rgba(197,139,214,${alpha})`; ctx.fillRect(x1, pad.t, x2-x1, H-pad.t-pad.b); };
+  cyPeriods().forEach(p=>band(p.s, p.e||addDays(p.s,4), .22));
+  starts.concat(next && next<=addDays(now,7) ? [next] : []).forEach(s=>band(addDays(s,-7), addDays(s,-1), .09));
+}
+function cyWeightNote(){
+  const el=document.getElementById('wCycleNote'); if(!el) return;
+  const inf=cyInfo(todayISO()), ws=S.weights.slice().sort((a,b)=>a.d<b.d?-1:1);
+  el.style.display='none';
+  if(!inf || inf.sit!=='natural' || ws.length<2) return;
+  const lastW=ws[ws.length-1], wk=ws.filter(w=>w.d<=addDays(lastW.d,-6)).pop(); if(!wk) return;
+  const dv=lastW.w-wk.w, late=inf.phase==='lut' || (inf.inPeriod && inf.day<=3);
+  if(dv>=0.5 && late){ el.innerHTML=`<b>+${dv.toFixed(1).replace('.',',')} kg w ostatnim tygodniu?</b> ${inf.inPeriod?'To początek okresu':'To dni przed okresem'} — zwykle woda, nie tłuszcz. Patrz na trend (niebieska linia); cel kalorii się nie zmienia.`; el.style.display='block'; }
+}
+// kontekst dla Trenera — tylko za zgodą
+function cyCoachContext(today){
+  const c=cyGet(); if(!cyTracking() || c.coach===false) return '';
+  const inf=cyInfo(today), sitName=(CY_SIT.find(x=>x[0]===c.sit)||[])[1]||c.sit, ps=cyPeriods(), out=[];
+  out.push('Cykl (dane od użytkowniczki, za zgodą): '+sitName+(inf&&inf.day?', dziś dzień '+inf.day+(inf.phase?' ('+CY_PH[inf.phase]+')':''):'')+(c.sit==='natural'&&ps.length>=2?', średnia długość cyklu '+cyLen()+' dni':''));
+  if(ps.length) out.push('Ostatnie okresy: '+ps.slice(-4).map(p=>{ const f=Object.values(p.flow||{}); return prDD(p.s)+(p.e?'–'+prDD(p.e):'')+(f.includes('heavy')?' (obfity)':''); }).join(', '));
+  const since=addDays(today,-14), sy=Object.keys(c.sym||{}).filter(k=>k>=since).sort().map(k=>prDD(k)+': '+c.sym[k].join(', ').toLowerCase());
+  if(sy.length) out.push('Objawy (14 dni): '+sy.join('; '));
+  out.push('Zasady: empatycznie i rzeczowo, bez diagnoz; dopasowanie do objawów, nie do kalendarza (różnice między kobietami są duże); decyzja należy do niej. Wzrost wagi przed okresem to zwykle woda — nie obcinaj z tego powodu kalorii. Przy obfitych krwawieniach podpowiadaj produkty z żelazem.');
+  // sygnały ostrzegawcze
+  const lastS=ps.length?ps[ps.length-1].s:null;
+  if(lastS && (c.sit==='natural'||c.sit==='irregular')){
+    const gap=cyDiff(lastS, today);
+    if(gap>90) out.push('UWAGA: brak okresu od '+gap+' dni (bez ciąży/menopauzy/antykoncepcji w ustawieniach). Nie obniżaj kalorii, przy deficycie zaproponuj powrót do zapotrzebowania i kontakt z lekarzem (możliwy niski dostęp energii).');
+  }
+  if(c.sit==='natural' && ps.length>=4){ const d=[]; for(let i=1;i<ps.length;i++) d.push(cyDiff(ps[i-1].s, ps[i].s)); const r=d.slice(-3);
+    if(r.every(x=>x<21) || r.every(x=>x>35)) out.push('UWAGA: ostatnie cykle stale '+(r[0]<21?'krótsze niż 21':'dłuższe niż 35')+' dni — delikatnie zasugeruj konsultację z lekarzem.'); }
+  return out.join('\n');
+}
 
 const WO_LS='zelazo_workout';
 let WO=null, woTick=null, woWake=null;
@@ -5160,7 +5374,7 @@ function woBuild(iso){
       sets.push({kg: wIn ? (wIn.value===''?0:+wIn.value) : null, r: rIn&&rIn.value!=='' ? +rIn.value : (e.rp||0)});
     }
     return {key, n:e.n, s:e.s, timed:!!ts, secs:ts?ts.secs:0, sides:ts?ts.sides:1, up:ts?ts.up:false,
-      step:progStep(e), rest:restFor(e, ts), sets};
+      step:progStep(e), rest:restFor(e, ts)+ciRestPlus(iso), sets};
   });
 }
 // statystyki sesji z listy serii (tryb treningu i odtworzenie z godzin odhaczenia)

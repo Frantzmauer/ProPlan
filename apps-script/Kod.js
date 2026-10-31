@@ -858,6 +858,8 @@ function mergeState(local, inc){
   out.shop=JSON.parse(JSON.stringify(local.shop||{}));
   Object.keys(inc.shop||{}).forEach(function(k){ if(inc.shop[k]) out.shop[k]=true; });
 
+  // cykl (beta, tylko gdy użytkowniczka włączyła synchronizację): nowsza kopia wygrywa, {off:true} usuwa dane
+  if(inc.cyc && (!local.cyc || (inc.cyc.at||0)>(local.cyc.at||0))) out.cyc=inc.cyc;
   var ls=local._settingsM||0, is=inc._settingsM||0;
   if(is>ls){
     out.startDate=inc.startDate||out.startDate;
