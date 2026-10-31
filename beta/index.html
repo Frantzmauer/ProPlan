@@ -893,8 +893,9 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <div class="section" style="margin-top:14px" data-grp="ver">
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
-      <a class="ver-btn" id="verStable" href="../"><b>Stabilna</b><span>obecny wygląd</span></a>
-      <a class="ver-btn" id="verBeta" href="./"><b>Beta</b><span>nowa nawigacja · do testów</span></a>
+      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.1</b><span>sprawdzona wersja</span></a>
+      <a class="ver-btn" id="verBeta" href="./"><b>Beta</b><span>nowości przed wydaniem · do testów</span></a>
+      <a class="ver-btn" id="verOld" href="../v1.0/"><b>Poprzednia · v1.0</b><span>stary wygląd — gdyby coś nie działało</span></a>
     </div>
     <div class="ver-hint">Wszystkie wersje mają te same dane i synchronizację. Ikona na ekranie głównym otwiera wersję stabilną.</div>
   </div>
@@ -3581,7 +3582,7 @@ if(btnTestNotif) btnTestNotif.onclick=()=>{
 // Trening i Dieta pokazują ten sam dzień; pasek dnia i przełącznik tylko w nich
 /* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
 const MORE_TITLES={cw:['Ćwiczenia','Nauka techniki'],prof:['Profil i plan','Profil · kalorie · start'],sync:['Synchronizacja','Chmura · zużycie AI · konta'],
-  rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna albo beta']};
+  rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna, beta albo poprzednia']};
 function moreOpen(sec, fromHistory){
   const v=document.getElementById('v-set'); v.dataset.sec=sec||'';
   const t=MORE_TITLES[sec];
@@ -3601,7 +3602,7 @@ function moreStatus(){
   set('mmProf', `${p.name||'bez imienia'} · ${S.kcalGoal||DEFAULT_KCAL} kcal · start ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
   set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
-  set('mmVer', APP_VER==='stable' ? 'Stabilna' : 'Beta · nowa nawigacja');
+  set('mmVer', APP_VER==='stable' ? 'Stabilna · v1.1' : 'Beta');
   const n=exLibrary().reduce((a,g)=>a+g.ex.length,0), last=loadCoach().filter(m=>m.kind==='form').pop();
   const pl=n===1?'ćwiczenie':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'ćwiczenia':'ćwiczeń';
   set('mmCw', n+' '+pl+(last?' · ostatnio: '+(last.ex||'')+' — '+(last.grade||''):' · nagraj serię i dostań ocenę'));
@@ -4408,6 +4409,20 @@ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hos
 
 const APP_VER=(location.pathname.match(/\/(beta|zeta)\/(index\.html)?$/)||[])[1]||"stable";
 document.getElementById(APP_VER==="stable"?"verStable":"verBeta").classList.add("on");
+// ten sam plik działa jako stabilna (katalog główny) i beta (/beta/) — linki i znaczek zależą od adresu
+if(APP_VER==="stable"){
+  document.getElementById('verStable').href='./'; document.getElementById('verBeta').href='beta/'; document.getElementById('verOld').href='v1.0/';
+  document.querySelectorAll('.beta-tag').forEach(x=>x.remove());
+}
+// jednorazowo po aktualizacji do 1.1: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
+const APP_REL='1.1';
+try{
+  if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.1 — co nowego',
+      'Zakładki Trening i Dieta z przełącznikiem dni na dole. Tryb treningu: serie, przerwy, pauza i podsumowanie. Historia ćwiczeń i rekordy. Ocena techniki z nagrania. Trener mówi głosem, przesuwa dni i ustala kroki. Działa też bez internetu. Stary wygląd: Więcej → Wersja aplikacji → v1.0.'), 1200);
+    localStorage.setItem('zelazo_seen_rel', APP_REL);
+  }
+}catch(e){}
 
 // wipe
 document.getElementById('wipe').onclick=()=>{
