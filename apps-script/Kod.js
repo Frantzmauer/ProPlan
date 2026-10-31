@@ -839,6 +839,8 @@ function mergeState(local, inc){
     });
     // pomiar treningu (tryb treningu w becie): zostaje sesja, która skończyła się później
     if(a.session||b.session) m.session = (!b.session || (a.session && (a.session.end||0)>=(b.session.end||0))) ? a.session : b.session;
+    // samopoczucie przed treningiem (beta): nowsza odpowiedź wygrywa
+    if(a.checkin||b.checkin) m.checkin = (!b.checkin || (a.checkin && (a.checkin.at||0)>=(b.checkin.at||0))) ? a.checkin : b.checkin;
     out.log[iso]=m;
   });
 
