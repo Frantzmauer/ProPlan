@@ -679,6 +679,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-rest.ready .fg{stroke:var(--green)}
 .wo-rest.ready .lab{color:var(--green)}
 .wo-hint{font-size:12.5px;color:var(--ink-faint);text-align:center}
+.wo-cont{margin:6px 14px 0;font-size:12.5px;color:var(--ink-dim);text-align:center}
 #guideDialog{z-index:460}   /* opis techniki ma być widoczny także nad trybem treningu */
 .sync-warn{margin-top:4px;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,122,26,.45);background:var(--amber-soft);color:var(--amber);font-size:12.5px}
 .show-btn{min-height:40px;padding:0 12px;font-size:12.5px}
@@ -2620,7 +2621,9 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   let badge = w.title.split(' ')[0]; // FBW / UPPER / LOWER
   let html=`${mvBar}<div class="wk-head"><span class="badge">${badge}</span><span class="t">${w.title}</span>${mvBtn}</div>`;
   // tryb treningu: tylko dziś; po zapisanej sesji krótkie podsumowanie
-  if(hasSession(L)) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}${L.session.paused?' · pauzy '+fmtDur(L.session.paused):''}${(L.session.prs||[]).length?' · 🏆 rekordy: '+L.session.prs.length:''}</div>`;
+  // stara sesja nadpisana przez „Wznów” (sprzed zapisywania listy serii): odtwórz cały trening z godzin odhaczenia
+  if(hasSession(L) && !L.session.log && iso>=addDays(todayISO(),-7)){ const rs=woRebuildSession(iso); if(rs){ L.session=rs; touch(L); save(); } }
+  if(hasSession(L)) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}${L.session.paused-(L.session.gap||0)>0?' · pauzy '+fmtDur(L.session.paused-(L.session.gap||0)):''}${L.session.parts>1?' · dokończony po przerwie '+fmtDur(L.session.gap):''}${(L.session.prs||[]).length?' · 🏆 rekordy: '+L.session.prs.length:''}</div>`;
   const allDone=w.ex.every((e0,i)=>okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s);
   // przyszły (do 7 dni) albo pominięty (ostatnie 7 dni, nic nieodhaczone) trening: zamień z dzisiejszym dniem i od razu zacznij
   const tdy=todayISO(), missed=iso<tdy;
@@ -2629,7 +2632,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
     if(missed) html+=`<div class="wo-saved">Ten trening nie został zrobiony. Możesz go odrobić dziś zamiast dzisiejszego planu (${esc(workoutOn(tdy).title)}).</div>`;
     html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>ZACZNIJ DZIŚ</button>`;
   }
-  if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${hasSession(L)||w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i]))?'WZNÓW TRENING':'START TRENINGU'}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="Resetuj dzisiejszy trening"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>`;
+  if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${woStartLabel(iso,w,L)}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="Resetuj dzisiejszy trening"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>${hasSession(L)&&!(WO&&WO.iso===iso)?`<div class="wo-cont">Czas liczy się dalej od ${fmtDur(L.session.dur)} — przerwa do teraz się nie wlicza.</div>`:''}`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
     const key=iso+'_e'+i;
@@ -3970,7 +3973,7 @@ function buildCoachContext(){
   // treningi zmierzone w trybie treningu (czas, przerwy vs plan) — ostatnie 8
   { const ss=Object.keys(S.log).sort().filter(k=>k<=today && hasSession(S.log[k])).slice(-8).map(k=>{ const x=S.log[k].session, f=t=>fmtDur(t);
       return '- '+dd(k)+' '+(x.title||'trening')+': '+f(x.dur)+' (praca '+f(x.work)+'), przerwy śr. '+f(x.avgRest)+(x.avgRestPlan?' przy planie '+f(x.avgRestPlan):'')+', serie '+x.done+'/'+x.total+(x.skipped?' (pominięte '+x.skipped+')':'')
-        +(x.paused?', pauzy '+f(x.paused)+' (nieliczone do czasu)':'')+(x.trans?', przejścia między ćwiczeniami '+f(x.trans):'')
+        +(x.paused-(x.gap||0)>0?', pauzy '+f(x.paused-(x.gap||0))+' (nieliczone do czasu)':'')+(x.parts>1?', dokończony po przerwie '+f(x.gap):'')+(x.rebuilt?' [czasy odtworzone z godzin odhaczenia serii — przybliżone]':'')+(x.trans?', przejścia między ćwiczeniami '+f(x.trans):'')
         +((x.ex||[]).filter(e=>e.avgRest&&e.avgRest>e.restPlan*1.2).map(e=>'; '+e.n+' przerwa '+f(e.avgRest)+' vs '+f(e.restPlan)).join(''))
         +((x.prs||[]).length?'; rekordy: '+x.prs.map(r=>r.n+' '+prName(r.kind,r.t)+' '+r.now+' (było '+r.was+')').join(', '):''); });
     if(ss.length) out.push('Treningi z pomiarem czasu (tryb treningu):\n'+ss.join('\n')); }
@@ -4600,8 +4603,61 @@ function woBuild(iso){
       step:progStep(e), rest:restSecs(e, ts), sets};
   });
 }
+// statystyki sesji z listy serii (tryb treningu i odtworzenie z godzin odhaczenia)
+function woAgg(lg, exs){
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0, rests=lg.filter(l=>l.restBefore!=null);
+  return {work:lg.reduce((a,l)=>a+(l.work||0),0), trans:lg.reduce((a,l)=>a+(l.trans||0),0),
+    avgRest:Math.round(avg(rests.map(l=>l.restBefore))), avgRestPlan:Math.round(avg(rests.map(l=>l.restPlan||0))), done:lg.length,
+    ex:exs.map(x=>{ const mine=lg.filter(l=>l.ex===x.n), rs=mine.filter(l=>l.restBefore!=null);
+      return {n:x.n, sets:mine.length, of:x.s, avgRest:Math.round(avg(rs.map(l=>l.restBefore))), restPlan:x.rest, avgWork:Math.round(avg(mine.map(l=>l.work||0)))}; })};
+}
+function woStartLabel(iso, w, L){
+  if(WO && WO.iso===iso) return 'WZNÓW TRENING';
+  if(hasSession(L)) return 'DOKOŃCZ TRENING · '+w.ex.filter((e0,i)=>{ const e=effEx(e0,iso); return okCount(L.ex[iso+'_e'+i], e.s)===e.s; }).length+'/'+w.ex.length;
+  return w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i])) ? 'WZNÓW TRENING' : 'START TRENINGU';
+}
+// „Dokończ trening”: ten sam pomiar co zakończona część — czas liczy się dalej, przerwa między częściami jak pauza
+function woContinue(iso){
+  const L=log(iso); if(!hasSession(L)) return;
+  let s=L.session;
+  if(!s.log){ const rs=woRebuildSession(iso); if(rs){ s=L.session=rs; touch(L); save(); } }
+  const now=Date.now(), last=s.last||s.end||now;
+  WO.start=s.start||now;
+  WO.pausedTotal=Math.max(0, now-WO.start-(s.dur||0)*1000);   // aktywny czas startuje od zapisanego
+  WO.gap=(s.gap||0)+Math.max(0, Math.round((now-last)/1000));
+  WO.parts=(s.parts||1)+1;
+  WO.log=(s.log||[]).slice(); WO.prs=(s.prs||[]).slice(); WO.pauses=s.pauses||0; WO.skipped=s.skipped||0; WO.forms=(s.forms||[]).slice();
+  WO.ex.forEach(x=>{ if(WO.prs.some(p=>p.n===x.n)) x.prPopped=true; });
+  WO.setStart=now; WO.phaseAt=now;
+}
+// sesja zapisana przed listą serii, nadpisana przez „Wznów”: składamy cały trening z godzin odhaczenia serii.
+// Przerwa > 20 min między seriami = przerwa w treningu (nie wlicza się). Czas serii: średnia z zapisanej części albo 45 s.
+function woRebuildSession(iso){
+  const L=log(iso), s=L.session, w=workoutOn(iso);
+  if(!hasSession(L) || s.log || !w || w.type!=='lift') return null;
+  const ticks=[], exs=[];
+  w.ex.forEach((e0,i)=>{ const e=effEx(e0,iso), k=iso+'_e'+i, r=L.ex[k], rest=restSecs(e,timedSpec(e,e0));
+    exs.push({n:e.n, s:e.s, rest});
+    for(let n=1;n<=e.s;n++){ const t=setOk(r,n) && L._t && L._t['ok:'+k+':'+n]; if(t) ticks.push({t, ex:e.n, set:n, rest}); } });
+  if(!ticks.length || !ticks.some(x=>x.t<(s.start||0)-60e3)) return null;   // nic sprzed tej części — nie ma czego łączyć
+  ticks.sort((a,b)=>a.t-b.t);
+  const per=s.done?Math.max(20,Math.round((s.work||0)/s.done)):45, GAP=20*60, lg=[];
+  let gap=0, prev=null;
+  ticks.forEach(x=>{
+    let restBefore=null, trans=null;
+    if(prev){ const g=Math.round((x.t-prev.t)/1000);
+      if(g>GAP) gap+=g-per; else if(prev.ex===x.ex) restBefore=Math.max(0,g-per); else trans=Math.max(0,g-per); }
+    lg.push({ex:x.ex, set:x.set, work:per, restBefore, trans, restPlan:restBefore!=null?x.rest:null});
+    prev=x;
+  });
+  const start=ticks[0].t-per*1000, last=Math.max(ticks[ticks.length-1].t, s.last||s.end||0);
+  return Object.assign({start, end:Date.now(), last, dur:Math.max(0,Math.round((last-start)/1000)-gap-(s.paused||0)),
+    paused:(s.paused||0)+gap, pauses:s.pauses||0, gap, parts:gap?2:1, prs:s.prs||[], total:exs.reduce((a,x)=>a+x.s,0),
+    skipped:s.skipped||0, title:s.title||w.title, forms:s.forms||[], log:lg, rebuilt:true}, woAgg(lg, exs));
+}
 function woStart(iso){
   try{ tmrAudio=tmrAudio||new (window.AudioContext||window.webkitAudioContext)(); tmrAudio.resume&&tmrAudio.resume(); }catch(e){}
+  if(WO && WO.iso===iso && WO.phase==='summary'){ WO=null; woSave(); }   // podsumowanie zostało otwarte — dokończenie startuje z zapisanej sesji
   if(!WO || WO.iso!==iso){
     const ex=woBuild(iso), L=log(iso);
     WO={iso, title:workoutOn(iso).title, start:Date.now(), ex, cur:0, phase:'work', setStart:Date.now(),
@@ -4609,6 +4665,7 @@ function woStart(iso){
     // serie odhaczone wcześniej ręcznie liczą się jako zrobione
     WO.ex.forEach(x=>{ x.ok=x.sets.map((_,j)=>setOk(L.ex[x.key], j+1)); });
     WO.cur=woNext(0); if(WO.cur<0) WO.cur=0;
+    woContinue(iso);
   }
   woSave(); document.getElementById('woFocus').style.display='flex';
   woWakeLock(true);
@@ -4832,16 +4889,12 @@ function woRender(){
 }
 function woFinish(){
   if(WO.pausedAt){ WO.pausedTotal=(WO.pausedTotal||0)+(Date.now()-WO.pausedAt); WO.pausedAt=0; }
-  const t=Date.now(), rests=WO.log.filter(l=>l.restBefore!=null);
-  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
-  const done=WO.log.length;
-  // dur = aktywny czas (bez pauz); pauzy i przejścia między ćwiczeniami osobno
-  const sess={start:WO.start, end:t, dur:Math.max(0,Math.round(woActive(t)/1000)), work:WO.log.reduce((a,l)=>a+l.work,0),
-    paused:Math.round((WO.pausedTotal||0)/1000), pauses:WO.pauses||0, trans:WO.log.reduce((a,l)=>a+(l.trans||0),0), prs:WO.prs||[],
-    avgRest:Math.round(avg(rests.map(l=>l.restBefore))), avgRestPlan:Math.round(avg(rests.map(l=>l.restPlan))),
-    done, total:woTotal(), skipped:WO.skipped, title:WO.title, forms:WO.forms||[],
-    ex:WO.ex.map(x=>{ const rs=WO.log.filter(l=>l.ex===x.n&&l.restBefore!=null);
-      return {n:x.n, sets:WO.log.filter(l=>l.ex===x.n).length, of:x.s, avgRest:Math.round(avg(rs.map(l=>l.restBefore))), restPlan:x.rest, avgWork:Math.round(avg(WO.log.filter(l=>l.ex===x.n).map(l=>l.work)))}; })};
+  const t=Date.now();
+  // dur = aktywny czas (bez pauz); pauzy i przejścia osobno. log — żeby „Dokończ trening” dołączył kolejne serie, a nie nadpisał
+  const sess=Object.assign({start:WO.start, end:t, last:t, dur:Math.max(0,Math.round(woActive(t)/1000)),
+    paused:Math.round((WO.pausedTotal||0)/1000), pauses:WO.pauses||0, gap:WO.gap||0, parts:WO.parts||1, prs:WO.prs||[],
+    total:woTotal(), skipped:WO.skipped, title:WO.title, forms:WO.forms||[], log:WO.log},
+    woAgg(WO.log, WO.ex.map(x=>({n:x.n, s:x.s, rest:x.rest}))));
   const L=log(WO.iso); L.session=sess; touch(L); save();
   WO.phase='summary'; WO.sess=sess; clearInterval(woTick); woTick=null; woSave();
   document.getElementById('woTotal').textContent=fmtDur(sess.dur);
@@ -4859,11 +4912,12 @@ function woSummaryHtml(){
   const dv=vPrev?Math.round((vNow/vPrev-1)*100):null;
   return `<div class="wo-sum"><h2>Trening zakończony 💪</h2></div>
     <div class="wo-tiles">
-      <div class="wo-tile"><b>${fmtDur(s.dur)}</b><small>CAŁY TRENING${s.paused?' · PAUZY '+fmtDur(s.paused):''}</small></div>
+      <div class="wo-tile"><b>${fmtDur(s.dur)}</b><small>CAŁY TRENING${s.paused-(s.gap||0)>0?' · PAUZY '+fmtDur(s.paused-(s.gap||0)):''}</small></div>
       <div class="wo-tile"><b>${s.done}/${s.total}</b><small>SERIE ZROBIONE</small></div>
       <div class="wo-tile"><b>${fmtDur(s.work)}</b><small>PRACA (SERIE)</small></div>
       <div class="wo-tile ${slowAvg?'warn':''}"><b>${fmtDur(s.avgRest)}</b><small>ŚREDNIA PRZERWA${s.avgRestPlan?' · PLAN '+fmtDur(s.avgRestPlan):''}</small></div>
     </div>
+    ${s.parts>1?`<div class="wo-note"><b>Trening dokończony po przerwie ${fmtDur(s.gap)}.</b> Ta przerwa nie wlicza się do czasu treningu.${s.rebuilt?' Czasy pierwszej części odtworzone z godzin odhaczenia serii (przybliżone).':''}</div>`:''}
     ${(s.prs||[]).length?`<div class="wo-prs"><h4>🏆 Rekordy dziś · ${s.prs.length}</h4>${s.prs.map(p=>`<div><b>${esc(p.n)}</b><span>${prName(p.kind,p.t)}: ${esc(p.now)} <small>(poprzednio ${esc(p.was)})</small></span></div>`).join('')}</div>`:''}
     ${cmp?`<div class="wo-list"><h4>W porównaniu z poprzednim razem${dv!=null?' · objętość '+(dv>=0?'+':'')+dv+'%':''}</h4></div><div class="wo-rows">${cmp}</div>`:''}
     <div class="wo-rows">${s.ex.map(e=>`<div><span>${esc(e.n)} · ${e.sets}/${e.of}</span><span class="${e.avgRest>e.restPlan*1.2?'slow':''}">${e.avgRest?'przerwa '+fmtDur(e.avgRest)+' / plan '+fmtDur(e.restPlan):'—'}</span></div>`).join('')}</div>
