@@ -496,6 +496,21 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .coach-att button{min-width:36px;min-height:36px;border-radius:999px;color:var(--ink-dim);font-size:16px}
 .coach-ask-vid{margin-top:6px;min-height:40px;padding:0 12px;border-radius:10px;border:1px solid rgba(95,168,211,.45);background:rgba(95,168,211,.1);color:var(--steel);font-size:13px}
 .coach-b .att{display:block;font-size:12px;opacity:.8;margin-top:4px}
+/* menu Więcej */
+.more-menu{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.more-menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);text-align:left;color:var(--ink)}
+.more-menu button:active{transform:scale(.99);background:var(--panel2)}
+.more-menu .ic{font-size:22px;width:28px;text-align:center;flex:none}
+.more-menu .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.more-menu b{font-weight:600;font-size:15px}
+.more-menu small{font-size:12.5px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more-menu small.warn{color:var(--amber)}
+.more-menu .go{color:var(--ink-faint);font-size:22px}
+.more-back{min-height:40px;padding:0 12px 0 6px;margin:0 0 8px -6px;color:var(--steel);font-size:15px;font-weight:600;border-radius:10px}
+#v-set [data-grp]{display:none}
+#v-set[data-sec="cw"] [data-grp="cw"],#v-set[data-sec="prof"] [data-grp="prof"],#v-set[data-sec="sync"] [data-grp="sync"],
+#v-set[data-sec="rem"] [data-grp="rem"],#v-set[data-sec="data"] [data-grp="data"],#v-set[data-sec="ver"] [data-grp="ver"]{display:block}
+#v-set[data-sec]:not([data-sec=""]) #moreMenu{display:none}
 /* biblioteka ćwiczeń w Więcej */
 .lib-hint{font-size:13px;color:var(--ink-dim);margin-bottom:10px}
 .lib-search{margin-bottom:10px}
@@ -747,18 +762,29 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <!-- ============ USTAWIENIA ============ -->
 <div class="view" id="v-set">
   <div class="section" style="margin-top:10px">
-    <div class="eyebrow">Konfiguracja</div>
-    <h2 style="font-size:30px;font-weight:600">Ustawienia</h2>
+    <button class="more-back" id="moreBack" style="display:none">‹ Więcej</button>
+    <div class="eyebrow" id="moreEyebrow">Konfiguracja</div>
+    <h2 style="font-size:30px;font-weight:600" id="moreTitle">Ustawienia</h2>
   </div>
 
-  <div class="section" style="margin-top:14px">
+  <!-- menu Więcej: każda pozycja otwiera tylko swoją część ustawień -->
+  <nav class="more-menu" id="moreMenu" aria-label="Ustawienia">
+    <button data-more="cw"><span class="ic">🎥</span><span class="tx"><b>Ćwiczenia · nauka techniki</b><small id="mmCw"></small></span><span class="go">›</span></button>
+    <button data-more="prof"><span class="ic">👤</span><span class="tx"><b>Profil i plan</b><small id="mmProf"></small></span><span class="go">›</span></button>
+    <button data-more="sync"><span class="ic">☁️</span><span class="tx"><b>Synchronizacja i konta</b><small id="mmSync"></small></span><span class="go">›</span></button>
+    <button data-more="rem"><span class="ic">🔔</span><span class="tx"><b>Przypomnienia</b><small id="mmRem"></small></span><span class="go">›</span></button>
+    <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Eksport, import, plik, czyszczenie</small></span><span class="go">›</span></button>
+    <button data-more="ver"><span class="ic">🧪</span><span class="tx"><b>Wersja aplikacji</b><small id="mmVer"></small></span><span class="go">›</span></button>
+  </nav>
+
+  <div class="section" style="margin-top:14px" data-grp="cw">
     <div class="eyebrow">Ćwiczenia · nauka techniki</div>
     <p class="lib-hint">Wszystkie ćwiczenia z planu. Wejdź w ćwiczenie, nagraj serię (np. z lekkim ciężarem) i dostań ocenę Trenera — niezależnie od treningu.</p>
     <input type="search" class="md-in lib-search" id="libSearch" placeholder="Szukaj ćwiczenia…" autocomplete="off">
     <div id="exLib" class="lib"></div>
   </div>
 
-  <div class="section" style="margin-top:14px">
+  <div class="section" style="margin-top:14px" data-grp="ver">
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
       <a class="ver-btn" id="verStable" href="../"><b>Stabilna</b><span>obecny wygląd</span></a>
@@ -767,7 +793,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="ver-hint">Wszystkie wersje mają te same dane i synchronizację. Ikona na ekranie głównym otwiera wersję stabilną.</div>
   </div>
 
-  <div class="section" style="margin-top:14px">
+  <div class="section" style="margin-top:14px" data-grp="rem">
     <div class="eyebrow">Przypomnienia</div>
     <div class="panel">
       <div class="settings-row">
@@ -798,7 +824,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="note">Systemowe powiadomienia (poza aplikacją) wymagają otwarcia strony pod adresem <b>https</b> — nie działają z pliku otwartego z dysku ani na niektórych telefonach. Dlatego gdy nie są dostępne, ŻELAZO pokaże przypomnienie jako <b>baner w aplikacji</b> o wyznaczonej godzinie, o ile karta jest otwarta. Aby działały w tle telefonu, dodaj stronę do ekranu głównego lub hostuj ją pod https.</div>
   </div>
 
-  <div class="section">
+  <div class="section" data-grp="sync">
     <div class="eyebrow">Synchronizacja w chmurze (Google Apps Script)</div>
 
     <div class="panel">
@@ -862,7 +888,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     </details>
   </div>
 
-  <div class="section">
+  <div class="section" data-grp="data">
     <div class="eyebrow">Kopia i eksport (zapasowo)</div>
     <div class="panel">
       <div class="settings-row">
@@ -909,7 +935,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="note">Chcesz w pełni automatyczną synchronizację też na telefonie (bez eksportu)? To wymaga postawienia aplikacji pod adresem https i logowania Google — mogę przygotować taką wersję osobno.</div>
   </div>
 
-  <div class="section">
+  <div class="section" data-grp="prof">
     <div class="eyebrow">Profil</div>
     <div class="panel">
       <div class="settings-row">
@@ -953,7 +979,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="note">Zmiana profilu automatycznie przelicza szacowane zapotrzebowanie i podpowiedzi przy celu kalorycznym. To osobne od wagi zapisywanej codziennie w „Postępie" (ta jest do śledzenia trendu).</div>
   </div>
 
-  <div class="section">
+  <div class="section" data-grp="prof">
     <div class="eyebrow">Cel kaloryczny</div>
     <div class="panel">
       <div style="padding:16px">
@@ -972,7 +998,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="note">Rekomendacja: cel ok. 400–500 kcal poniżej szacowanego utrzymania (patrz Profil powyżej) — to ~0,4–0,5 kg tłuszczu tygodniowo. Koryguj po 2–3 tyg. wg trendu wagi. To nie jest porada medyczna.</div>
   </div>
 
-  <div class="section">
+  <div class="section" data-grp="prof">
     <div class="eyebrow">Start planu</div>
     <div class="panel">
       <div class="settings-row">
@@ -984,7 +1010,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 
   <input type="file" id="importFile" accept="application/json,.json" style="display:none">
 
-  <div class="section">
+  <div class="section" data-grp="data">
     <div class="eyebrow">Dane</div>
     <div class="panel">
       <div class="settings-row">
@@ -3416,13 +3442,43 @@ if(btnTestNotif) btnTestNotif.onclick=()=>{
    NAV + INIT
    ============================================================ */
 // Trening i Dieta pokazują ten sam dzień; pasek dnia i przełącznik tylko w nich
+/* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
+const MORE_TITLES={cw:['Ćwiczenia','Nauka techniki'],prof:['Profil i plan','Profil · kalorie · start'],sync:['Synchronizacja','Chmura · zużycie AI · konta'],
+  rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna albo beta']};
+function moreOpen(sec, fromHistory){
+  const v=document.getElementById('v-set'); v.dataset.sec=sec||'';
+  const t=MORE_TITLES[sec];
+  document.getElementById('moreBack').style.display=t?'inline-flex':'none';
+  document.getElementById('moreTitle').textContent=t?t[0]:'Ustawienia';
+  document.getElementById('moreEyebrow').textContent=t?t[1]:'Konfiguracja';
+  if(sec==='cw') renderExLib();
+  if(!sec) moreStatus();
+  // jeden wpis w historii na podsekcję: „wstecz” zawsze wraca do menu
+  try{ if(sec && !fromHistory){ if(history.state&&history.state.more) history.replaceState({more:sec},''); else history.pushState({more:sec},''); }
+       else if(!sec && !fromHistory && history.state&&history.state.more) history.replaceState(null,''); }catch(e){}
+  window.scrollTo(0,0);
+}
+function moreStatus(){
+  const set=(id,t,warn)=>{ const e=document.getElementById(id); if(e){ e.textContent=t; e.classList.toggle('warn',!!warn); } };
+  const p=S.profile||{}, st=parseISO(S.startDate);
+  set('mmProf', `${p.name||'bez imienia'} · ${S.kcalGoal||DEFAULT_KCAL} kcal · start ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
+  set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
+  set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
+  set('mmVer', APP_VER==='stable' ? 'Stabilna' : 'Beta · nowa nawigacja');
+  const n=exLibrary().reduce((a,g)=>a+g.ex.length,0), last=loadCoach().filter(m=>m.kind==='form').pop();
+  const pl=n===1?'ćwiczenie':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'ćwiczenia':'ćwiczeń';
+  set('mmCw', n+' '+pl+(last?' · ostatnio: '+(last.ex||'')+' — '+(last.grade||''):' · nagraj serię i dostań ocenę'));
+}
+document.getElementById('moreBack').onclick=()=>{ if(history.state&&history.state.more) history.back(); else moreOpen(''); };
+document.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>moreOpen(b.dataset.more));
+window.addEventListener('popstate',()=>{ const v=document.getElementById('v-set'); if(v.dataset.sec) moreOpen('', true); });
 function showView(v){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('on', x.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on', x.id==='v-'+v));
   document.body.classList.toggle('daily', v==='train'||v==='diet');
   window.scrollTo(0,0);
   if(v==='progress'){ renderWeight(); renderPlan(); }
-  if(v==='set'){ loadUsage(); renderExLib(); }   // świeże zużycie AI i lista ćwiczeń przy każdym wejściu w „Więcej”
+  if(v==='set'){ loadUsage(); moreOpen(''); }   // „Więcej” zawsze startuje od menu; świeże zużycie AI
   if(v==='shop')renderShop();
 }
 document.querySelectorAll('.nav button').forEach(b=>{ b.onclick=()=>showView(b.dataset.v); });
@@ -4041,7 +4097,7 @@ document.getElementById('coachClear').onclick=()=>{ if(confirm('Wyczyścić rozm
 document.getElementById('coachSend').onclick=()=>coachSend(document.getElementById('coachIn').value);
 document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); coachSend(e.target.value); } });
 document.querySelectorAll('#coachChips button').forEach(b=>b.onclick=()=>coachSend(b.textContent));
-document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('coachDialog').classList.remove('show'); document.querySelector('.nav button[data-v="set"]').click(); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),300); };
+document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('coachDialog').classList.remove('show'); document.querySelector('.nav button[data-v="set"]').click(); moreOpen('sync'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),300); };
 
 // ---- zużycie AI (koszt Trenera i szacowania kalorii, liczony na serwerze z tokenów × cennik) ----
 const fmtUsd=v=>'$'+(v>0&&v<0.01?v.toFixed(3):v.toFixed(2));
@@ -4399,7 +4455,7 @@ function woResume(){
   }catch(e){}
 }
 
-document.getElementById('syncWarn').onclick=()=>{ showView('set'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),200); };
+document.getElementById('syncWarn').onclick=()=>{ showView('set'); moreOpen('sync'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),200); };
 
 /* ============================================================
    ANALIZA TECHNIKI Z NAGRANIA (beta)
