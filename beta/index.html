@@ -772,6 +772,18 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .cy-flow button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--ink-dim)}
 .cy-flow button.on{border-color:var(--plum);color:var(--ink);background:rgba(197,139,214,.12)}
 .cy-flow .cy-end{border-style:dashed;color:var(--plum)}
+.cy-confirm{width:100%;background:var(--panel);border:1px solid rgba(197,139,214,.5);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
+.cy-confirm b{color:var(--ink);font-weight:600}
+.cy-confirm .row{display:flex;gap:8px;margin-top:4px}
+.cy-confirm .row button{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-weight:600;font-size:14px;color:var(--ink)}
+.cy-confirm .row .yes{border-color:var(--plum);color:var(--plum);background:rgba(197,139,214,.1)}
+.cy-list{display:flex;flex-direction:column;gap:6px}
+.cy-pr{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;gap:8px;align-items:center}
+.cy-pr.add{grid-template-columns:minmax(0,1fr) auto}
+.cy-pr .md-in{min-width:0}
+.cy-pr .g{font-size:12.5px;color:var(--ink-faint);white-space:nowrap}
+.cy-pr .g b{color:var(--amber);font-weight:600}
+.cy-pr button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink-dim);font-size:16px}
 .cy-move{margin:12px 14px 0;background:var(--panel2);border:1px solid rgba(197,139,214,.35);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
 .cy-move b{color:var(--ink);font-size:15px}
 .cy-move button{align-self:flex-start;color:var(--steel);font-weight:600;font-size:13.5px;min-height:40px}
@@ -5227,7 +5239,7 @@ var CY_SIT=[
   ['meno','Okołomenopauza / menopauza','objawy: uderzenia gorąca, sen, nastrój'],
   ['preg','Ciąża / po porodzie','trening tylko za zgodą lekarza; aplikacja nie dopasowuje planu']
 ];
-var CY_SYM=['Skurcze','Ból głowy','Wzdęcia','Obniżony nastrój','Ból piersi','Obfite krwawienie','Trawienie'];
+var CY_SYM=['Skurcze','Ból głowy','Wzdęcia','Obniżony nastrój','Ból piersi','Obfite krwawienie','Plamienie','Trawienie'];
 var CY_SYM_MENO=['Uderzenia gorąca','Gorszy sen','Obniżony nastrój','Ból stawów','Ból głowy'];
 function cyGet(){
   if(CYC) return CYC;
@@ -5282,7 +5294,22 @@ function cyRenderBox(iso){
   box.innerHTML=h;
   box.querySelectorAll('[data-cyflow]').forEach(b=>b.onclick=()=>{ cyFlow(iso, b.dataset.cyflow); cyRenderBox(iso); });
   const e=box.querySelector('[data-cyend]'); if(e) e.onclick=()=>{ cyPeriodEnd(iso); cyRenderBox(iso); restToast('Zapisano koniec okresu'); };
-  const st=box.querySelector('[data-cystart]'); if(st) st.onclick=()=>{ cyPeriodStart(iso); cyRenderBox(iso); restToast('Zapisano: dzień 1 cyklu'); };
+  const st=box.querySelector('[data-cystart]'); if(st) st.onclick=()=>cyAskStart(iso);
+}
+// „Okres się zaczął”: mniej niż 15 dni od poprzedniego to prawie zawsze pomyłka albo plamienie — najpierw pytamy
+function cyAskStart(iso){
+  const prev=cyPeriods().filter(p=>p.s<iso).pop(), gap=prev?cyDiff(prev.s, iso):99;
+  if(gap>=15){ cyDoStart(iso); return; }
+  const box=document.getElementById('cyBox');
+  box.innerHTML=`<div class="cy-confirm"><b>Poprzedni okres zaczął się ${prDD(prev.s)} — ${gap} ${gap===1?'dzień':'dni'} temu.</b>
+    <span>To nowy okres? Plamienie między miesiączkami możesz zaznaczyć w check-inie jako objaw.</span>
+    <div class="row"><button class="yes" data-cyyes>Tak, nowy okres</button><button data-cyno>Anuluj</button></div></div>`;
+  box.querySelector('[data-cyyes]').onclick=()=>cyDoStart(iso);
+  box.querySelector('[data-cyno]').onclick=()=>cyRenderBox(iso);
+}
+function cyDoStart(iso){
+  cyPeriodStart(iso); cyRenderBox(iso);
+  swapToast('Zapisano: dzień 1 cyklu', ()=>{ const c=Object.assign({}, cyGet()); c.periods=cyPeriods().filter(p=>p.s!==iso); cySave(c); renderToday(); });
 }
 function cyMoveHtml(){
   return `<div class="cy-move"><b>Lekki ruch · ok. 25 min</b><span>Spacer 15 min · krążenia bioder i koci grzbiet 5 min · rozciąganie dolnej części pleców 5 min. Ruch często łagodzi skurcze.</span><button data-cytrain>Jednak trenuję</button></div>`;
@@ -5294,21 +5321,30 @@ var CYS=null;
 function openCycle(){ CYS={del:false}; renderCycle(); document.getElementById('cySheet').style.display='flex'; document.getElementById('cyPanel').scrollTop=0; }
 function closeCycle(){ document.getElementById('cySheet').style.display='none'; }
 function renderCycle(){
-  const c=cyGet(), last=cyPeriods().pop();
+  const c=cyGet();
   const sw=(k,on,label)=>`<button class="cy-sw ${on?'on':''}" data-cyt="${k}" aria-pressed="${on}" aria-label="${label}"></button>`;
   document.getElementById('cyPanel').innerHTML=`<div class="eh-grab"></div>
     <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Dobrowolne</div><h2 id="cyTitle">Cykl i samopoczucie</h2></div><button class="eh-x" data-cyclose aria-label="Zamknij">✕</button></div>
     <div class="cy-row"><div><b>Śledzenie cyklu</b><small>Dopasuje trening, check-in i komentarze do wagi do Twojego cyklu i samopoczucia.</small></div>${sw('on', !!c.on, 'Śledzenie cyklu')}</div>
     ${c.on?`<div class="sw-lab">Twoja sytuacja</div>
       <div class="cy-opts">${CY_SIT.map(([k,t,d])=>`<button class="${c.sit===k?'on':''}" data-cysit="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}<button class="${c.sit==='none'?'on':''}" data-cysit="none"><b>Wolę nie śledzić</b><small>zwykły check-in, nic się nie zmienia</small></button></div>
-      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Ostatni okres zaczął się</div><input type="date" class="md-in" id="cyLast" value="${last?last.s:''}" max="${todayISO()}">`:''}
+      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Zapisane okresy (początek)</div>
+        <div class="cy-list">${cyPeriods().slice().reverse().map(p=>{ const nx=cyPeriods().find(q=>q.s>p.s), g=nx?cyDiff(p.s,nx.s):null;
+          return `<div class="cy-pr"><input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}" aria-label="Początek okresu"><span class="g">${g!=null?(g<15?'<b>cykl '+g+' dni?</b>':'cykl '+g+' dni'):'ostatni'}</span><button data-cyrm="${p.s}" aria-label="Usuń ten wpis">✕</button></div>`; }).join('')||'<div class="rs-hint">Brak zapisanych okresów.</div>'}</div>
+        <div class="cy-pr add"><input type="date" class="md-in" id="cyAdd" max="${todayISO()}" aria-label="Dodaj początek okresu"><span class="g">dodaj wcześniejszy okres</span></div>`:''}
       <div class="sw-lab">Prywatność</div>
       <div class="cy-row"><div><b>Tylko na tym telefonie</b><small>${c.sync?'Synchronizacja włączona — dane o cyklu trafiają na serwer aplikacji razem z resztą. Administrator aplikacji technicznie ma do nich dostęp.':'Dane o cyklu nie są wysyłane na serwer ani na inne urządzenia.'}</small></div>${sw('local', !c.sync, 'Tylko na tym telefonie')}</div>
       <div class="cy-row"><div><b>Trener może z tego korzystać</b><small>Dzień cyklu i objawy idą do Trenera tylko razem z Twoim pytaniem.</small></div>${sw('coach', c.coach!==false, 'Trener może korzystać z danych o cyklu')}</div>
       <button class="ci-alt" data-cydel style="color:var(--red)">${CYS.del?'Na pewno? Stuknij jeszcze raz, żeby usunąć':'Usuń historię cyklu'}</button>`:''}
     <div class="rs-hint">Nigdy nie włącza się sama. Dopasowanie treningu zawsze jest propozycją — decyzja należy do Ciebie. Aplikacja nie stawia diagnoz.</div>`;
-  const li=document.getElementById('cyLast');
-  if(li) li.onchange=()=>{ if(!li.value) return; const c2=Object.assign({}, cyGet()), ps=cyPeriods(); if(!ps.some(p=>p.s===li.value)){ ps.push({s:li.value, e:null, flow:{}}); c2.periods=ps; cySave(c2); } renderToday(); renderCycle(); };
+  const panel=document.getElementById('cyPanel');
+  panel.querySelectorAll('[data-cyedit]').forEach(inp=>inp.onchange=()=>{ const old=inp.dataset.cyedit, v=inp.value; if(!v || v===old) return;
+    const c2=Object.assign({}, cyGet()), ps=cyPeriods();
+    if(ps.some(p=>p.s===v)){ renderCycle(); return; }   // taki wpis już jest
+    ps.forEach(p=>{ if(p.s===old){ p.s=v; if(p.e && p.e<v) p.e=null; p.flow={}; } }); c2.periods=ps; cySave(c2); renderToday(); renderCycle(); });
+  panel.querySelectorAll('[data-cyrm]').forEach(b=>b.onclick=()=>{ const c2=Object.assign({}, cyGet()); c2.periods=cyPeriods().filter(p=>p.s!==b.dataset.cyrm); cySave(c2); renderToday(); renderCycle(); restToast('Usunięto wpis'); });
+  const ad=document.getElementById('cyAdd');
+  if(ad) ad.onchange=()=>{ if(!ad.value) return; const c2=Object.assign({}, cyGet()), ps=cyPeriods(); if(!ps.some(p=>p.s===ad.value)){ ps.push({s:ad.value, e:addDays(ad.value,4), flow:{}}); c2.periods=ps; cySave(c2); } renderToday(); renderCycle(); };
 }
 document.getElementById('cySheet').addEventListener('click', ev=>{
   const t=ev.target.closest('[data-cyclose],[data-cyt],[data-cysit],[data-cydel]'); if(!t) return;
