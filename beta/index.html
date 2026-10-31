@@ -8,10 +8,10 @@
 <link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
-<link rel="manifest" href="../manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ŻELAZO">
+<meta name="apple-mobile-web-app-title" content="ŻELAZO β">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{
@@ -680,6 +680,11 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-rest.ready .lab{color:var(--green)}
 .wo-hint{font-size:12.5px;color:var(--ink-faint);text-align:center}
 .wo-cont{margin:6px 14px 0;font-size:12.5px;color:var(--ink-dim);text-align:center}
+/* brak internetu */
+#netPill{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 6px);z-index:490;display:none;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--ink-dim);box-shadow:var(--shadow);white-space:nowrap;max-width:calc(100% - 32px)}
+#netPill i{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none}
+#netPill.ok i{background:var(--green)}
+#woFocus[style*="display: flex"] ~ #netPill{display:none!important}   /* w trybie treningu status jest w pasku postępu */
 #guideDialog{z-index:460}   /* opis techniki ma być widoczny także nad trybem treningu */
 .sync-warn{margin-top:4px;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,122,26,.45);background:var(--amber-soft);color:var(--amber);font-size:12.5px}
 .show-btn{min-height:40px;padding:0 12px;font-size:12.5px}
@@ -1270,6 +1275,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <button class="wo-save" id="prOk">DALEJ</button>
 </div></div>
 <div id="prToast" role="status"></div>
+<button id="netPill" role="status"><i></i><span id="netTxt"></span></button>
 
 <!-- historia ćwiczenia: wykres, rekordy, treningi -->
 <div id="exHist"><div class="bd" data-ehclose></div><div class="pn" id="ehPanel" role="dialog" aria-modal="true" aria-labelledby="ehTitle"></div></div>
@@ -1810,9 +1816,9 @@ async function cloudPush(){
     const j=await cloudCall('push', {data:S, clientMerge:true});
     // w międzyczasie zmieniono konto (np. dołączenie nowej osoby) — nie wpuszczaj danych poprzedniego
     if(j.data && CLOUD.account===acc){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
-    CLOUD.lastSync=Date.now(); CLOUD.lastError='';
-  }catch(e){ CLOUD.lastError=e.message; }
-  cloudBusy=false; saveCloud(); refreshCloudUI();
+    CLOUD.lastSync=Date.now(); CLOUD.lastError=''; CLOUD.pending=false;
+  }catch(e){ if(netDown(e)){ CLOUD.pending=true; CLOUD.lastError=''; } else CLOUD.lastError=e.message; }
+  cloudBusy=false; saveCloud(); refreshCloudUI(); updateNetPill();
 }
 async function cloudPull({silent}={}){
   if(!CLOUD.url){ if(!silent) alert('Najpierw wpisz URL skryptu.'); return; }
@@ -1824,7 +1830,8 @@ async function cloudPull({silent}={}){
     if(j.data && CLOUD.account===acc){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
     CLOUD.lastSync=Date.now(); CLOUD.lastError='';
     if(!silent) showInAppReminder('✅ Zsynchronizowano','Dane pobrane i scalone.');
-  }catch(e){ CLOUD.lastError=e.message; if(!silent) alert('Błąd synchronizacji: '+e.message); }
+  }catch(e){ if(netDown(e)){ CLOUD.pending=true; if(!silent) alert('Brak internetu. Dane są zapisane na telefonie — zsynchronizuję je, gdy wróci zasięg.'); }
+    else { CLOUD.lastError=e.message; if(!silent) alert('Błąd synchronizacji: '+e.message); } }
   cloudBusy=false; saveCloud(); refreshCloudUI();
 }
 async function cloudTest(){
@@ -4154,6 +4161,7 @@ async function coachAttImages(att){
 async function coachSend(text, {voice=false}={}){
   text=(text||'').trim(); if(!text||coachBusy) return;
   coachSpeakStop();
+  if(!navigator.onLine){ coachVoice.say('Brak internetu — Trener odpowie, gdy wróci zasięg. Wiadomość czeka w polu.','info'); return; }
   const att=coachAtt; coachAtt=null;
   const um={role:'user',content:text, id:coachId(), t:Date.now()};
   const h=loadCoach(); h.push(um); saveCoach(h);
@@ -4174,7 +4182,7 @@ async function coachSend(text, {voice=false}={}){
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
     reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');
   }catch(e){
-    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+e.message, id:coachId(), t:Date.now()}); saveCoach(h2);
+    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+(netDown(e)?'Brak połączenia z internetem. Spróbuj ponownie, gdy wróci zasięg.':e.message), id:coachId(), t:Date.now()}); saveCoach(h2);
   }
   coachBusy=false; renderCoach();
   if(document.getElementById('usageSection').style.display==='block') loadUsage();
@@ -4376,6 +4384,28 @@ function refreshSyncUI(){
 }
 
 // wersja aplikacji: zaznacz tę, w której jesteś
+/* ---- praca bez internetu ----
+   Kopia aplikacji na telefonie (sw.js, tylko /beta/). Zmiany zapisują się lokalnie jak zawsze;
+   bez sieci synchronizacja czeka (CLOUD.pending) i rusza sama po powrocie zasięgu. */
+function netDown(e){ return !navigator.onLine || /failed to fetch|load failed|networkerror|network request failed/i.test((e&&e.message)||''); }
+var netPillT=null;
+function updateNetPill(flash){
+  const p=document.getElementById('netPill'), t=document.getElementById('netTxt'); if(!p) return;
+  clearTimeout(netPillT);
+  const w=document.getElementById('woPTxt'); if(w && WO) w.textContent=w.textContent.replace(/ · offline$/,'')+(navigator.onLine?'':' · offline');
+  if(!navigator.onLine){ p.classList.remove('ok'); t.textContent='Offline'; p.style.display='inline-flex'; return; }
+  if(flash){ p.classList.add('ok'); t.textContent='Online'; p.style.display='inline-flex'; netPillT=setTimeout(()=>{ p.style.display='none'; }, 3000); return; }
+  p.style.display='none';
+}
+document.getElementById('netPill').onclick=()=>showInAppReminder(navigator.onLine?'Znów online':'Brak internetu',
+  navigator.onLine?'Wysyłam zmiany zapisane bez zasięgu.':'Aplikacja działa dalej: serie, posiłki i waga zapisują się na telefonie. Zsynchronizuję je, gdy wróci zasięg. Trener i ocena techniki potrzebują internetu.');
+function netResync(){ if(navigator.onLine && CLOUD.on && CLOUD.url && CLOUD.account && CLOUD.pending) cloudPush(); }
+window.addEventListener('online', ()=>{ updateNetPill(true); netResync(); });
+window.addEventListener('offline', ()=>updateNetPill());
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) netResync(); });
+setTimeout(updateNetPill, 0);   // po całym skrypcie — WO jest zadeklarowane niżej
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(()=>{});
+
 const APP_VER=(location.pathname.match(/\/(beta|zeta)\/(index\.html)?$/)||[])[1]||"stable";
 document.getElementById(APP_VER==="stable"?"verStable":"verBeta").classList.add("on");
 
@@ -4818,7 +4848,7 @@ function woStep(){
 function woRender(){
   const b=document.getElementById('woBody');
   document.getElementById('woPBar').style.width=(woDone()/woTotal()*100)+'%';
-  document.getElementById('woPTxt').textContent=`${woDone()} z ${woTotal()} serii · ${WO.title}`;
+  document.getElementById('woPTxt').textContent=`${woDone()} z ${woTotal()} serii · ${WO.title}${navigator.onLine?'':' · offline'}`;
   const eb=document.getElementById('woEnd');
   eb.textContent=WO.phase==='summary'?'Zamknij':WO.pausedAt?'▶ Wznów':'⏸ Wstrzymaj'; eb.classList.toggle('paused', !!WO.pausedAt);
   if(WO.phase==='summary'){ b.innerHTML=woSummaryHtml(); document.getElementById('woSave').onclick=woClose; return; }
