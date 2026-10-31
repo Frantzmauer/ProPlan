@@ -424,9 +424,17 @@ function coachReply(req, acc) {
         properties: { dzien: { type: 'string', description: 'RRRR-MM-DD' }, trening_z: { type: 'string', description: 'RRRR-MM-DD' } } } };
     required.push('przesuniecia');
   }
+  var rests = features.indexOf('przerwy') >= 0;
+  if (rests) {
+    props.przerwy = { type: 'array', description: 'Zmiana przerwy między seriami przy ćwiczeniu (sekundy 30–300, co 15 s). Proponuj tylko, gdy dane to uzasadniają ' +
+      '(„Przerwy między seriami” i spadki powtórzeń w historii): ciężkie wielostawowe zwykle 120–180 s, izolowane 60–90 s. Pusta lista, jeśli bez zmian.',
+      items: { type: 'object', additionalProperties: false, required: ['cwiczenie', 'sekundy'],
+        properties: { cwiczenie: { type: 'string', description: 'Nazwa ćwiczenia dokładnie jak w danych' }, sekundy: { type: 'integer' } } } };
+    required.push('przerwy');
+  }
   var tool = {
     name: 'zaproponuj_zmiany',
-    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii' + (steps ? ' i kroków' : '') + '. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
+    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii' + (steps ? ' i kroków' : '') + (rests ? ', a także przerwy między seriami' : '') + '. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
     strict: true,
     input_schema: { type: 'object', additionalProperties: false, required: required, properties: props }
   };
@@ -510,10 +518,16 @@ function cleanProposal(p, names) {
   var kroki = Math.round((+p.cel_krokow || 0) / 500) * 500;
   kroki = kroki ? Math.max(3000, Math.min(30000, kroki)) : 0;
   var mv = cleanMoves(p.przesuniecia);
-  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki && !mv.length) return null;
+  var rest = (Array.isArray(p.przerwy) ? p.przerwy : []).filter(function (r) {
+    return r && (!names.length || names.indexOf(r.cwiczenie) >= 0) && +r.sekundy > 0;
+  }).map(function (r) {
+    return { cwiczenie: String(r.cwiczenie), sekundy: Math.max(30, Math.min(300, Math.round(+r.sekundy / 15) * 15)) };
+  }).slice(0, 12);
+  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki && !mv.length && !rest.length) return null;
   var out = { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, zamiany_cwiczen: swaps, posilki: meals, cel_kcal: kcal };
   if (kroki) out.cel_krokow = kroki;   // tylko gdy Trener go zaproponował — stabilna wersja tego pola nie dostaje
   if (mv.length) out.przesuniecia = mv;
+  if (rest.length) out.przerwy = rest;   // tylko wersje z features 'przerwy'
   return out;
 }
 
