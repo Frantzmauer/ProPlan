@@ -593,7 +593,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .fc-thumbs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
 .fc-thumbs img{height:84px;border-radius:8px;border:1px solid var(--line);flex:none}
 /* poprawki UX z testów (przyciski ≥40 px, kontrast, zwarty nagłówek) */
-.wo-setno{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wo-setno{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap}
 .wo-show{flex:none;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--steel);font-size:13px;font-weight:600}
 /* historia ćwiczeń i rekordy */
 .hist-btn{display:inline-flex;align-items:center;gap:7px;margin:8px 0 0 32px;min-height:40px;padding:6px 12px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);font-size:12.5px;font-weight:600;text-align:left;max-width:calc(100% - 32px)}
@@ -680,6 +680,36 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .wo-rest.ready .lab{color:var(--green)}
 .wo-hint{font-size:12.5px;color:var(--ink-faint);text-align:center}
 .wo-cont{margin:6px 14px 0;font-size:12.5px;color:var(--ink-dim);text-align:center}
+/* Zamień */
+.show-btn.sw-btn{color:var(--amber);font-size:15px;padding:3px 9px}
+.wo-show.sw{color:var(--amber);border-color:rgba(255,122,26,.45);background:var(--amber-soft)}
+.wo-from{font-size:13px;color:var(--ink-dim);margin-top:-6px}
+.wo-from b{color:var(--amber);font-weight:600}
+.wo-from button{color:var(--steel);font-weight:600;font-size:13px;min-height:36px;padding:0 4px}
+#swSheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
+#swSheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#swSheet .pn{position:relative;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px;animation:ehup .25s ease-out}
+#swSheet .eh-head{margin-bottom:0}
+.sw-grp{font-size:13px;color:var(--ink-dim);margin-top:4px}
+.sw-lab{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.sw-warn{font-size:13px;background:rgba(226,84,58,.1);border:1px solid rgba(226,84,58,.4);border-radius:12px;padding:9px 12px}
+.sw-opts{display:flex;flex-direction:column;gap:8px}
+.sw-opt{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;width:100%;color:var(--ink)}
+.sw-opt.on{border-color:var(--amber);background:var(--amber-soft)}
+.sw-opt .n{font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:8px}
+.sw-opt .n span:last-child{font-family:var(--font-disp);font-size:18px;color:var(--amber);white-space:nowrap}
+.sw-opt small{font-size:12.5px;color:var(--ink-dim)}
+.sw-tag{font-size:11px;font-weight:700;color:#0e1114;background:var(--steel);border-radius:5px;padding:1px 6px;margin-right:6px}
+.sw-seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sw-seg button{min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:6px 10px;text-align:left;color:var(--ink)}
+.sw-seg button b{display:block;font-size:14px}
+.sw-seg button small{font-size:11.5px;color:var(--ink-dim)}
+.sw-seg button.on{border-color:var(--amber);background:var(--amber-soft)}
+.sw-split{font-size:13px;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.sw-split b{color:var(--ink)}
+.sw-ask{color:var(--steel);font-weight:600;font-size:14px;min-height:40px;align-self:center}
+#swToast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:480;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;font-size:13.5px;display:none;gap:6px;align-items:center;width:max-content;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+#swToast button{color:var(--steel);font-weight:600;padding:6px 10px;flex:none}
 /* brak internetu */
 #netPill{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 6px);z-index:490;display:none;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--ink-dim);box-shadow:var(--shadow);white-space:nowrap;max-width:calc(100% - 32px)}
 #netPill i{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none}
@@ -1277,6 +1307,9 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 </div></div>
 <div id="prToast" role="status"></div>
 <button id="netPill" role="status"><i></i><span id="netTxt"></span></button>
+<!-- Zamień ćwiczenie -->
+<div id="swSheet"><div class="bd" data-swclose></div><div class="pn" id="swPanel" role="dialog" aria-modal="true" aria-labelledby="swTitle"></div></div>
+<div id="swToast" role="status"><span id="swToastTxt"></span><button id="swToastUndo">Cofnij</button></div>
 
 <!-- historia ćwiczenia: wykres, rekordy, treningi -->
 <div id="exHist"><div class="bd" data-ehclose></div><div class="pn" id="ehPanel" role="dialog" aria-modal="true" aria-labelledby="ehTitle"></div></div>
@@ -2321,14 +2354,14 @@ function renderToday(){
    S.adj.log = [{at, from, summary, ex:[...], kcal, prevKcal}] — historia, do cofnięcia. */
 function exAdj(name, iso){
   const list=S.adj&&S.adj.ex&&S.adj.ex[name]; if(!list) return null;
-  let r=null; list.forEach(x=>{ if(x.from<=iso && (!r || x.from>=r.from)) r=x; }); return r;
+  let r=null; list.forEach(x=>{ if(x.from<=iso && (!x.to || x.to>=iso) && (!r || x.from>=r.from)) r=x; }); return r;   // to: zamiana tylko na jeden dzień
 }
 // wymiana (swap) zapisana pod starą nazwą; późniejsze korekty nowego ćwiczenia — pod nową nazwą
 function effEx(e, iso){
   let cur=e, a=exAdj(e.n, iso), guard=0;
   while(a && guard++<3){
     if(a.swap){
-      cur=Object.assign({}, cur, {n:a.swap.n, s:a.s, rp:a.rp, r:String(a.rp), w:a.w||0, start:a.w>0?a.w+' kg':'dobierz (RIR 2)', _adj:a, _from:cur._from||cur.n});
+      cur=Object.assign({}, cur, {n:a.swap.n, s:a.s, rp:a.rp, r:a.r||String(a.rp), w:a.w||0, start:a.w>0?a.w+' kg'+(a.ph?'/rękę':''):'dobierz (RIR 2)', _adj:a, _from:cur._from||cur.n});
       const b=exAdj(cur.n, iso); a=(b && b!==a && b.from>=a.from) ? b : null;
     } else {
       cur=Object.assign({}, cur, {s:a.s, rp:a.rp, r:String(a.rp), w:a.w>0?a.w:cur.w, _adj:a}); a=null;
@@ -2372,8 +2405,9 @@ function prevSession(exName, iso){
     if(idx<0) continue;
     const r=S.log[p] && S.log[p].ex && S.log[p].ex[p+'_e'+idx];
     if(!r || !r.sets || r.skip) continue;   // pominięte nie liczy się do progresji
-    const sets=[];
+    const sets=[], sp=swapSplit(exs[idx], p);
     for(let s=1; s<=exs[idx].s; s++){
+      if(sp && s<sp.fromSet) continue;
       const kg=parseFloat(r.sets['w'+s]), rp=parseFloat(r.sets['r'+s]);
       if(rp>0 && setOk(r,s)) sets.push({kg:kg>0?kg:0, rp});   // tylko serie odhaczone
     }
@@ -2662,7 +2696,8 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
       const prev=prevSession(e.n, iso);
       if(!prev || prev.iso < e._adj.from){
         const fmt=x=>String(x).replace('.',',');
-        prog={kg:e._adj.w, up:true, hint:`Trener (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)})${e._from?' zamiast „'+e._from+'”':''}: ${e._adj.w>0?fmt(e._adj.w)+' kg · ':''}${e.s}×${e.rp}`};
+        const who=e._adj.user?(e._adj.to?'Zamiana na dziś':`Twoja zamiana (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)})`):`Trener (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)})`, was=e._adj.was||e._from;
+        prog={kg:e._adj.w, up:true, hint:`${who}${was?' zamiast „'+was+'”':''}: ${e._adj.w>0?fmt(e._adj.w)+' kg'+(e._adj.ph?'/rękę':'')+' · ':''}${e.s}×${e.r==='max'?'max':e.rp}`};
       }
     }
     if(prog && prog.kg>0) recW=prog.kg;
@@ -2690,11 +2725,13 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
       <div class="ex-top">
         <span class="num">${i+1}</span>
         <span class="nm">${e.n}</span>
+        ${!exDone && !exSkip && iso>=todayISO() && swapAlts(e.n).length?`<button class="show-btn sw-btn" data-swap="${i}" aria-label="Zamień ćwiczenie">⇄</button>`:''}
         <button class="show-btn" data-guide="${encodeURIComponent(e.n)}">Pokaż</button>
         <span class="scheme">${e.s}×${e.r}</span>
       </div>
       ${exSkip?'':`${prog?`<div class="ex-sub" style="color:${prog.up?'var(--amber)':'var(--ink-dim)'}">${prog.up?'⬆ ':''}${prog.hint}</div>`
             :(e.start?`<div class="ex-sub">Start: ${startLabel(e)}</div>`:'')}
+      ${swapNote(e, iso, rec)}
       ${exHistBtn(e.n, iso)}
       ${ts && !exDone?timerHtml(key):''}
       <div class="sets per-set">${setsHtml}</div>`}
@@ -2721,6 +2758,8 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   const wr=card.querySelector('[data-wo-reset]'); if(wr) wr.onclick=()=>woResetAsk(iso);
   const wt=card.querySelector('[data-wo-today]'); if(wt) wt.onclick=()=>startToday(iso);
   card.querySelectorAll('[data-hist]').forEach(b=>b.onclick=()=>openExHist(decodeURIComponent(b.dataset.hist)));
+  card.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>openSwap(iso, +b.dataset.swap));
+  card.querySelectorAll('[data-swap-undo]').forEach(b=>b.onclick=()=>swapUndo(+b.dataset.swapUndo, iso));
 
   // bind inputs
   const exOf=el=>{ const x=el.closest('.ex'); return {k:x.dataset.k, n:+x.dataset.n}; };
@@ -3985,6 +4024,10 @@ function buildCoachContext(){
         +((x.ex||[]).filter(e=>e.avgRest&&e.avgRest>e.restPlan*1.2).map(e=>'; '+e.n+' przerwa '+f(e.avgRest)+' vs '+f(e.restPlan)).join(''))
         +((x.prs||[]).length?'; rekordy: '+x.prs.map(r=>r.n+' '+prName(r.kind,r.t)+' '+r.now+' (było '+r.was+')').join(', '):''); });
     if(ss.length) out.push('Treningi z pomiarem czasu (tryb treningu):\n'+ss.join('\n')); }
+  // zamiany ćwiczeń zrobione samodzielnie (przycisk Zamień) — ostatnie 14 dni
+  { const since=addDays(today,-14), why={busy:'zajęte stanowisko',pain:'BÓL',gear:'brak sprzętu'}, sw=[];
+    Object.values((S.adj&&S.adj.ex)||{}).forEach(l=>l.forEach(y=>{ if(y.user && y.swap && y.from>=since) sw.push('- '+dd(y.from)+': '+(y.was||'?')+' → '+y.swap.n+' ('+(why[y.reason]||'—')+', '+(y.to?'tylko ten dzień':'na stałe')+(y.fromSet?', od serii '+y.fromSet:'')+')'); }));
+    if(sw.length) out.push('Zamiany ćwiczeń zrobione przez użytkownika:\n'+sw.sort().join('\n')); }
   // najlepsze wyniki (rekordy) każdego ćwiczenia — z odhaczonych serii
   { const rec=Object.values(exIndex()).map(h=>{ const an=prAnalyze(h), b=prBest(h.kind,an); return '- '+h.n+': '+prTopText(h.kind,b.top)+' ('+dd(b.top.iso)+')'+(h.kind==='kg'&&b.e1.m.e1?', 1RM szac. ≈ '+prE1(b.e1.m.e1)+' kg':''); });
     if(rec.length) out.push('Rekordy ćwiczeń (najlepsza seria):\n'+rec.join('\n')); }
@@ -4462,12 +4505,12 @@ function exIndex(){
     w.ex.forEach((e0,i)=>{
       const e=effEx(e0,p), r=L.ex[p+'_e'+i];
       if(!r || !r.sets || r.skip) return;
-      const sets=[];
-      for(let s=1;s<=e.s;s++){ const kg=parseFloat(r.sets['w'+s]), rp=parseFloat(r.sets['r'+s]); if(rp>0 && setOk(r,s)) sets.push({kg:kg>0?kg:0, r:rp}); }
-      if(!sets.length) return;
-      const n=e.n.trim(), h=idx[n]||(idx[n]={n, timed:false, sess:[]});
-      if(timedSpec(e,e0)) h.timed=true;
-      h.sess.push({iso:p, sets, full:sets.length>=e.s, phase3:!!w.phase3});
+      const sp=swapSplit(e, p), cut=sp?sp.fromSet:1, before=[], sets=[];
+      for(let s=1;s<=e.s;s++){ const kg=parseFloat(r.sets['w'+s]), rp=parseFloat(r.sets['r'+s]); if(rp>0 && setOk(r,s)) (s<cut?before:sets).push({kg:kg>0?kg:0, r:rp}); }
+      const add=(name, list, full, timed)=>{ if(!list.length) return; const n=name.trim(), h=idx[n]||(idx[n]={n, timed:false, sess:[]});
+        if(timed) h.timed=true; h.sess.push({iso:p, sets:list, full, phase3:!!w.phase3}); };
+      if(sp) add(sp.was, before, false, false);   // zamiana w trakcie: wcześniejsze serie zostają przy poprzednim ćwiczeniu
+      add(e.n, sets, sets.length>=e.s-cut+1, !!timedSpec(e,e0));
     });
   });
   Object.values(idx).forEach(h=>{ h.kind=h.timed?'time':(h.sess.some(s=>s.sets.some(x=>x.kg>0))?'kg':'reps'); });
@@ -4631,6 +4674,209 @@ function renderRecords(){
   box.querySelectorAll('[data-hist]').forEach(x=>x.onclick=()=>openExHist(decodeURIComponent(x.dataset.hist)));
   const m=document.getElementById('recMore'); if(m) m.onclick=()=>{ recAll=!recAll; renderRecords(); };
 }
+
+/* ---- Zamień: ćwiczenie na inne na te same mięśnie ----
+   Grupy: [nazwa, przelicznik ciężaru względem wzorca grupy, sprzęt, ciężar na rękę, powtórzenia/czas, technika (dla spoza planu)].
+   Zamiana trafia do S.adj.ex jak zmiana od Trenera (user:1); „tylko dziś” ma to=dzień, w trakcie ćwiczenia fromSet + was. */
+function swapGroupsData(){ return [
+  {g:'klatka, triceps, przód barków', m:[
+    ['Wyciskanie sztangi — ławka płaska',1,'sztanga'],
+    ['Wyciskanie hantli — ławka płaska',.4,'hantle',1,'','Hantle nad klatką, łopatki ściągnięte. Opuszczasz do boków klatki, łokcie ~45°, wyciskasz do złączenia nad mostkiem.'],
+    ['Wyciskanie hantli — ławka skośna',.35,'hantle',1],
+    ['Wyciskanie na maszynie (chest press)',.9,'maszyna',0,'','Uchwyty na wysokości środka klatki, łopatki dociśnięte do oparcia. Wyciskasz bez blokowania łokci, wracasz powoli.'],
+    ['Rozpiętki w bramie (wyciąg)',.15,'wyciąg',1],
+    ['Pompki',0,'bez sprzętu',0,'max']]},
+  {g:'barki, triceps', m:[
+    ['Wyciskanie żołnierskie (stojąc)',1,'sztanga'],
+    ['Wyciskanie hantli siedząc (barki)',.4,'hantle',1],
+    ['Wyciskanie na maszynie barkowej',.85,'maszyna',0,'','Plecy przy oparciu, uchwyty na wysokości barków. Wyciskasz w górę bez wyginania lędźwi.'],
+    ['Wznosy hantli bokiem (barki)',.15,'hantle',1]]},
+  {g:'plecy (najszerszy), biceps', m:[
+    ['Ściąganie drążka wyciągu z góry',1,'wyciąg'],
+    ['Podciąganie na drążku (lub wyciąg)',0,'drążek',0,'max'],
+    ['Ściąganie wąskim uchwytem (wyciąg)',1,'wyciąg',0,'','Uchwyt V, lekko odchylony tułów. Ciągniesz do górnej części klatki, łokcie wzdłuż tułowia, łopatki w dół.'],
+    ['Wiosłowanie hantlem jednorącz',.5,'hantel',1]]},
+  {g:'plecy (środek), tył barków, biceps', m:[
+    ['Wiosłowanie sztangą w opadzie',1,'sztanga'],
+    ['Wiosłowanie hantlem jednorącz',.45,'hantel',1],
+    ['Wiosłowanie na wyciągu siedząc',.9,'wyciąg',0,'','Plecy proste, klatka do przodu. Ciągniesz do brzucha, ściągasz łopatki, wracasz bez garbienia.'],
+    ['Wiosłowanie na maszynie',.9,'maszyna',0,'','Klatka oparta o podparcie. Ciągniesz łokciami w tył, ściągasz łopatki, kontrolowany powrót.']]},
+  {g:'uda (przód), pośladki', m:[
+    ['Przysiad ze sztangą na karku',1,'sztanga'],
+    ['Przysiad z hantlami / Hack',.8,'hantle / maszyna'],
+    ['Wyciskanie nóg na suwnicy',1.8,'maszyna'],
+    ['Wypady chodzone z hantlami',.3,'hantle',1],
+    ['Przysiad goblet (hantel)',.4,'hantel',0,'','Hantel pionowo przy klatce, łokcie w dół. Schodzisz między kolana, plecy proste, wstajesz napierając piętami.']]},
+  {g:'tył uda, pośladki, dół pleców', m:[
+    ['Martwy ciąg (klasyczny/rumuński)',1,'sztanga'],
+    ['Rumuński martwy ciąg (RDL)',.85,'sztanga'],
+    ['Hip thrust (sztanga)',1,'sztanga',0,'','Łopatki na ławce, sztanga na biodrach (z podkładką). Wypychasz biodra do linii tułowia, napinasz pośladki, broda lekko w dół.'],
+    ['Uginanie nóg na maszynie',.35,'maszyna'],
+    ['Swing kettlebell',.25,'kettlebell']]},
+  {g:'biceps', m:[
+    ['Uginanie ramion ze sztangą (biceps)',1,'sztanga'],
+    ['Uginanie młotkowe (biceps)',.45,'hantle',1],
+    ['Uginanie ramion na wyciągu',.9,'wyciąg',0,'','Łokcie przy tułowiu, bez bujania. Uginasz do pełnego napięcia, opuszczasz powoli.']]},
+  {g:'triceps', m:[
+    ['Wyciskanie francuskie hantli (triceps)',1,'hantel'],
+    ['Prostowanie ramion na wyciągu (triceps)',1,'wyciąg'],
+    ['Pompki na poręczach (dipy)',0,'poręcze',0,'max','Tułów pionowo, schodzisz do ok. 90° w łokciach, wypychasz się bez bujania. Za trudne — poręcze z gumą albo maszyna.']]},
+  {g:'łydki', m:[
+    ['Wspięcia na palce (łydki)',1,'maszyna / sztanga'],
+    ['Wspięcia na palce siedząc',.6,'maszyna'],
+    ['Wspięcia na palce jednonóż z hantlem',.3,'hantel',1,'','Stopa na krawędzi stopnia, druga ręka trzyma się ściany. Pełne opuszczenie pięty, wspięcie z pauzą na górze.']]},
+  {g:'brzuch', m:[
+    ['Allahy (brzuch z wyciągiem)',1,'wyciąg'],
+    ['Brzuszki na ławce skośnej',0,'ławka'],
+    ['Unoszenie nóg na ławce skośnej',0,'ławka'],
+    ['Ab Wheel / brzuszki na piłce',0,'kółko / piłka'],
+    ['Russian twist z hantlem',.3,'hantel']]},
+  {g:'brzuch (izometria)', m:[
+    ['Deska (plank)',0,'bez sprzętu',0,'45 s'],
+    ['Deska boczna',0,'bez sprzętu',0,'30 s/stronę'],
+    ['Ab Wheel / brzuszki na piłce',0,'kółko / piłka']]},
+  {g:'chwyt, tułów', m:[
+    ['Farmer walk z hantlami',1,'hantle',1],
+    ['Swing kettlebell',.6,'kettlebell']]}
+]; }
+// leniwie: karta dnia renderuje się wcześniej w skrypcie niż ta część
+var SWAP_GROUPS_C=null;
+function SG(){ return SWAP_GROUPS_C||(SWAP_GROUPS_C=swapGroupsData()); }
+function swapAlts(name){
+  const n=(name||'').trim(), out=[], seen=new Set([n]);
+  SG().forEach(g=>{ const me=g.m.find(m=>m[0]===n); if(!me) return;
+    g.m.forEach(m=>{ if(seen.has(m[0])) return; seen.add(m[0]); out.push({n:m[0], k:m[1], eq:m[2], ph:!!m[3], r:m[4]||'', cue:m[5]||'', grp:g.g, base:me[1]}); }); });
+  return out;
+}
+function swapGroup(name){ const n=(name||'').trim(), g=SG().find(g=>g.m.some(m=>m[0]===n)); return g?g.g:''; }
+// zamiana w trakcie ćwiczenia: serie przed fromSet należą do poprzedniego ćwiczenia (was)
+function swapSplit(e, iso){ const a=e&&e._adj; return a && a.swap && a.user && a.from===iso && a.fromSet>1 && a.was ? a : null; }
+function swapDoneCount(rec, n){ let d=0; while(d<n && setOk(rec,d+1)) d++; return d; }
+// cofnąć można zamianę zrobioną dziś, dopóki nie odhaczono serii nowego ćwiczenia
+function swapCanUndo(e, iso, rec){
+  const a=e&&e._adj; if(!a || !a.user || !a.swap || a.from!==todayISO() || iso!==todayISO()) return false;
+  for(let s=a.fromSet||1; s<=e.s; s++) if(setOk(rec,s)) return false;
+  return true;
+}
+function swapNote(e, iso, rec){
+  const a=e._adj; if(!a || !a.user || !a.swap) return '';
+  const sp=swapSplit(e, iso), bits=[];
+  if(sp) bits.push(`Serie 1–${sp.fromSet-1}: ${esc(sp.was)}`);
+  if(swapCanUndo(e, iso, rec)) bits.push(`<button class="link-btn" data-swap-undo="${iso===todayISO()?w0Index(e, iso):''}">↺ Cofnij zamianę</button>`);
+  return bits.length?`<div class="ex-sub">${bits.join(' · ')}</div>`:'';
+}
+function w0Index(e, iso){ const w=workoutOn(iso); return w.ex.findIndex(e0=>effEx(e0,iso).n===e.n); }
+function adjOrigOf(name){ const ex=(S.adj&&S.adj.ex)||{}; for(const k in ex) for(const y of ex[k]) if(y.swap&&y.swap.n===name) return k; return name; }
+// zalecany ciężar ćwiczenia (jak na karcie): zmiana od Trenera/zamiana → historia → start z planu
+function swapRecKg(e, iso){
+  let kg=(e._adj && e._adj.w>0) ? e._adj.w : scaledStart(e);
+  const prog=progressionFor(e, iso, e.rp||0, false); if(prog && prog.kg>0) kg=prog.kg;
+  return kg||0;
+}
+function swapBaseKg(iso, i, e){
+  if(WO && WO.iso===iso && WO.ex[i]){ const x=WO.ex[i], k=woCurSet(i), v=x.sets[k<0?0:k]; if(v && v.kg>0) return v.kg; }
+  for(let s=1;s<=e.s;s++){ const inp=document.querySelector(`.set input[data-k="${iso}_e${i}"][data-s="w${s}"]`); if(inp && +inp.value>0) return +inp.value; }
+  return swapRecKg(e, iso);
+}
+function swapSuggest(o, base, reason, iso){
+  const prev=prevSession(o.n, iso), ex={n:o.n, start:o.ph?'/rękę':''};
+  let kg=0, src;
+  if(prev){ kg=Math.max(...prev.sets.map(x=>x.kg)); src=`ostatnio ${prDD(prev.iso)}: ${prSetsText(o.r&&!/max/.test(o.r)?'time':(prev.sets.some(x=>x.kg>0)?'kg':'reps'), prev.sets.map(x=>({kg:x.kg, r:x.rp})))}`; }
+  else if(o.k>0 && o.base>0 && base>0){ kg=roundLoad(ex, base*o.k/o.base); src=`przeliczone z ${prFmt(base)} kg — dopasuj po 1. serii`; }
+  else if(o.k>0) src='dobierz ciężar (2 powtórzenia w zapasie)';
+  else src=/\d+\s*s\b/.test(o.r)?'na czas':'ciężar ciała';
+  if(reason==='pain' && kg>0){ kg=roundLoad(ex, kg*0.8); src+=' · −20%, bo boli'; }
+  return {kg, src, hist:!!prev};
+}
+var SW=null;
+function openSwap(iso, i){ SW={iso, i, reason:'busy', pick:0, scope:'today'}; renderSwap(); document.getElementById('swSheet').style.display='flex'; document.getElementById('swPanel').scrollTop=0; }
+function closeSwap(){ document.getElementById('swSheet').style.display='none'; }
+function renderSwap(){
+  const w=workoutOn(SW.iso), e0=w.ex[SW.i], e=effEx(e0,SW.iso), rec=log(SW.iso).ex[SW.iso+'_e'+SW.i];
+  const done=swapDoneCount(rec, e.s), base=swapBaseKg(SW.iso, SW.i, e);
+  const opts=swapAlts(e.n).map(o=>Object.assign({o}, swapSuggest(o, base, SW.reason, SW.iso)));
+  // najpierw to, co już robiłeś (znany ciężar); przy braku sprzętu maszyny na koniec
+  opts.sort((x,y)=>(SW.reason==='gear'?(/maszyna/.test(x.o.eq)-/maszyna/.test(y.o.eq)):0) || (y.hist-x.hist));
+  Object.assign(SW, {opts, done, e, e0, ts:timedSpec(e,e0)});
+  const p=opts[SW.pick]||opts[0], left=e.s-done;
+  document.getElementById('swPanel').innerHTML=`<div class="eh-grab"></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Zamień ćwiczenie</div><h2 id="swTitle">${esc(e.n)}</h2>
+      <div class="sw-grp">Te same mięśnie: ${esc(swapGroup(e.n))}</div></div><button class="eh-x" data-swclose aria-label="Zamknij">✕</button></div>
+    <div class="sw-lab">Dlaczego?</div>
+    <div class="eh-chips">${[['busy','Zajęte stanowisko'],['pain','Coś boli'],['gear','Brak sprzętu']].map(([k,l])=>`<button data-swreason="${k}" class="${SW.reason===k?'on':''}">${l}</button>`).join('')}</div>
+    ${SW.reason==='pain'?'<div class="sw-warn">Ostry albo kłujący ból — przerwij to ćwiczenie. Zamiennik dostaje ciężar o 20% niższy, a Trener zobaczy tę zamianę.</div>':''}
+    <div class="sw-lab">Na co?</div>
+    <div class="sw-opts">${opts.map((x,j)=>`<button class="sw-opt ${j===SW.pick?'on':''}" data-swpick="${j}">
+      <span class="n"><span>${esc(x.o.n)}</span><span>${x.kg?prFmt(x.kg)+' kg'+(x.o.ph?' / rękę':''):(x.o.r==='max'?'MAX':x.o.r)}</span></span>
+      <small>${x.hist?'<span class="sw-tag">ROBIŁEŚ</span>':''}${esc(x.o.eq)} · ${x.src}</small></button>`).join('')}</div>
+    <div class="sw-lab">Na jak długo?</div>
+    <div class="sw-seg">
+      <button data-swscope="today" class="${SW.scope==='today'?'on':''}"><b>Tylko dziś</b><small>następnym razem wraca ćwiczenie z planu</small></button>
+      <button data-swscope="perm" class="${SW.scope==='perm'?'on':''}"><b>Na stałe</b><small>w planie od dziś, jak zmiana od Trenera</small></button>
+    </div>
+    ${done?`<div class="sw-split">Zrobione <b>${done} ${done===1?'seria':done<5?'serie':'serii'}</b> zostają jako ${esc(e.n)}. Pozostałe <b>${left}</b> zrobisz jako ${esc(p.o.n)}. Historia i rekordy liczą się osobno.</div>`:''}
+    <button class="wo-save" data-swapply>${done?'ZAMIEŃ POZOSTAŁE SERIE':'ZAMIEŃ'}</button>
+    <button class="sw-ask" data-swask>Żadne nie pasuje? Zapytaj Trenera →</button>`;
+}
+function swapApply(){
+  const {iso, i, e, done}=SW, x=SW.opts[SW.pick]; if(!x) return;
+  S.adj=S.adj||{}; S.adj.ex=S.adj.ex||{};
+  const k=adjOrigOf(e.n), old=S.adj.ex[k]||[], prevToday=old.find(y=>y.user && y.from===iso);
+  let rp=e.rp||0, r;
+  if(x.o.r){ r=x.o.r; const m=/(\d+)/.exec(x.o.r); rp=m?+m[1]:(rp||10); }
+  else if(SW.ts || !rp) rp=SW.ts?12:10;   // z ćwiczenia na czas / „max” na zwykłe powtórzenia
+  const a={from:iso, w:x.kg||0, ph:x.o.ph?1:0, s:e.s, rp, swap:{n:x.o.n, cue:x.o.cue}, user:1, reason:SW.reason,
+    was:prevToday?prevToday.was:e.n, id:Date.now()};
+  if(r) a.r=r;
+  if(SW.scope==='today') a.to=iso;
+  const fs=prevToday&&prevToday.fromSet ? prevToday.fromSet : (done>0 ? done+1 : 0); if(fs) a.fromSet=fs;
+  // ponowna zamiana tego samego dnia zastępuje poprzednią
+  S.adj.ex[k]=old.filter(y=>!(y.user && y.from===iso)).concat([a]);
+  S._settingsM=Date.now(); save(); closeSwap(); renderToday();
+  if(WO && WO.iso===iso) woSwapRebuild(i);
+  swapToast('Zamieniono na: '+x.o.n, ()=>swapUndo(i, iso));
+}
+function swapUndo(i, iso){
+  const w=workoutOn(iso), e=effEx(w.ex[i], iso), a=e._adj; if(!a || !a.user) return;
+  const ex=S.adj.ex; for(const k in ex){ ex[k]=ex[k].filter(y=>y.id!==a.id); if(!ex[k].length) delete ex[k]; }
+  S._settingsM=Date.now(); save(); renderToday();
+  if(WO && WO.iso===iso) woSwapRebuild(i);
+  document.getElementById('swToast').style.display='none';
+}
+// tryb treningu po zamianie: niezrobione serie dostają nowe ćwiczenie i ciężar, zrobione zostają
+function woSwapRebuild(i){
+  const w=workoutOn(WO.iso), e0=w.ex[i], e=effEx(e0,WO.iso), ts=timedSpec(e,e0), old=WO.ex[i];
+  const kg=swapRecKg(e, WO.iso), noKg=!(kg>0) && (ts || swapAlts(e.n).length && (SG().some(g=>g.m.some(m=>m[0]===e.n.trim() && m[1]===0))));
+  WO.ex[i]=Object.assign({}, old, {n:e.n, s:e.s, timed:!!ts, secs:ts?ts.secs:0, sides:ts?ts.sides:1, up:ts?ts.up:false, step:progStep(e), rest:restSecs(e,ts),
+    sets:old.sets.map((v,j)=>old.ok[j]?v:{kg:noKg?null:kg, r:e.rp||0}), prPopped:false});
+  WO.tStart=0; woSave(); woRender();
+}
+function woSwapLine(i){
+  const e=effEx(workoutOn(WO.iso).ex[i], WO.iso), a=e._adj; if(!a || !a.user || !a.swap || a.from!==WO.iso) return '';
+  const rec=log(WO.iso).ex[WO.ex[i].key];
+  return `<div class="wo-from">zamiast <b>${esc(a.was||'')}</b> · ${a.to?'tylko dziś':'na stałe od dziś'}${swapCanUndo(e, WO.iso, rec)?' · <button id="woSwapUndo">↺ cofnij</button>':''}</div>`;
+}
+var swToastT=null;
+function swapToast(msg, undo){
+  const t=document.getElementById('swToast'); document.getElementById('swToastTxt').textContent=msg; t.style.display='flex';
+  document.getElementById('swToastUndo').onclick=()=>{ t.style.display='none'; undo(); };
+  clearTimeout(swToastT); swToastT=setTimeout(()=>{ t.style.display='none'; }, 6000);
+}
+document.getElementById('swSheet').addEventListener('click', ev=>{
+  const t=ev.target.closest('[data-swclose],[data-swreason],[data-swpick],[data-swscope],[data-swapply],[data-swask]'); if(!t) return;
+  const d=t.dataset;
+  if('swclose' in d) closeSwap();
+  else if(d.swreason){ SW.reason=d.swreason; SW.pick=0; renderSwap(); }
+  else if(d.swpick!=null){ SW.pick=+d.swpick; renderSwap(); }
+  else if(d.swscope){ SW.scope=d.swscope; renderSwap(); }
+  else if('swapply' in d) swapApply();
+  else {
+    const why={busy:'zajęte stanowisko', pain:'coś boli', gear:'brak sprzętu'}[SW.reason], n=SW.e.n;
+    closeSwap();
+    document.getElementById('coachDialog').style.zIndex=document.getElementById('woFocus').style.display==='flex'?'455':'';   // nad trybem treningu
+    openCoach(); document.getElementById('coachIn').value=`Nie mogę dziś zrobić: ${n} (${why}). Zaproponuj zamiennik na te same mięśnie, z ciężarem.`;
+  }
+});
 
 const WO_LS='zelazo_workout';
 let WO=null, woTick=null, woWake=null;
@@ -4885,7 +5131,7 @@ function woRender(){
   }
   const i=WO.cur, x=WO.ex[i], k=woCurSet(i)<0?x.s-1:woCurSet(i), v=x.sets[k];
   let h=`<div class="wo-name"><span class="t">${esc(x.n)}</span><div class="nv"><button id="woPrev" aria-label="Poprzednie ćwiczenie" ${i===0?'disabled':''}>‹</button><button id="woNx" aria-label="Następne ćwiczenie" ${i===WO.ex.length-1?'disabled':''}>›</button></div></div>
-    <div class="wo-setno"><span>Seria <b>${k+1}</b> z ${x.s} · przerwa ${fmtDur(x.rest)}</span><span style="display:flex;gap:6px">${exIndex()[x.n.trim()]?`<button class="wo-hist" id="woHist" aria-label="Historia ćwiczenia">${IC_HIST}</button>`:''}<button class="wo-show" id="woShow">Pokaż technikę</button></span></div>
+    <div class="wo-setno"><span>Seria <b>${k+1}</b> z ${x.s} · przerwa ${fmtDur(x.rest)}</span><span style="display:flex;gap:6px">${exIndex()[x.n.trim()]?`<button class="wo-hist" id="woHist" aria-label="Historia ćwiczenia">${IC_HIST}</button>`:''}${woCurSet(i)>=0 && swapAlts(x.n).length?'<button class="wo-show sw" id="woSwap">⇄ Zamień</button>':''}<button class="wo-show" id="woShow">Pokaż technikę</button></span></div>${woSwapLine(i)}
     <div class="wo-dots">${x.ok.map((d,j)=>`<i class="${d?((x.prSet||[])[j]?'pr':'ok'):j===k?'cur':''}"></i>`).join('')}</div>`;
   if(WO.phase==='rest'){
     const nx=WO.ex[WO.cur], nk=woCurSet(WO.cur), nv=nx.sets[nk], C=2*Math.PI*90;
@@ -4916,7 +5162,9 @@ function woRender(){
   on('woTimer', g(()=>{ WO.tStart=Date.now(); WO.lastSec=null; woRender(); }));
   on('woStopUp', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].sets[k2].r=Math.round((Date.now()-WO.tStart)/1000); WO.tStart=0; woSetDone(); }));
   on('woShow', ()=>openGuide(x.n));
-  on('woHist', ()=>openExHist(x.n.trim()));   // opis techniki nad ekranem treningu
+  on('woHist', ()=>openExHist(x.n.trim()));
+  on('woSwap', ()=>openSwap(WO.iso, WO.cur));
+  on('woSwapUndo', ()=>swapUndo(WO.cur, WO.iso));   // opis techniki nad ekranem treningu
   on('woCam', ()=>openFormCheck(x.n, (v.kg?String(v.kg).replace('.',',')+' kg × ':'')+v.r+(x.timed?' s':' powt.')));
   on('woPlus', ()=>{ WO.restEnd+=15000; WO.restPlan+=15; WO.beeped=false; woSave(); woStep(); });
   on('woSkip', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].ok[k2]=true; WO.ex[WO.cur].skipped=(WO.ex[WO.cur].skipped||0)+1; WO.skipped++; WO.tStart=0;
