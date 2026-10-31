@@ -772,6 +772,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .cy-flow button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--ink-dim)}
 .cy-flow button.on{border-color:var(--plum);color:var(--ink);background:rgba(197,139,214,.12)}
 .cy-flow .cy-end{border-style:dashed;color:var(--plum)}
+.cy-endnote{font-size:12.5px;color:var(--ink-faint)}
 .cy-confirm{width:100%;background:var(--panel);border:1px solid rgba(197,139,214,.5);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
 .cy-confirm b{color:var(--ink);font-weight:600}
 .cy-confirm .row{display:flex;gap:8px;margin-top:4px}
@@ -5272,7 +5273,7 @@ function cyInfo(iso){
   if(!cyTracking()) return null;
   const c=cyGet(), ps=cyPeriods().filter(p=>p.s<=iso), p=ps[ps.length-1];
   if(!p) return {day:null, phase:null, inPeriod:false, sit:c.sit};
-  const day=cyDiff(p.s, iso)+1, inPeriod=p.e ? iso<=p.e : day<=7, L=cyLen();
+  const day=cyDiff(p.s, iso)+1, inPeriod=p.e ? iso<=p.e : (day<=7 || !!(p.still && iso<=addDays(p.still,1))), L=cyLen();
   let phase=null;
   if(c.sit==='natural' && day<=L+10) phase = inPeriod ? 'period' : day<=L-16 ? 'foll' : day<=L-12 ? 'ov' : 'lut';
   else if(inPeriod) phase='period';
@@ -5281,7 +5282,11 @@ function cyInfo(iso){
 function cySym(iso){ return ((cyGet().sym||{})[iso])||[]; }
 function cySetSym(iso, list){ const c=Object.assign({}, cyGet()); c.sym=Object.assign({}, c.sym||{}); if(list.length) c.sym[iso]=list; else delete c.sym[iso]; cySave(c); }
 function cyPeriodStart(iso){ const c=Object.assign({}, cyGet()); c.periods=cyPeriods().filter(p=>p.s!==iso); c.periods.push({s:iso, e:null, flow:{}}); cySave(c); }
-function cyPeriodEnd(iso){ const c=Object.assign({}, cyGet()); const ps=cyPeriods(), p=ps.filter(q=>q.s<=iso).pop(); if(p){ p.e=iso; c.periods=ps; cySave(c); } }
+function cyPeriodEnd(iso){ const c=Object.assign({}, cyGet()); const ps=cyPeriods(), p=ps.filter(q=>q.s<=iso).pop(); if(p){ p.e=iso; delete p.auto; c.periods=ps; cySave(c); } }
+function cyPatchPeriod(start, patch){ const c=Object.assign({}, cyGet()), ps=cyPeriods(); ps.forEach(p=>{ if(p.s===start) Object.assign(p, patch); }); c.periods=ps; cySave(c); }
+// koniec bez odpowiedzi: 7. dzień albo ostatni dzień „Jeszcze trwa”; oznaczony jako automatyczny
+function cyAutoEnd(p){ const e=p.still && p.still>addDays(p.s,6) ? p.still : addDays(p.s,6); cyPatchPeriod(p.s, {e, auto:true}); }
+function cyPeriodLen(p){ return p.e ? cyDiff(p.s, p.e)+1 : null; }
 function cyFlow(iso, f){ const c=Object.assign({}, cyGet()); const ps=cyPeriods(), p=ps.filter(q=>q.s<=iso).pop(); if(p){ p.flow=Object.assign({}, p.flow||{}, {[iso]:f}); c.periods=ps; cySave(c); } }
 // pasek nad treningiem: dzień cyklu i jedno stuknięcie „okres się zaczął”
 function cyRenderBox(iso){
@@ -5289,13 +5294,21 @@ function cyRenderBox(iso){
   const inf=cyInfo(iso);
   if(!inf || inf.sit==='preg'){ box.innerHTML=''; return; }
   const today=iso===todayISO(), fl=inf.inPeriod && inf.p && inf.p.flow ? inf.p.flow[iso] : null;
+  if(today && inf.p && !inf.p.e && !inf.inPeriod){ cyAutoEnd(inf.p); return cyRenderBox(iso); }   // brak odpowiedzi — koniec przyjęty automatycznie
+  const askEnd=today && inf.inPeriod && inf.p && !inf.p.e && inf.day>=3 && inf.p.still!==iso;
   let h='';
   if(inf.day && (inf.sit==='natural' || inf.inPeriod)) h+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${CY_PH[inf.phase]||(inf.inPeriod?'okres':'')}</span>`;
-  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>Krwawienie:</span>${[['light','Lekkie'],['medium','Średnie'],['heavy','Obfite']].map(([k,t])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${t}</button>`).join('')}<button class="cy-end" data-cyend>Okres się skończył</button></div>`;
-  else if(today && inf.sit!=='meno') h+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
+  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>Krwawienie:</span>${[['light','Lekkie'],['medium','Średnie'],['heavy','Obfite']].map(([k,t])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${t}</button>`).join('')}${askEnd?'':inf.p&&inf.p.e?`<span class="cy-endnote">koniec zapisany: ${inf.p.e===iso?'dziś':prDD(inf.p.e)}</span>`:'<button class="cy-end" data-cyend>Okres się skończył</button>'}</div>`;
+  if(askEnd) h+=`<div class="cy-confirm"><b>Okres już się skończył?</b><span>Dzień ${inf.day} okresu. Zapisana długość pomoże lepiej dopasować trening w kolejnych cyklach.</span>
+    <div class="row"><button class="yes" data-cyendt="0">Tak, dziś</button><button class="yes" data-cyendt="1">Tak, wczoraj</button><button data-cystill>Jeszcze trwa</button></div></div>`;
+  if(today && inf.inPeriod && inf.day>7 && !(inf.p.longNote)) h+=`<div class="cy-confirm"><b>Krwawienie trwa już ${inf.day} dni.</b><span>Okres dłuższy niż 7 dni warto skonsultować z lekarzem — zwłaszcza gdy jest obfity albo powtarza się co cykl.</span><div class="row"><button data-cylong>Rozumiem</button></div></div>`;
+  if(today && !inf.inPeriod && inf.sit!=='meno') h+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-cyflow]').forEach(b=>b.onclick=()=>{ cyFlow(iso, b.dataset.cyflow); cyRenderBox(iso); });
   const e=box.querySelector('[data-cyend]'); if(e) e.onclick=()=>{ cyPeriodEnd(iso); cyRenderBox(iso); restToast('Zapisano koniec okresu'); };
+  box.querySelectorAll('[data-cyendt]').forEach(b=>b.onclick=()=>{ const d=addDays(iso, -(+b.dataset.cyendt)); cyPeriodEnd(d); renderToday(); restToast('Zapisano koniec okresu · '+prDD(d)); });
+  const sl=box.querySelector('[data-cystill]'); if(sl) sl.onclick=()=>{ cyPatchPeriod(inf.p.s, {still:iso}); cyRenderBox(iso); };
+  const ln=box.querySelector('[data-cylong]'); if(ln) ln.onclick=()=>{ cyPatchPeriod(inf.p.s, {longNote:true}); cyRenderBox(iso); };
   const st=box.querySelector('[data-cystart]'); if(st) st.onclick=()=>cyAskStart(iso);
 }
 // „Okres się zaczął”: mniej niż 15 dni od poprzedniego to prawie zawsze pomyłka albo plamienie — najpierw pytamy
@@ -5333,7 +5346,7 @@ function renderCycle(){
       ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Zapisane okresy (początek)</div>
         <div class="cy-list">${cyPeriods().slice().reverse().map(p=>{ const pv=cyPeriods().filter(q=>q.s<p.s).pop(), g=pv?cyDiff(pv.s,p.s):null;
           // uwaga stoi przy podejrzanym (późniejszym) wpisie — to on jest zwykle pomyłką
-          return `<div class="cy-pr ${g!=null&&g<15?'warn':''}"><input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}" aria-label="Początek okresu ${prDD(p.s)}"><span class="g">${g==null?'pierwszy zapisany':g<15?'<b>tylko '+g+' dni po poprzednim?</b>':g+' dni po poprzednim'}</span><button data-cyrm="${p.s}" aria-label="Usuń okres z ${prDD(p.s)}">✕</button></div>`; }).join('')||'<div class="rs-hint">Brak zapisanych okresów.</div>'}</div>
+          return `<div class="cy-pr ${g!=null&&g<15?'warn':''}"><input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}" aria-label="Początek okresu ${prDD(p.s)}"><span class="g">${g==null?'pierwszy zapisany':g<15?'<b>tylko '+g+' dni po poprzednim?</b>':g+' dni po poprzednim'}${cyPeriodLen(p)?'<br>trwał '+cyPeriodLen(p)+' '+(cyPeriodLen(p)===1?'dzień':'dni')+(p.auto?' (przyjęte automatycznie)':''):''}</span><button data-cyrm="${p.s}" aria-label="Usuń okres z ${prDD(p.s)}">✕</button></div>`; }).join('')||'<div class="rs-hint">Brak zapisanych okresów.</div>'}</div>
         <div class="cy-pr add"><input type="date" class="md-in" id="cyAdd" max="${todayISO()}" aria-label="Dodaj początek okresu"><span class="g">dodaj wcześniejszy okres</span></div>
         <div class="rs-hint">Najnowszy okres jest na górze. ✕ usuwa tylko ten jeden wpis.</div>`:''}
       <div class="sw-lab">Prywatność</div>
@@ -5386,7 +5399,8 @@ function cyCoachContext(today){
   const c=cyGet(); if(!cyTracking() || c.coach===false) return '';
   const inf=cyInfo(today), sitName=(CY_SIT.find(x=>x[0]===c.sit)||[])[1]||c.sit, ps=cyPeriods(), out=[];
   out.push('Cykl (dane od użytkowniczki, za zgodą): '+sitName+(inf&&inf.day?', dziś dzień '+inf.day+(inf.phase?' ('+CY_PH[inf.phase]+')':''):'')+(c.sit==='natural'&&ps.length>=2?', średnia długość cyklu '+cyLen()+' dni':''));
-  if(ps.length) out.push('Ostatnie okresy: '+ps.slice(-4).map(p=>{ const f=Object.values(p.flow||{}); return prDD(p.s)+(p.e?'–'+prDD(p.e):'')+(f.includes('heavy')?' (obfity)':''); }).join(', '));
+  if(ps.length) out.push('Ostatnie okresy: '+ps.slice(-4).map(p=>{ const f=Object.values(p.flow||{}); return prDD(p.s)+(p.e?'–'+prDD(p.e)+' ('+cyPeriodLen(p)+' dni'+(p.auto?', koniec szacowany':'')+')':'')+(f.includes('heavy')?' (obfity)':''); }).join(', '));
+  { const lg=ps.slice(-3).filter(p=>(cyPeriodLen(p)||0)>7 && !p.auto); if(lg.length) out.push('UWAGA: krwawienie dłuższe niż 7 dni ('+lg.map(p=>prDD(p.s)+': '+cyPeriodLen(p)+' dni').join(', ')+') — delikatnie zasugeruj konsultację z lekarzem, zwłaszcza przy obfitym krwawieniu.'); }
   const since=addDays(today,-14), sy=Object.keys(c.sym||{}).filter(k=>k>=since).sort().map(k=>prDD(k)+': '+c.sym[k].join(', ').toLowerCase());
   if(sy.length) out.push('Objawy (14 dni): '+sy.join('; '));
   out.push('Zasady: empatycznie i rzeczowo, bez diagnoz; dopasowanie do objawów, nie do kalendarza (różnice między kobietami są duże); decyzja należy do niej. Wzrost wagi przed okresem to zwykle woda — nie obcinaj z tego powodu kalorii. Przy obfitych krwawieniach podpowiadaj produkty z żelazem.');
