@@ -736,6 +736,33 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .rs-list .nm small{display:block;font-size:12px;color:var(--ink-faint)}
 .rs-list .v{font-family:var(--font-disp);font-weight:700;font-size:20px;white-space:nowrap;display:flex;align-items:center;gap:6px}
 .rest-link{display:block;margin:12px 16px 0;min-height:40px;color:var(--steel);font-size:13.5px;font-weight:600}
+/* check-in przed treningiem */
+#ciSheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
+#ciSheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#ciSheet .pn{position:relative;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:14px;animation:ehup .25s ease-out}
+#ciSheet .eh-head{margin-bottom:0}
+.ci-q{display:flex;flex-direction:column;gap:6px}
+.ci-q .l{font-size:14px;font-weight:600}
+.ci-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ci-seg button{min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:13px;font-weight:600;color:var(--ink-dim)}
+.ci-seg button i{font-style:normal;font-size:20px;line-height:1.1}
+.ci-seg button.on{border-color:var(--amber);background:var(--amber-soft);color:var(--ink)}
+.ci-seg button.on.lo{border-color:var(--red);background:rgba(226,84,58,.12)}
+.ci-seg button.on.hi{border-color:var(--green);background:rgba(78,201,126,.12)}
+.ci-verdict{border-radius:14px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);background:var(--panel)}
+.ci-verdict b{font-family:var(--font-disp);font-size:20px;text-transform:uppercase;letter-spacing:.02em}
+.ci-verdict.ok{border-color:rgba(78,201,126,.5)} .ci-verdict.ok b{color:var(--green)}
+.ci-verdict.mid{border-color:rgba(255,122,26,.5)} .ci-verdict.mid b{color:var(--amber)}
+.ci-verdict.low{border-color:rgba(226,84,58,.5)} .ci-verdict.low b{color:var(--red)}
+.ci-verdict small{color:var(--ink-dim);font-size:13px}
+.ci-alt{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-size:14.5px;font-weight:600;color:var(--ink)}
+.ci-chip{margin:10px 14px 0;font-size:13px;color:var(--ink-dim);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ci-chip b{color:var(--ink);letter-spacing:.06em}
+.ci-chip .lt{color:var(--steel);font-weight:600}
+.ci-chip button{color:var(--steel);font-weight:600;font-size:13px;min-height:36px;padding:0 4px}
+.wo-light{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(95,168,211,.1);border:1px solid rgba(95,168,211,.4);border-radius:12px;padding:6px 6px 6px 12px;font-size:13.5px}
+.wo-light b{color:var(--steel)}
+.wo-light button{color:var(--steel);font-weight:600;font-size:13px;min-height:40px;padding:0 8px;white-space:nowrap}
 #rsToast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:480;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-size:13.5px;display:none;width:max-content;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 /* brak internetu */
 #netPill{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 6px);z-index:490;display:none;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--ink-dim);box-shadow:var(--shadow);white-space:nowrap;max-width:calc(100% - 32px)}
@@ -1341,6 +1368,8 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <!-- przerwy między seriami -->
 <div id="rsSheet"><div class="bd" data-rsclose></div><div class="pn" id="rsPanel" role="dialog" aria-modal="true" aria-labelledby="rsTitle"></div></div>
 <div id="rsToast" role="status"></div>
+<!-- check-in przed treningiem -->
+<div id="ciSheet"><div class="bd" data-ciclose></div><div class="pn" id="ciPanel" role="dialog" aria-modal="true" aria-labelledby="ciTitle"></div></div>
 
 <!-- historia ćwiczenia: wykres, rekordy, treningi -->
 <div id="exHist"><div class="bd" data-ehclose></div><div class="pn" id="ehPanel" role="dialog" aria-modal="true" aria-labelledby="ehTitle"></div></div>
@@ -2061,6 +2090,8 @@ function mergeState(local, inc){
     });
     // pomiar treningu (tryb treningu): zostaje sesja, która skończyła się później
     if(a.session||b.session) m.session = (!b.session || (a.session && (a.session.end||0)>=(b.session.end||0))) ? a.session : b.session;
+    // samopoczucie przed treningiem: nowsza odpowiedź wygrywa
+    if(a.checkin||b.checkin) m.checkin = (!b.checkin || (a.checkin && (a.checkin.at||0)>=(b.checkin.at||0))) ? a.checkin : b.checkin;
     out.log[iso]=m;
   });
 
@@ -2398,6 +2429,9 @@ function effEx(e, iso){
       cur=Object.assign({}, cur, {s:a.s, rp:a.rp, r:String(a.rp), w:a.w>0?a.w:cur.w, _adj:a}); a=null;
     }
   }
+  // check-in „mocne zmęczenie”: dziś jedna seria mniej (minimum 2)
+  const ci=S.log && S.log[iso] && S.log[iso].checkin;
+  if(ci && ci.plan==='light2' && cur.s>2) cur=Object.assign({}, cur, {s:cur.s-1, _light:true});
   return cur;
 }
 function swapCue(name){
@@ -2696,6 +2730,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   // tryb treningu: tylko dziś; po zapisanej sesji krótkie podsumowanie
   // stara sesja nadpisana przez „Wznów” (sprzed zapisywania listy serii): odtwórz cały trening z godzin odhaczenia
   if(hasSession(L) && !L.session.log && iso>=addDays(todayISO(),-7)){ const rs=woRebuildSession(iso); if(rs){ L.session=rs; touch(L); save(); } }
+  if(L.checkin) html+=ciChip(L, iso);
   if(hasSession(L)) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}${L.session.paused-(L.session.gap||0)>0?' · pauzy '+fmtDur(L.session.paused-(L.session.gap||0)):''}${L.session.parts>1?' · dokończony po przerwie '+fmtDur(L.session.gap):''}${(L.session.prs||[]).length?' · 🏆 rekordy: '+L.session.prs.length:''}</div>`;
   const allDone=w.ex.every((e0,i)=>okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s);
   // przyszły (do 7 dni) albo pominięty (ostatnie 7 dni, nic nieodhaczone) trening: zamień z dzisiejszym dniem i od razu zacznij
@@ -2732,6 +2767,7 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
       }
     }
     if(prog && prog.kg>0) recW=prog.kg;
+    if(ciLight(L) && recW>0) recW=roundLoad(e, recW*0.9);   // lżejszy dzień z check-inu
     const recWtxt = recW>0 ? String(recW) : '';
     let setsHtml='';
     for(let s=1;s<=e.s;s++){
@@ -2786,7 +2822,8 @@ function renderWorkout(iso, wk, dow, dayIdx, L){
   }
   card.innerHTML=html;
   bindMoveUi(card);
-  const ws=card.querySelector('[data-wo-start]'); if(ws) ws.onclick=()=>woStart(iso);
+  const ws=card.querySelector('[data-wo-start]'); if(ws) ws.onclick=()=>ciStartOrAsk(iso);
+  const cic=card.querySelector('[data-ci-edit]'); if(cic) cic.onclick=()=>openCheckin(iso, 'edit');
   const wr=card.querySelector('[data-wo-reset]'); if(wr) wr.onclick=()=>woResetAsk(iso);
   const wt=card.querySelector('[data-wo-today]'); if(wt) wt.onclick=()=>startToday(iso);
   card.querySelectorAll('[data-hist]').forEach(b=>b.onclick=()=>openExHist(decodeURIComponent(b.dataset.hist)));
@@ -4063,6 +4100,11 @@ function buildCoachContext(){
   { const rows=Object.values(exIndex()).map(h=>{ const st=restStats(h.n), o=restOverride(h.n); if(!st && !o) return '';
       return '- '+h.n+': '+fmtDur(restCurrent(h.n, h.timed))+' ('+(o?(o.by==='tr'?'ustawił Trener':'ustawił użytkownik'):'z planu')+')'+(st?', średnio '+fmtDur(st.avg)+' z '+st.sessions+' tren.':''); }).filter(Boolean);
     if(rows.length) out.push('Przerwy między seriami (ustawione; średnio faktycznie):\n'+rows.join('\n')); }
+  // samopoczucie przed treningiem (check-in) — ostatnie 14 dni
+  { const since=addDays(today,-14), lv=['słabo','OK','dobrze'], sr=['mocne','lekkie','brak'], en=['niska','OK','wysoka'], pl={normal:'trening wg planu', light:'lżej (−10%)', light2:'lżej (−10%, seria mniej)', moved:'przesunięty', skip:'pominięty check-in'};
+    const rows=Object.keys(S.log).filter(k=>k>=since && k<=today && S.log[k].checkin && S.log[k].checkin.plan!=='skip').sort().map(k=>{ const c=S.log[k].checkin;
+      return '- '+dd(k)+': sen '+lv[c.sleep]+', zakwasy '+sr[c.sore]+', energia '+en[c.energy]+' → '+(pl[c.plan]||c.plan); });
+    if(rows.length) out.push('Samopoczucie przed treningiem (check-in):\n'+rows.join('\n')); }
   // zamiany ćwiczeń zrobione samodzielnie (przycisk Zamień) — ostatnie 14 dni
   { const since=addDays(today,-14), why={busy:'zajęte stanowisko',pain:'BÓL',gear:'brak sprzętu'}, sw=[];
     Object.values((S.adj&&S.adj.ex)||{}).forEach(l=>l.forEach(y=>{ if(y.user && y.swap && y.from>=since) sw.push('- '+dd(y.from)+': '+(y.was||'?')+' → '+y.swap.n+' ('+(why[y.reason]||'—')+', '+(y.to?'tylko ten dzień':'na stałe')+(y.fromSet?', od serii '+y.fromSet:'')+')'); }));
@@ -5026,6 +5068,85 @@ document.getElementById('rsSheet').addEventListener('click', ev=>{
   }
 });
 
+/* ---- check-in przed treningiem: sen, zakwasy, energia → lżejszy dzień ----
+   L.checkin = {sleep, sore, energy: 0 słabo … 2 dobrze, plan:'normal'|'light'|'light2'|'skip', at}
+   light: ciężar −10% (zaokrąglenie jak w planie), light2: do tego jedna seria mniej (effEx). Synchronizowane (nowsze at). */
+var CI_Q=[
+  {k:'sleep', l:'Jak spałeś?', o:[['😴','Słabo'],['🙂','OK'],['😌','Dobrze']]},
+  {k:'sore', l:'Zakwasy, ból mięśni?', o:[['🔥','Mocne'],['〰️','Lekkie'],['✅','Brak']]},
+  {k:'energy', l:'Energia teraz?', o:[['🪫','Niska'],['⚡','OK'],['🚀','Wysoka']]}
+];
+function ciLight(L){ const c=L && L.checkin; return !!(c && (c.plan==='light' || c.plan==='light2')); }
+function ciVerdict(a){
+  if(['sleep','sore','energy'].some(k=>a[k]==null)) return null;
+  const s=a.sleep+a.sore+a.energy;
+  if(s>=4) return {c:'ok', plan:'normal', t:'Dobra forma', d:'Trenujesz według planu.'};
+  if(s>=2) return {c:'mid', plan:'light', t:'Gorszy dzień', d:'Proponuję lżej: ciężar −10%, serie bez zmian. Technika i ruch są dziś ważniejsze niż rekordy.'};
+  return {c:'low', plan:'light2', t:'Mocne zmęczenie', d:'Proponuję lżej: ciężar −10% i jedna seria mniej w każdym ćwiczeniu — albo przesuń trening na inny dzień.'};
+}
+function ciIcons(c){ return CI_Q.map(q=>c[q.k]!=null?q.o[c[q.k]][0]:'').join(''); }
+function ciChip(L, iso){
+  const c=L.checkin; if(!c || c.plan==='skip') return '';
+  const what=c.plan==='light2'?'lżejszy dzień (−10%, seria mniej)':c.plan==='light'?'lżejszy dzień (−10%)':c.plan==='moved'?'trening przesunięty':'wg planu';
+  return `<div class="ci-chip">Samopoczucie: <b>${ciIcons(c)}</b> · <span class="${ciLight(L)?'lt':''}">${what}</span>${iso===todayISO()?' <button data-ci-edit>zmień</button>':''}</div>`;
+}
+// START TRENINGU: przy pierwszym starcie dnia najpierw check-in; WZNÓW / DOKOŃCZ startuje od razu
+function ciStartOrAsk(iso){
+  const L=log(iso), w=workoutOn(iso);
+  const fresh=!L.checkin && !hasSession(L) && !(WO && WO.iso===iso) && !w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i]));
+  if(fresh) openCheckin(iso, 'start'); else woStart(iso);
+}
+var CI=null;
+function openCheckin(iso, mode){
+  const c=log(iso).checkin||{};
+  CI={iso, mode, a:{sleep:c.sleep, sore:c.sore, energy:c.energy}};
+  renderCheckin(); document.getElementById('ciSheet').style.display='flex'; document.getElementById('ciPanel').scrollTop=0;
+}
+function closeCheckin(){ document.getElementById('ciSheet').style.display='none'; }
+function renderCheckin(){
+  const v=ciVerdict(CI.a), hard=CI.a.sore===0, start=CI.mode==='start';
+  const go=t=>start?'▶ '+t:t;
+  document.getElementById('ciPanel').innerHTML=`<div class="eh-grab"></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${start?'Zanim zaczniesz · 3 stuknięcia':'Samopoczucie dziś'}</div><h2 id="ciTitle">Jak się dziś czujesz?</h2></div><button class="eh-x" data-ciclose aria-label="Zamknij">✕</button></div>
+    ${CI_Q.map(q=>`<div class="ci-q"><span class="l">${q.l}</span><div class="ci-seg">${q.o.map(([ic,l],j)=>`<button data-cia="${q.k}:${j}" class="${CI.a[q.k]===j?'on '+(j===0?'lo':j===2?'hi':''):''}" aria-pressed="${CI.a[q.k]===j}"><i>${ic}</i>${l}</button>`).join('')}</div></div>`).join('')}
+    ${v?`<div class="ci-verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${hard?'<small>Mocne zakwasy: dłuższa rozgrzewka (5–8 min) i pierwsza seria lżej.</small>':''}</div>`:''}
+    ${!v?`<button class="wo-save" disabled style="opacity:.35">ODPOWIEDZ NA 3 PYTANIA</button>`
+      : v.c==='ok'?`<button class="wo-save" data-ciplan="normal">${go('START TRENINGU').replace('START TRENINGU',start?'START TRENINGU':'ZAPISZ')}</button>`
+      : `<button class="wo-save" data-ciplan="${v.plan}">${start?'▶ TRENUJ LŻEJ':'LŻEJSZY DZIEŃ'}</button><button class="ci-alt" data-ciplan="normal">${start?'Trenuj normalnie':'Według planu'}</button>${v.c==='low'?'<button class="ci-alt" data-cimove>Przesuń trening na inny dzień</button>':''}`}
+    ${start?'<button class="sw-ask" data-ciplan="skip">Pomiń — od razu start</button>':''}`;
+}
+function ciSave(plan){
+  const iso=CI.iso, L=log(iso);
+  L.checkin=Object.assign(plan==='skip'?{}:{sleep:CI.a.sleep, sore:CI.a.sore, energy:CI.a.energy}, {plan, at:Date.now()});
+  touch(L); save(); closeCheckin();
+  if(iso===todayISO()) viewOffset=0;   // karta dzisiejszego dnia musi mieć nowe ciężary, zanim tryb treningu je odczyta
+  renderToday();
+  if(CI.mode==='start') woStart(iso);
+  else if(WO && WO.iso===iso) woRefreshFromCard();
+}
+// tryb treningu po zmianie check-inu (albo „Wróć do planu”): niezrobione serie dostają ciężary i liczbę serii z karty
+function woRefreshFromCard(){
+  viewOffset=0; renderToday();
+  const nb=woBuild(WO.iso);
+  WO.ex=WO.ex.map((x,i)=>{ const n=nb[i]; if(!n) return x;
+    const ok=n.sets.map((_,j)=>!!x.ok[j]);
+    return Object.assign({}, x, {s:n.s, sets:n.sets.map((v,j)=>ok[j] && x.sets[j] ? x.sets[j] : v), ok}); });
+  if(woCurSet(WO.cur)<0){ const nx=woNext(WO.cur); if(nx>=0) WO.cur=nx; }
+  woSave(); woRender(); woStep();
+}
+function woLightBanner(){
+  const L=log(WO.iso); if(!ciLight(L)) return '';
+  return `<div class="wo-light"><span><b>Lżejszy dzień</b> · ciężar −10%${L.checkin.plan==='light2'?', seria mniej':''}</span><button id="woLightOff">Wróć do planu</button></div>`;
+}
+document.getElementById('ciSheet').addEventListener('click', ev=>{
+  const t=ev.target.closest('[data-ciclose],[data-cia],[data-ciplan],[data-cimove]'); if(!t) return;
+  const d=t.dataset;
+  if('ciclose' in d) closeCheckin();
+  else if(d.cia){ const [k,v]=d.cia.split(':'); CI.a[k]=+v; renderCheckin(); }
+  else if(d.ciplan) ciSave(d.ciplan);
+  else { const iso=CI.iso, L=log(iso); L.checkin={sleep:CI.a.sleep, sore:CI.a.sore, energy:CI.a.energy, plan:'moved', at:Date.now()}; touch(L); save(); closeCheckin(); openMove(iso); }
+});
+
 const WO_LS='zelazo_workout';
 let WO=null, woTick=null, woWake=null;
 function woSave(){ try{ if(WO) localStorage.setItem(WO_LS, JSON.stringify(WO)); else localStorage.removeItem(WO_LS); }catch(e){} }
@@ -5279,7 +5400,7 @@ function woRender(){
     document.getElementById('woYes').onclick=woFinish; return;
   }
   const i=WO.cur, x=WO.ex[i], k=woCurSet(i)<0?x.s-1:woCurSet(i), v=x.sets[k];
-  let h=`<div class="wo-name"><span class="t">${esc(x.n)}</span><div class="nv"><button id="woPrev" aria-label="Poprzednie ćwiczenie" ${i===0?'disabled':''}>‹</button><button id="woNx" aria-label="Następne ćwiczenie" ${i===WO.ex.length-1?'disabled':''}>›</button></div></div>
+  let h=`${woLightBanner()}<div class="wo-name"><span class="t">${esc(x.n)}</span><div class="nv"><button id="woPrev" aria-label="Poprzednie ćwiczenie" ${i===0?'disabled':''}>‹</button><button id="woNx" aria-label="Następne ćwiczenie" ${i===WO.ex.length-1?'disabled':''}>›</button></div></div>
     <div class="wo-setno"><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Seria <b>${k+1}</b> z ${x.s} <button class="wo-restchip" id="woRestEdit">⏱ przerwa ${fmtDur(x.rest)}${restTag(x.n)}<i>zmień</i></button></span><span style="display:flex;gap:6px">${exIndex()[x.n.trim()]?`<button class="wo-hist" id="woHist" aria-label="Historia ćwiczenia">${IC_HIST}</button>`:''}${woCurSet(i)>=0 && swapAlts(x.n).length?'<button class="wo-show sw" id="woSwap">⇄ Zamień</button>':''}<button class="wo-show" id="woShow">Pokaż technikę</button></span></div>${woSwapLine(i)}
     <div class="wo-dots">${x.ok.map((d,j)=>`<i class="${d?((x.prSet||[])[j]?'pr':'ok'):j===k?'cur':''}"></i>`).join('')}</div>`;
   if(WO.phase==='rest'){
@@ -5317,6 +5438,7 @@ function woRender(){
   on('woCam', ()=>openFormCheck(x.n, (v.kg?String(v.kg).replace('.',',')+' kg × ':'')+v.r+(x.timed?' s':' powt.')));
   on('woPlus', ()=>{ WO.restEnd+=15000; WO.restPlan+=15; WO.beeped=false; WO.plusCount=(WO.plusCount||0)+1; woSave(); if(WO.plusCount===2) woRender(); woStep(); });
   on('woRestEdit', ()=>openRestEdit(x.n, x.timed));
+  on('woLightOff', ()=>{ const L=log(WO.iso); L.checkin=Object.assign({}, L.checkin, {plan:'normal', at:Date.now()}); touch(L); save(); woRefreshFromCard(); });
   on('woLearnNo', ()=>{ WO.ex[WO.cur].learnNo=true; woSave(); woRender(); woStep(); });
   { const ly=document.getElementById('woLearnYes'); if(ly) ly.onclick=()=>{ restSet(WO.ex[WO.cur].n, +ly.dataset.sec, 'me'); restToast('Przerwa '+fmtDur(+ly.dataset.sec)+' zapamiętana przy tym ćwiczeniu'); }; }
   on('woSkip', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].ok[k2]=true; WO.ex[WO.cur].skipped=(WO.ex[WO.cur].skipped||0)+1; WO.skipped++; WO.tStart=0;
