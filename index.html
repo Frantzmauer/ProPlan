@@ -360,6 +360,26 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .habit .s b{color:var(--ink)}
 /* dyktowanie posiłku */
 .md-row{display:flex;gap:8px}
+/* skaner kodów kreskowych (Open Food Facts) */
+#bcSheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
+#bcSheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#bcSheet .pn{position:relative;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px;animation:ehup .25s ease-out}
+#bcSheet .eh-head{margin-bottom:0}
+.bc-cam{position:relative;width:100%;max-width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--panel2)}
+.bc-cam video{width:100%;height:100%;object-fit:cover;display:block}
+.bc-frame{position:absolute;left:10%;right:10%;top:32%;bottom:32%;border:2px solid var(--amber);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.35);pointer-events:none}
+.bc-st{font-size:14px;line-height:1.45;color:var(--ink-dim)}
+.bc-man{display:flex;gap:8px}.bc-man .md-in{flex:1;min-width:0}
+.bc-recent{display:flex;flex-direction:column;gap:6px}
+.bc-recent button{display:flex;justify-content:space-between;gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);font-size:14px}
+.bc-recent button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-recent button small{color:var(--ink-dim);white-space:nowrap}
+.bc-prod{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.bc-prod b{font-size:16px;overflow-wrap:anywhere}.bc-prod small{color:var(--ink-dim);font-size:13px}
+.bc-100{font-size:13.5px;color:var(--ink-dim)}.bc-100 b{font-size:13.5px;color:var(--ink)}
+.bc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.bc-chips button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 11px;color:var(--ink);font-size:13px}
+.bc-sum{font-size:15px;color:var(--ink-dim)}.bc-sum b{font-family:var(--font-disp);font-size:24px;color:var(--amber)}
 .md-row .md-in{flex:1;min-width:0}
 .mic{width:48px;flex:none;border-radius:10px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
 .mic svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
@@ -1370,6 +1390,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div class="md-row">
       <input type="text" id="mdTxt" class="md-in" placeholder="np. duży kebab z sosem czosnkowym">
       <button class="mic" id="mdMic" type="button" aria-label="Powiedz, co zjadłeś" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="mic" id="mdScan" type="button" aria-label="Zeskanuj kod kreskowy z opakowania"><svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13.5 8v8M17 8v8"/></svg></button>
     </div>
     <div class="md-voice" id="mdVoice" style="display:none"></div>
     <button class="btn ghost" id="mdEstimate" style="width:100%;margin-top:8px;padding:11px;font-size:14px">✨ Oszacuj kalorie z opisu</button>
@@ -1381,7 +1402,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
       <div><label class="md-lab">Węgle</label><input type="number" id="mdC" class="md-in" inputmode="numeric" placeholder="g"></div>
       <div><label class="md-lab">Tłuszcz</label><input type="number" id="mdF" class="md-in" inputmode="numeric" placeholder="g"></div>
     </div>
-    <div class="md-hint">Makro są opcjonalne — sama kaloryczność wystarczy. „Oszacuj" wymaga skonfigurowanego skryptu z kluczem API i działa najlepiej, gdy podasz gramatury.</div>
+    <div class="md-hint">Masz opakowanie? Zeskanuj kod kreskowy — kalorie z etykiety, bez AI i bez limitu. Makro są opcjonalne — sama kaloryczność wystarczy. „Oszacuj" wymaga skonfigurowanego skryptu z kluczem API i działa najlepiej, gdy podasz gramatury.</div>
     <div class="md-btns">
       <button class="btn ghost" id="mdCancel">Anuluj</button>
       <button class="btn" id="mdSave">Dodaj</button>
@@ -1389,6 +1410,9 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   </div>
 </div>
 
+
+<!-- skaner kodów kreskowych: kod → Open Food Facts → kcal i makro -->
+<div id="bcSheet"><div class="bd" data-bcclose></div><div class="pn" id="bcPanel" role="dialog" aria-modal="true" aria-labelledby="bcTitle"></div></div>
 
 <!-- analiza techniki z nagrania (film zostaje na telefonie; do Trenera idą klatki i pomiary) -->
 <div id="formDialog" style="display:none" role="dialog" aria-modal="true" aria-labelledby="fcTitle">
@@ -3146,11 +3170,12 @@ function openMealDialog(iso){
   dlg.querySelector('#mdC').value='';
   dlg.querySelector('#mdF').value='';
   dlg.dataset.iso=iso;
+  dlg.querySelector('#mdEstMsg').style.display='none';
   voiceReset();
   dlg.classList.add('show');
   setTimeout(()=>dlg.querySelector('#mdTxt').focus(),50);
 }
-function closeMealDialog(){ voiceStop(); document.getElementById('mealDialog').classList.remove('show'); }
+function closeMealDialog(){ voiceStop(); bcClose(); document.getElementById('mealDialog').classList.remove('show'); }
 
 /* ---- dyktowanie opisu posiłku: rozpoznawanie mowy przeglądarki (pl-PL), tekst pojawia się na bieżąco ----
    Chrome na Androidzie wysyła nagranie do Google; Safari używa rozpoznawania Apple.
@@ -3927,6 +3952,150 @@ loadProfileUI();
 applyName();
 
 // meal dialog buttons
+/* ---- skaner kodów kreskowych ----
+   Kod z opakowania → Open Food Facts (otwarta baza produktów; bez AI, więc bez limitów) → kcal i makro na 100 g × porcja.
+   Aparat: BarcodeDetector (Android/Chrome); bez niego biblioteka ZXing z CDN, wczytywana dopiero przy pierwszym skanie.
+   Znalezione produkty zostają na telefonie (zelazo_bc), więc drugi raz działają też bez internetu.
+   „Wstaw” dodaje produkt do pól posiłku — kilka skanów składa się w jeden posiłek. */
+const ZXING_URL='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+var BC={stream:null, timer:null, zx:null, busy:false};
+function bcCache(){ try{ return JSON.parse(localStorage.getItem('zelazo_bc')||'{}'); }catch(e){ return {}; } }
+function bcRemember(p){
+  const c=bcCache(); c[p.code]=Object.assign({}, p, {t:Date.now()});
+  Object.keys(c).sort((a,b)=>c[b].t-c[a].t).slice(40).forEach(k=>delete c[k]);
+  try{ localStorage.setItem('zelazo_bc', JSON.stringify(c)); }catch(e){}
+}
+const bcNum=x=>String(Math.round(x*10)/10).replace('.',',');
+function bcView(title, html){
+  const pn=document.getElementById('bcPanel');
+  pn.innerHTML=`<div class="eh-grab"></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Kod kreskowy · Open Food Facts</div><h2 id="bcTitle">${title}</h2></div><button class="eh-x" data-bcclose aria-label="Zamknij">✕</button></div>`+html;
+  pn.querySelectorAll('[data-bcclose]').forEach(b=>b.onclick=bcClose);
+}
+function openScanner(){
+  BC.busy=false;
+  const recent=Object.values(bcCache()).sort((a,b)=>b.t-a.t).slice(0,5);
+  bcView('Skanuj kod', `<div class="bc-cam"><video id="bcVideo" playsinline muted autoplay></video><div class="bc-frame"></div></div>
+    <div class="bc-st" id="bcSt">Włączam aparat…</div>
+    <div class="bc-man"><input class="md-in" id="bcCode" inputmode="numeric" autocomplete="off" placeholder="albo wpisz cyfry spod kodu"><button class="btn" id="bcGo" type="button">Szukaj</button></div>
+    ${recent.length?`<div class="eyebrow" style="margin-bottom:-4px">Ostatnio skanowane</div><div class="bc-recent">${recent.map(p=>`<button type="button" data-bcpick="${esc(p.code)}"><span>${esc(p.name)}</span><small>${Math.round(p.kcal)} kcal / 100 ${p.liquid?'ml':'g'}</small></button>`).join('')}</div>`:''}
+    <div class="md-hint" style="margin:0">Do bazy wysyłamy tylko numer kodu. Skanowanie nie używa AI i nie ma limitu.</div>`);
+  document.getElementById('bcSheet').style.display='flex';
+  document.getElementById('bcGo').onclick=()=>bcFound(document.getElementById('bcCode').value);
+  document.getElementById('bcCode').addEventListener('keydown',e=>{ if(e.key==='Enter') bcFound(e.target.value); });
+  document.querySelectorAll('[data-bcpick]').forEach(b=>b.onclick=()=>{ bcStop(); bcShow(bcCache()[b.dataset.bcpick]); });
+  bcStart();
+}
+function bcLoadZxing(){
+  if(window.ZXing) return Promise.resolve();
+  return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src=ZXING_URL; sc.onload=ok; sc.onerror=()=>no(new Error('zxing')); document.head.appendChild(sc); });
+}
+async function bcStart(){
+  const v=document.getElementById('bcVideo'), st=document.getElementById('bcSt');
+  const say=t=>{ if(st && document.body.contains(st)) st.textContent=t; };
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ say('Ta przeglądarka nie daje dostępu do aparatu — wpisz cyfry spod kodu.'); return; }
+  try{
+    let fmts=[];
+    if('BarcodeDetector' in window){ try{ fmts=await BarcodeDetector.getSupportedFormats(); }catch(e){} }
+    if(fmts.includes('ean_13')){
+      BC.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
+      if(!document.body.contains(v)){ bcStop(); return; }
+      v.srcObject=BC.stream; await v.play();
+      const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e'].filter(f=>fmts.includes(f))});
+      say('Nakieruj aparat na kod kreskowy.');
+      const tick=async()=>{
+        if(!BC.stream) return;
+        try{ const r=await det.detect(v); if(r.length){ bcFound(r[0].rawValue); return; } }catch(e){}
+        BC.timer=setTimeout(tick, 180);
+      };
+      tick();
+    }else{
+      say('Wczytuję skaner…');
+      await bcLoadZxing();
+      if(!document.body.contains(v)) return;
+      const hints=new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E]);
+      BC.zx=new ZXing.BrowserMultiFormatReader(hints);
+      say('Nakieruj aparat na kod kreskowy.');
+      await BC.zx.decodeFromConstraints({video:{facingMode:'environment'}, audio:false}, v, res=>{ if(res && BC.zx) bcFound(res.getText()); });
+    }
+  }catch(e){
+    const cam=document.querySelector('.bc-cam'); if(cam) cam.style.display='none';   // bez aparatu zostaje wpisanie cyfr
+    say(e.message==='zxing' ? 'Skaner potrzebuje internetu przy pierwszym użyciu. Możesz wpisać cyfry spod kodu.'
+      : /NotAllowed|Permission|Security/i.test((e.name||'')+(e.message||'')) ? 'Brak zgody na aparat — zezwól na niego w ustawieniach przeglądarki albo wpisz cyfry spod kodu.'
+      : 'Nie udało się włączyć aparatu — wpisz cyfry spod kodu.');
+  }
+}
+function bcStop(){
+  clearTimeout(BC.timer); BC.timer=null;
+  if(BC.zx){ try{ BC.zx.reset(); }catch(e){} BC.zx=null; }
+  if(BC.stream){ BC.stream.getTracks().forEach(t=>t.stop()); BC.stream=null; }
+}
+function bcClose(){ bcStop(); const sh=document.getElementById('bcSheet'); if(sh) sh.style.display='none'; }
+async function bcFound(raw){
+  const code=String(raw||'').replace(/\D/g,'');
+  if(code.length<8 || BC.busy) return;
+  BC.busy=true; bcStop();
+  if(navigator.vibrate) navigator.vibrate(60);
+  const hit=bcCache()[code];
+  if(hit){ bcShow(hit); return; }
+  bcView('Szukam…', `<div class="bc-st">Szukam produktu o kodzie ${code}…</div>`);
+  if(!navigator.onLine){ bcMiss(code, 'Brak internetu, a tego produktu nie ma jeszcze na telefonie. Spróbuj, gdy wróci zasięg, albo wpisz kalorie z etykiety.'); return; }
+  try{
+    const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(), 9000);
+    const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_pl,brands,nutriments,serving_quantity,quantity`, {signal:ctl.signal});
+    clearTimeout(to);
+    const j=await r.json(), p=j.product, n=(p&&p.nutriments)||{};
+    let kcal=n['energy-kcal_100g'];
+    if(kcal==null && n.energy_100g!=null) kcal=n.energy_100g/4.184;   // tylko kJ na etykiecie
+    if(j.status!==1 || !p){ bcMiss(code, 'Nie ma tego produktu w bazie Open Food Facts.'); return; }
+    if(kcal==null){ bcMiss(code, 'Produkt jest w bazie, ale bez wartości odżywczych.'); return; }
+    const prod={code, name:String(p.product_name_pl||p.product_name||'Produkt '+code).trim(), brand:String(p.brands||'').split(',')[0].trim(),
+      kcal:+kcal, p:+(n.proteins_100g||0), c:+(n.carbohydrates_100g||0), f:+(n.fat_100g||0),
+      serv:+p.serving_quantity||0, liquid:/\d\s*(ml|cl|l)\b/i.test(p.quantity||'')};
+    bcRemember(prod); bcShow(prod);
+  }catch(e){ bcMiss(code, 'Nie udało się połączyć z bazą produktów. Spróbuj ponownie.'); }
+}
+function bcMiss(code, msg){
+  bcView('Nie znaleziono', `<div class="bc-st">${esc(msg)}</div><div class="bc-st" style="font-size:13px">Kod: ${esc(code)}</div>
+    <button class="btn" id="bcDescribe" type="button">Opisz posiłek słowami</button>
+    <button class="btn ghost" id="bcAgain" type="button">Skanuj ponownie</button>`);
+  document.getElementById('bcDescribe').onclick=()=>{ bcClose(); document.getElementById('mdTxt').focus(); };
+  document.getElementById('bcAgain').onclick=openScanner;
+}
+function bcShow(p){
+  const u=p.liquid?'ml':'g', serv=p.serv>0?Math.round(p.serv):0, g0=serv||100;
+  const chips=[...new Set([serv,50,100,150,200].filter(x=>x>0))].slice(0,4);
+  bcView('Produkt', `<div class="bc-prod"><b>${esc(p.name)}</b>${p.brand && p.brand.toLowerCase()!==p.name.toLowerCase()?`<small>${esc(p.brand)}</small>`:''}
+      <div class="bc-100">Na 100 ${u}: <b>${Math.round(p.kcal)} kcal</b> · B ${bcNum(p.p)} / W ${bcNum(p.c)} / T ${bcNum(p.f)} g</div></div>
+    <div><label class="md-lab" for="bcG" style="margin-top:0">Porcja (${u})</label>
+      <input type="number" class="md-in" id="bcG" inputmode="decimal" min="1" value="${g0}">
+      <div class="bc-chips">${chips.map(x=>`<button type="button" data-bcg="${x}">${x} ${u}${x===serv?' · porcja':''}</button>`).join('')}</div></div>
+    <div class="bc-sum" id="bcSum"></div>
+    <button class="btn" id="bcUse" type="button">Wstaw do posiłku</button>
+    <button class="btn ghost" id="bcAgain" type="button">Skanuj inny produkt</button>
+    <div class="md-hint" style="margin:0">Dane z Open Food Facts, wpisywane przez użytkowników — gdy coś nie pasuje do etykiety, popraw liczby w posiłku.</div>`);
+  const inp=document.getElementById('bcG');
+  const qty=()=>Math.max(0, parseFloat(String(inp.value).replace(',','.'))||0);
+  const part=g=>({kcal:Math.round(p.kcal*g/100), p:Math.round(p.p*g/100), c:Math.round(p.c*g/100), f:Math.round(p.f*g/100)});
+  const upd=()=>{ const x=part(qty()); document.getElementById('bcSum').innerHTML=`<b>${x.kcal} kcal</b> · B ${x.p} / W ${x.c} / T ${x.f} g`; document.getElementById('bcUse').disabled=!qty(); };
+  inp.addEventListener('input', upd);
+  document.querySelectorAll('[data-bcg]').forEach(b=>b.onclick=()=>{ inp.value=b.dataset.bcg; upd(); });
+  document.getElementById('bcAgain').onclick=openScanner;
+  document.getElementById('bcUse').onclick=()=>{
+    const g=qty(); if(!g) return;
+    const x=part(g), add=(id,v)=>{ const el=document.getElementById(id); el.value=(parseInt(el.value)||0)+v; };
+    const t=document.getElementById('mdTxt'), item=`${p.name} ${bcNum(g)} ${u}`;
+    t.value=t.value.trim() ? t.value.trim()+' + '+item : item;
+    add('mdKcal', x.kcal); add('mdP', x.p); add('mdC', x.c); add('mdF', x.f);
+    const msg=document.getElementById('mdEstMsg');
+    msg.style.display='block'; msg.style.color='var(--steel)'; msg.textContent='Dodano z kodu: '+item+' · '+x.kcal+' kcal. Zeskanuj kolejny produkt, żeby dodać go do tego posiłku.';
+    bcClose();
+  };
+  upd();
+}
+document.getElementById('mdScan').onclick=openScanner;
+
 document.getElementById('mdCancel').onclick=closeMealDialog;
 document.getElementById('mdSave').onclick=saveMealDialog;
 document.getElementById('mealDialog').addEventListener('click',e=>{ if(e.target.id==='mealDialog') closeMealDialog(); });
