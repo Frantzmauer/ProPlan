@@ -877,6 +877,26 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .cy-confirm .row button{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-weight:600;font-size:14px;color:var(--ink)}
 .cy-confirm .row .yes{border-color:var(--plum);color:var(--plum);background:rgba(197,139,214,.1)}
 .cy-list{display:flex;flex-direction:column;gap:6px}
+/* cykl, etap 2: prognoza i Twoje wzorce */
+.cy-fc{background:var(--panel);border:1px solid rgba(197,139,214,.35);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--ink-dim)}
+.cy-fc b{color:var(--ink);font-size:15px}.cy-fc .late{color:var(--gold)}
+.cy-pat{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.cy-pat .r{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.cy-pat .r span:first-child{color:var(--ink-dim)}.cy-pat .r small{color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cy-pat .bar{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}.cy-pat .bar i{display:block;height:100%;background:var(--plum);border-radius:99px}
+.cy-pat p{margin:0;font-size:13px;line-height:1.5;color:var(--ink-dim)}.cy-pat p b{color:var(--ink)}
+/* kalorie z trendu wagi */
+.td{margin-top:14px;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.td-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.td-h b{font-family:var(--font-disp);font-size:18px;letter-spacing:.03em;text-transform:uppercase}
+.td-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.td-grid div{background:var(--panel2);border-radius:10px;padding:9px 10px;min-width:0}.td-grid b{display:block;font-family:var(--font-disp);font-size:21px;font-variant-numeric:tabular-nums}
+.td-grid span{font-size:11.5px;color:var(--ink-dim);line-height:1.3;display:block}
+.td-prog{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-dim)}
+.td-prog .r{display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:center}.td-prog .bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.td-prog .bar i{display:block;height:100%;background:var(--amber)}.td-prog small{font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+.td-prop{border:1px solid var(--amber);background:var(--amber-soft);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--ink-dim)}
+.td-prop b{color:var(--ink)}.td-prop .row{display:flex;gap:8px}.td-prop .row .btn{flex:1;font-size:14px;padding:10px}
+.td-note{font-size:12px;color:var(--ink-faint);line-height:1.5}
 .cy-pr{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,1fr) 44px;gap:8px;align-items:center}
 .cy-pr.add{grid-template-columns:minmax(150px,1fr) minmax(0,1fr)}
 .cy-pr .md-in{min-width:0}
@@ -1046,6 +1066,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
       <canvas class="chart" id="wChart"></canvas>
       <div class="cy-wnote" id="wCycleNote" style="display:none"></div>
       <div class="empty" id="wEmpty">Zapisz pierwszą wagę, żeby zobaczyć trend.</div>
+      <div class="td" id="tdeeCard"></div>
     </div>
   </div>
   <div class="section">
@@ -2636,8 +2657,8 @@ function mealAdj(iso, dow, tag){
   return r;
 }
 // posiłki dnia: podmienione stoją z wartościami od Trenera, reszta skaluje się do (cel − podmienione)
-function dayMeals(iso, dow, L, wk){
-  const diet=DIET[dow], goal=S.kcalGoal||DEFAULT_KCAL;
+function dayMeals(iso, dow, L, wk, goalOverride){
+  const diet=DIET[dow], goal=goalOverride||S.kcalGoal||DEFAULT_KCAL;
   const slots=diet.meals.map((slot,i)=>({slot, i, vi:variantIndex(L,i,wk), adj:mealAdj(iso,dow,slot.tag)}));
   let bk=0, bp=0, fixed=0, fixedP=0;
   slots.forEach(x=>{ if(x.adj){ fixed+=x.adj.kcal; fixedP+=x.adj.b||0; return; } const b=variantBase(x.slot.v[x.vi]); bk+=b.kcal; bp+=b.p; });
@@ -3614,8 +3635,97 @@ function renderWeight(){
   else{dEl.textContent='—';dEl.className='n'}
   drawChart(ws);
   cyWeightNote();
+  renderTdee();
   document.getElementById('wEmpty').style.display=ws.length?'none':'block';
   renderMeasures();
+}
+
+/* ---- kalorie z trendu wagi: rzeczywisty wydatek z Twoich danych (jak w MacroFactor) ----
+   Wydatek = średnie kalorie z dni z pełnym zapisem − zmiana wagi (trend z regresji liniowej, 1 kg ≈ 7700 kcal).
+   Okno: 28 dni przed dzisiaj. Potrzeba: ważenia z co najmniej 14 dni (min. 6), 10 dni z pełnym zapisem jedzenia.
+   Dzień z pełnym zapisem: 3+ odhaczone posiłki albo 70% celu tego dnia (niepełny zapis zaniżałby wydatek).
+   Jadłospis skaluje się do celu, więc stare dni liczymy z celem, który wtedy obowiązywał (S.adj.kcal.hist).
+   Propozycja zachowuje zamierzony deficyt (wzór − cel), najwyżej ±300 kcal naraz i co najmniej 14 dni po poprzedniej
+   zmianie z trendu; tempo spadku nie szybsze niż 1% masy ciała na tydzień.
+   Stan w S.adj.kcal = {hist:[{d,kcal,prev}], last:{at,d,from,to,tdee}, snooze:'RRRR-MM-DD'} — synchronizowany z ustawieniami. */
+const TD_WIN=28, TD_SPAN=14, TD_WN=6, TD_DAYS=10, TD_EVERY=14;
+function kcalAdj(){ if(!S.adj) S.adj={}; if(!S.adj.kcal) S.adj.kcal={hist:[]}; if(!S.adj.kcal.hist) S.adj.kcal.hist=[]; return S.adj.kcal; }
+// zmiana celu kalorii od dziś (suwak, Trener, trend wagi) — do liczenia starych dni
+function kcalRecord(kcal, prev){
+  if(!kcal || kcal===prev) return;
+  const A=kcalAdj(), d=todayISO(), ex=A.hist.find(h=>h.d===d);
+  if(ex) ex.kcal=kcal; else A.hist.push({d, kcal, prev:prev||null});
+  A.hist=A.hist.filter(h=>h.kcal!==h.prev).slice(-60);
+}
+function goalOn(iso){
+  const h=((S.adj&&S.adj.kcal&&S.adj.kcal.hist)||[]).slice().sort((a,b)=>a.d<b.d?-1:1);
+  const e=h.filter(x=>x.d<=iso).pop();
+  if(e) return e.kcal;
+  return (h[0] && h[0].prev) || S.kcalGoal || DEFAULT_KCAL;
+}
+function dayIntake(iso){
+  const L=S.log[iso]; if(!L) return null;
+  const goal=goalOn(iso), dow=parseISO(iso).getDay(), wk=weekOf(dayIndexFor(iso));
+  let kcal=0, items=0;
+  if(L.meals && DIET[dow]) dayMeals(iso, dow, L, wk, goal).forEach((x,i)=>{ if(L.meals['m'+i]){ kcal+=x.mc.kcal; items++; } });
+  (L.custom||[]).forEach(c=>{ if(!c._del && c.done!==false){ kcal+=c.kcal||0; items++; } });
+  return {kcal, items, full: items>=3 || kcal>=0.7*goal};
+}
+function tdeeEstimate(){
+  const today=todayISO(), from=addDays(today,-TD_WIN), to=addDays(today,-1);
+  const ws=(S.weights||[]).filter(w=>w.d>=from && w.d<=today && w.w>0).sort((a,b)=>a.d<b.d?-1:1);
+  const span=ws.length>1 ? cyDiff(ws[0].d, ws[ws.length-1].d) : 0;
+  const days=[]; for(let d=from; d<=to; d=addDays(d,1)){ const x=dayIntake(d); if(x && x.full) days.push(x.kcal); }
+  const need={w:ws.length, span, days:days.length};
+  if(ws.length<TD_WN || span<TD_SPAN || days.length<TD_DAYS) return {ok:false, need};
+  // trend wagi: nachylenie prostej (kg na dzień) — mniej czułe na wodę niż różnica pierwszego i ostatniego ważenia
+  const xs=ws.map(w=>cyDiff(ws[0].d, w.d)), mx=xs.reduce((a,b)=>a+b,0)/xs.length, my=ws.reduce((a,w)=>a+w.w,0)/ws.length;
+  let num=0, den=0; ws.forEach((w,i)=>{ num+=(xs[i]-mx)*(w.w-my); den+=(xs[i]-mx)**2; });
+  const slope=den ? num/den : 0, avg=days.reduce((a,b)=>a+b,0)/days.length, tdee=Math.round(avg - slope*7700);
+  if(tdee<1200 || tdee>5500) return {ok:false, need, odd:true};
+  return {ok:true, need, tdee, avg:Math.round(avg), weekly:slope*7, formula:estMaintenance(), weight:ws[ws.length-1].w};
+}
+function tdeeProposal(e){
+  const goal=S.kcalGoal||DEFAULT_KCAL, deficit=e.formula-goal;   // zamierzony deficyt z obecnego celu
+  let to=Math.round((e.tdee-deficit)/100)*100;
+  to=Math.max(goal-300, Math.min(goal+300, to));
+  const maxDef=e.weight*0.01*7700/7;                               // 1% masy ciała na tydzień
+  if(e.tdee-to>maxDef) to=Math.ceil((e.tdee-maxDef)/100)*100;
+  return Math.max(1500, Math.min(3200, to));
+}
+const tdFmt=v=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2).replace('.',',');
+function renderTdee(){
+  const box=document.getElementById('tdeeCard'); if(!box) return;
+  const e=tdeeEstimate(), A=(S.adj&&S.adj.kcal)||{}, today=todayISO(), goal=S.kcalGoal||DEFAULT_KCAL, last=A.last;
+  const head=`<div class="td-h"><b>Wydatek z Twoich danych</b><span class="md-hint" style="margin:0;white-space:nowrap">28 dni</span></div>`;
+  if(!e.ok){
+    const n=e.need, row=(l,v,max,u)=>`<div class="r"><span>${l}</span><span class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></span><small>${Math.min(v,max)}/${max}${u}</small></div>`;
+    box.innerHTML=head+(e.odd?`<div class="td-note">Wynik wyszedł nierealny — zwykle przez niepełny zapis jedzenia albo pomyłkę przy wadze. Sprawdź ostatnie wpisy.</div>`:
+      `<div class="md-hint" style="margin:0">Po 2–3 tygodniach aplikacja porówna, co jesz, ze zmianą wagi i zaproponuje cel kalorii dopasowany do Ciebie.</div>
+      <div class="td-prog">${row('Ważenia',n.w,TD_WN,'')}${row('Okres ważeń',n.span,TD_SPAN,' dni')}${row('Dni z pełnym zapisem jedzenia',n.days,TD_DAYS,'')}</div>
+      <div class="td-note">Dzień z pełnym zapisem: odhaczone co najmniej 3 posiłki albo 70% celu. Waż się rano, na czczo, kilka razy w tygodniu.</div>`);
+    return;
+  }
+  const to=tdeeProposal(e), since=last ? cyDiff(last.d, today) : 99, snoozed=A.snooze && A.snooze>today;
+  const show=Math.abs(to-goal)>=100 && since>=TD_EVERY && !snoozed;
+  const pace=(e.formula-goal)*7/7700;
+  box.innerHTML=head+`<div class="td-grid">
+      <div><b>${e.tdee}</b><span>kcal — Twój wydatek<br>(wzór: ${e.formula})</span></div>
+      <div><b>${e.avg}</b><span>kcal — jesz średnio<br>(${e.need.days} dni)</span></div>
+      <div><b>${tdFmt(e.weekly)}</b><span>kg/tydz. — trend wagi</span></div></div>`+
+    (show?`<div class="td-prop"><span><b>Proponuję cel ${to} kcal zamiast ${goal}.</b> ${to<goal?'Twój wydatek jest niższy, niż zakładał wzór':'Twój wydatek jest wyższy, niż zakładał wzór'} — z nowym celem utrzymasz zamierzone tempo${pace>0?' (~'+pace.toFixed(2).replace('.',',')+' kg tłuszczu/tydz.)':''}.</span>
+      <div class="row"><button class="btn" type="button" id="tdApply">Zastosuj od dziś</button><button class="btn ghost" type="button" id="tdLater">Za tydzień</button></div></div>`
+    : last && last.d===today ? `<div class="td-note">Cel zmieniony dziś: ${last.from} → ${last.to} kcal (z trendu wagi). <button class="btn ghost" type="button" id="tdUndo" style="font-size:12px;padding:5px 10px;margin-left:4px">Cofnij</button></div>`
+    : `<div class="td-note">${last?'Ostatnia zmiana z trendu: '+prDD(last.d)+' ('+last.from+' → '+last.to+' kcal). ':''}${Math.abs(to-goal)<100?'Obecny cel '+goal+' kcal pasuje do Twoich danych.':snoozed?'Następna propozycja od '+prDD(A.snooze)+'.':'Następne sprawdzenie od '+prDD(addDays(last.d,TD_EVERY))+'.'}</div>`)+
+    `<div class="td-note">Liczone z odhaczonych posiłków i wag. Wahania wody (sól, trening${cyTracking()?', cykl':''}) wygładza trend z 4 tygodni. Zmiana celu to zawsze Twoja decyzja.</div>`;
+  const ap=document.getElementById('tdApply');
+  if(ap) ap.onclick=()=>{ const Aa=kcalAdj(), from=goal; Aa.prevLast=Aa.last||null; Aa.last={at:Date.now(), d:today, from, to, tdee:e.tdee}; delete Aa.snooze;
+    S.kcalGoal=to; kcalRecord(to, from); kcalSlider.value=to; updateKcalHint(); S._settingsM=Date.now(); save(); renderToday(); renderWeight(); restToast('Nowy cel: '+to+' kcal'); };
+  const lt=document.getElementById('tdLater');
+  if(lt) lt.onclick=()=>{ kcalAdj().snooze=addDays(today,7); S._settingsM=Date.now(); save(); renderWeight(); };
+  const un=document.getElementById('tdUndo');
+  if(un) un.onclick=()=>{ const Aa=kcalAdj(), l=Aa.last; S.kcalGoal=l.from; kcalRecord(l.from, l.to); Aa.last=Aa.prevLast||null; delete Aa.prevLast;
+    kcalSlider.value=S.kcalGoal; updateKcalHint(); S._settingsM=Date.now(); save(); renderToday(); renderWeight(); restToast('Cofnięto — cel '+S.kcalGoal+' kcal'); };
 }
 
 /* ---- obwody ciała: S.measures=[{d, waist, chest, arm, thigh, hips, _t}] ---- */
@@ -3998,7 +4108,7 @@ function updateKcalHint(){
 kcalSlider.value=S.kcalGoal||DEFAULT_KCAL;
 updateKcalHint();
 kcalSlider.addEventListener('input',updateKcalHint);
-kcalSlider.addEventListener('change',()=>{S.kcalGoal=+kcalSlider.value;S._settingsM=Date.now();save();renderToday()});
+kcalSlider.addEventListener('change',()=>{const prev=S.kcalGoal||DEFAULT_KCAL;S.kcalGoal=+kcalSlider.value;kcalRecord(S.kcalGoal,prev);S._settingsM=Date.now();save();renderToday();if(document.getElementById('v-progress').classList.contains('on'))renderWeight()});
 
 // settings: profil
 const pf={name:'pfName',weight:'pfWeight',height:'pfHeight',age:'pfAge',sex:'pfSex',activity:'pfAct'};
@@ -4394,6 +4504,7 @@ function buildCoachContext(){
   out.push(`Profil: ${p.name||'bez imienia'}, ${p.sex==='f'?'kobieta':'mężczyzna'}, ${p.age||'?'} lat, ${p.height||'?'} cm, waga w profilu ${p.weight||'?'} kg, aktywność ×${p.activity||'?'}.`);
   const g=macroGoalFor(S.kcalGoal||DEFAULT_KCAL);
   out.push(`Cel dzienny: ${g.kcal} kcal (szacowane utrzymanie ${estMaintenance()} kcal), białko ${g.p} g, węglowodany ${g.c} g, tłuszcz ${g.f} g. Jadłospis z aplikacji: 4 posiłki dziennie skalowane do celu.`);
+  { const te=tdeeEstimate(); if(te.ok) out.push(`Wydatek z danych użytkownika (28 dni: ${te.need.days} dni z pełnym zapisem jedzenia, ${te.need.w} ważeń): ~${te.tdee} kcal/dzień; je średnio ${te.avg} kcal; trend wagi ${tdFmt(te.weekly)} kg/tydz. Przy radach o kaloriach opieraj się na tym, nie na wzorze.`); }
   const dn=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
   if(inPlan){
     // plan od poniedziałku tego tygodnia do +7 dni od dziś, z przesunięciami; daty potrzebne do pola przesuniecia
@@ -4587,7 +4698,7 @@ function applyProposal(i){
     S.adj.meals.push({from, posilek:x.posilek, dni:x.dni||[], opis:x.opis, kcal:x.kcal, b:x.bialko_g, w:x.wegle_g, t:x.tluszcz_g, id});
   });
   const prevKcal=S.kcalGoal;
-  if(P.cel_kcal){ S.kcalGoal=Math.min(3200,Math.max(1500,Math.round(P.cel_kcal/100)*100)); kcalSlider.value=S.kcalGoal; updateKcalHint(); }
+  if(P.cel_kcal){ S.kcalGoal=Math.min(3200,Math.max(1500,Math.round(P.cel_kcal/100)*100)); kcalRecord(S.kcalGoal, prevKcal); kcalSlider.value=S.kcalGoal; updateKcalHint(); }
   const prevMoves=JSON.stringify((S.adj&&S.adj.moves)||{});
   if(P.przesuniecia&&P.przesuniecia.length){
     // tylko pełna wymiana dni od dziś (każdy dzień oddaje i dostaje jeden trening, żaden nie znika)
@@ -4615,7 +4726,7 @@ function undoProposal(i){
   const h=loadCoach(), m=h[i]; if(!m||!m.applied||!S.adj) return;
   const id=m.applied, entry=(S.adj.log||[]).find(x=>x.id===id);
   Object.keys(S.adj.ex||{}).forEach(n=>{ S.adj.ex[n]=S.adj.ex[n].filter(y=>y.id!==id); if(!S.adj.ex[n].length) delete S.adj.ex[n]; });
-  if(entry && entry.kcal && S.kcalGoal===entry.kcal && entry.prevKcal){ S.kcalGoal=entry.prevKcal; kcalSlider.value=S.kcalGoal; updateKcalHint(); }
+  if(entry && entry.kcal && S.kcalGoal===entry.kcal && entry.prevKcal){ S.kcalGoal=entry.prevKcal; kcalRecord(S.kcalGoal, entry.kcal); kcalSlider.value=S.kcalGoal; updateKcalHint(); }
   S.adj.meals=(S.adj.meals||[]).filter(x=>x.id!==id);
   if(S.adj.steps) S.adj.steps=S.adj.steps.filter(x=>x.id!==id);
   if(entry && entry.prevMoves!=null) S.adj.moves=JSON.parse(entry.prevMoves);   // przesunięcia sprzed tej propozycji
@@ -5771,6 +5882,11 @@ function ciVerdict(a, iso, sym){
   if(inf && inf.sit!=='preg'){
     if(inf.inPeriod && (sy.has('Skurcze')||sy.has('Obfite krwawienie')) && s<=3) return {c:'low', plan:'light', move:true, rest:true, t:'Okres z objawami', d:'Do wyboru: lżejszy trening (−10%, przerwy +30 s, bez mocnego obciążania brzucha) albo lekki ruch — 20–30 min spaceru i mobilności często łagodzi skurcze.'};
     if(inf.phase==='lut' && (sy.size>=2 || s<=3)) return {c:'mid', plan:'light', rest:true, t:'Gorsze dni przed okresem', d:'Proponuję lżej: ciężar −10% i przerwy dłuższe o 30 s. Ten tydzień bywa trudniejszy — to normalne i przejściowe.'};
+    // Twoje wzorce: w fazie, w której energia jest u Ciebie zwykle niższa, przy granicznym samopoczuciu proponujemy lżej
+    const pn=cyPhaseNote(inf.phase);
+    if(pn && pn.low && s===4) return {c:'mid', plan:'light', rest:true, t:'Twoja słabsza faza', d:'Z Twoich check-inów: w tej fazie energia jest u Ciebie zwykle niższa. Proponuję lżej (−10%, przerwy +30 s) — jeśli w trakcie poczujesz moc, wróć do planu.'};
+    if(pn && pn.high && s>=5) return {c:'ok', plan:'normal', t:'Twoja mocna faza', d:'Z Twoich check-inów: to zwykle Twoje najlepsze dni. Trenujesz według planu — dobry moment na rekord.'};
+    if(pn && pn.low && s>=5) return {c:'ok', plan:'normal', t:'Dobra forma', d:'Ta faza bywa u Ciebie słabsza, ale dziś czujesz się dobrze — trenujesz według planu.'};
   }
   if(s>=4) return {c:'ok', plan:'normal', t:'Dobra forma', d:inf && inf.phase==='foll' ? 'Trenujesz według planu. U wielu kobiet to dobry moment na mocniejszy trening — jeśli czujesz moc, spróbuj rekordu.' : 'Trenujesz według planu.'};
   if(s>=2) return {c:'mid', plan:'light', t:'Gorszy dzień', d:'Proponuję lżej: ciężar −10%, serie bez zmian. Technika i ruch są dziś ważniejsze niż rekordy.'};
@@ -5919,7 +6035,8 @@ function cyRenderBox(iso){
   // jedna linia: dzień cyklu + przycisk (początek albo koniec okresu)
   const PH={period:'okres', foll:'folikularna', ov:'owulacja', lut:'lutealna'};
   let row='';
-  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) row+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${PH[inf.phase]||(inf.inPeriod?'okres':'')}</span>`;
+  const fc=today && !inf.inPeriod ? cyForecast() : null, soon=fc && !fc.late && fc.in>=1 && fc.in<=3 ? ' · okres za ~'+fc.in+' '+(fc.in===1?'dzień':'dni') : fc && fc.late ? ' · spóźnia się '+fc.late+' '+(fc.late===1?'dzień':'dni') : '';
+  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) row+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${PH[inf.phase]||(inf.inPeriod?'okres':'')}${soon}</span>`;
   if(today && inf.inPeriod) row+= inf.p && inf.p.e ? `<span class="cy-endnote">koniec: ${inf.p.e===iso?'dziś':prDD(inf.p.e)}</span>` : `<button class="cy-end" data-cyend>Koniec okresu</button>`;
   else if(today && inf.sit!=='meno') row+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
   let h=row?`<div class="cy-row1">${row}</div>`:'';
@@ -5967,6 +6084,7 @@ function renderCycle(){
     <div class="cy-row"><div><b>Śledzenie cyklu</b><small>Dopasuje trening, check-in i komentarze do wagi do Twojego cyklu i samopoczucia.</small></div>${sw('on', !!c.on, 'Śledzenie cyklu')}</div>
     ${c.on?`<div class="sw-lab">Twoja sytuacja</div>
       <div class="cy-opts">${CY_SIT.map(([k,t,d])=>`<button class="${c.sit===k?'on':''}" data-cysit="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}<button class="${c.sit==='none'?'on':''}" data-cysit="none"><b>Wolę nie śledzić</b><small>zwykły check-in, nic się nie zmienia</small></button></div>
+      ${cyStage2Html()}
       ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Zapisane okresy</div>
         <div class="cy-list">${cyPeriods().slice().reverse().map(p=>{ const pv=cyPeriods().filter(q=>q.s<p.s).pop(), g=pv?cyDiff(pv.s,p.s):null;
           // uwaga stoi przy podejrzanym (późniejszym) wpisie — to on jest zwykle pomyłką
@@ -6027,6 +6145,79 @@ function cyWeightNote(){
   const dv=lastW.w-wk.w, late=inf.phase==='lut' || (inf.inPeriod && inf.day<=3);
   if(dv>=0.5 && late){ el.innerHTML=`<b>+${dv.toFixed(1).replace('.',',')} kg w ostatnim tygodniu?</b> ${inf.inPeriod?'To początek okresu':'To dni przed okresem'} — zwykle woda, nie tłuszcz. Patrz na trend (niebieska linia); cel kalorii się nie zmienia.`; el.style.display='block'; }
 }
+/* ---- cykl, etap 2: prognoza, Twoje wzorce i dopasowanie z Twoich danych ----
+   Prognoza: ostatni okres + średnia długość cyklu, rozrzut z odchylenia (min. 2 dni, przy nieregularnym 4, max 7).
+   Wzorce: check-iny (sen, zakwasy, energia 0–2) i objawy pogrupowane po fazach — tylko naturalny cykl,
+   co najmniej 3 check-iny w dwóch fazach. Wszystko liczone na telefonie z danych, które już są. */
+function cyGaps(){ const s=cyPeriods().map(p=>p.s), d=[]; for(let i=1;i<s.length;i++){ const x=cyDiff(s[i-1],s[i]); if(x>=15 && x<=60) d.push(x); } return d.slice(-6); }
+function cyForecast(){
+  if(!cyTracking()) return null;
+  const c=cyGet(); if(c.sit!=='natural' && c.sit!=='irregular') return null;
+  const ps=cyPeriods(); if(!ps.length) return null;
+  const g=cyGaps(), L=cyLen(), today=todayISO();
+  const sd=g.length>=3 ? Math.sqrt(g.reduce((a,x)=>a+(x-L)**2,0)/g.length) : null;
+  const spread=Math.min(7, Math.max(c.sit==='irregular'?4:2, sd!=null?Math.round(sd):3));
+  const next=addDays(ps[ps.length-1].s, L), to=addDays(next,spread);
+  return {next, from:addDays(next,-spread), to, in:cyDiff(today,next), L, n:g.length, min:g.length?Math.min(...g):null, max:g.length?Math.max(...g):null,
+    pre:addDays(next,-7), late: today>to ? cyDiff(to,today) : 0, sit:c.sit};
+}
+const CY_PH_ORDER=['period','foll','ov','lut'];
+const CY_PH_SHORT={period:'Okres', foll:'Folikularna', ov:'Owulacja', lut:'Lutealna'};
+const CY_PH_IN={period:'w czasie okresu', foll:'w fazie folikularnej', ov:'w okolicach owulacji', lut:'w fazie lutealnej'};
+function cyPatterns(){
+  if(!cyTracking() || cyGet().sit!=='natural') return null;
+  const by={}, tot={n:0,e:0};
+  Object.keys(S.log||{}).forEach(iso=>{
+    const ci=S.log[iso].checkin; if(!ci || ci.energy==null || ci.plan==='skip') return;
+    const inf=cyInfo(iso); if(!inf || !inf.phase) return;
+    const b=by[inf.phase]||(by[inf.phase]={n:0,energy:0,sleep:0,sore:0});
+    b.n++; b.energy+=ci.energy; b.sleep+=ci.sleep||0; b.sore+=ci.sore||0; tot.n++; tot.e+=ci.energy;
+  });
+  Object.values(by).forEach(b=>{ b.energy/=b.n; b.sleep/=b.n; b.sore/=b.n; });
+  const sym={}, raw=cyGet().sym||{};
+  Object.keys(raw).forEach(iso=>{ const inf=cyInfo(iso); if(!inf || !inf.phase) return; raw[iso].forEach(x=>{ const o=sym[x]||(sym[x]={n:0}); o.n++; o[inf.phase]=(o[inf.phase]||0)+1; }); });
+  const ready=Object.values(by).filter(b=>b.n>=3).length>=2;
+  return {by, sym, ready, n:tot.n, overall:tot.n?tot.e/tot.n:0};
+}
+// czy ta faza jest u Ciebie zwykle słabsza / mocniejsza niż średnio (energia w check-inie)
+function cyPhaseNote(phase){
+  const P=cyPatterns(); if(!P || !P.ready || !phase) return null;
+  const b=P.by[phase]; if(!b || b.n<3) return null;
+  const d=b.energy-P.overall;
+  return d<=-0.35 ? {low:true, b} : d>=0.35 ? {high:true, b} : null;
+}
+function cyInsights(P){
+  const out=[], ok=Object.entries(P.by).filter(([,b])=>b.n>=3).sort((a,b)=>a[1].energy-b[1].energy);
+  if(ok.length>=2){ const lo=ok[0], hi=ok[ok.length-1];
+    if(hi[1].energy-lo[1].energy>=0.4) out.push(`Energia jest u Ciebie najniższa <b>${CY_PH_IN[lo[0]]}</b>, a najwyższa <b>${CY_PH_IN[hi[0]]}</b>. Check-in uwzględnia to przy propozycji treningu.`);
+    else out.push('Twoja energia jest podobna we wszystkich fazach — trening idzie według planu i samopoczucia z danego dnia.'); }
+  const sl=ok.slice().sort((a,b)=>a[1].sleep-b[1].sleep); if(sl.length>=2 && sl[sl.length-1][1].sleep-sl[0][1].sleep>=0.5) out.push(`Najgorzej śpisz <b>${CY_PH_IN[sl[0][0]]}</b>.`);
+  Object.entries(P.sym).filter(([,o])=>o.n>=3).forEach(([k,o])=>{ const top=CY_PH_ORDER.filter(ph=>o[ph]).sort((a,b)=>o[b]-o[a])[0];
+    if(top && o[top]/o.n>=0.6) out.push(`${esc(k)}: głównie <b>${CY_PH_IN[top]}</b> (${o[top]} z ${o.n} razy).`); });
+  return out;
+}
+function cyStage2Html(){
+  const f=cyForecast(); if(!f) return '';
+  const d=x=>prDD(x);
+  let h=`<div class="sw-lab">Prognoza</div><div class="cy-fc">`;
+  if(f.late) h+=`<b class="late">Okres spóźnia się o ${f.late} ${f.late===1?'dzień':'dni'}</b><span>Prognoza: ${d(f.from)}–${d(f.to)}. Kilka dni spóźnienia zdarza się przy stresie, chorobie czy dużym deficycie kalorii. Zaznacz „Okres się zaczął”, gdy przyjdzie.</span>`;
+  else if(f.in<=0) h+=`<b>Następny okres: ok. ${d(addDays(f.next, f.L))}</b>`;
+  else h+=`<b>Następny okres: ok. ${d(f.next)}</b><span>między ${d(f.from)} a ${d(f.to)} · za ${f.in} ${f.in===1?'dzień':'dni'}</span>`;
+  h+=`<span>${f.n?`Średni cykl ${f.L} dni (z ${f.n} ${f.n===1?'cyklu':'cykli'}${f.n>=2?': '+f.min+'–'+f.max+' dni':''}).`:'Prognoza z jednego zapisanego okresu — przyjęto 28 dni. Z każdym kolejnym okresem będzie dokładniejsza.'}${f.sit==='natural'&&!f.late&&f.in>7?' Dni przed okresem od ok. '+d(f.pre)+'.':''}</span>
+    <span style="font-size:12px;color:var(--ink-faint)">To szacunek do planowania treningu — nie nadaje się do antykoncepcji ani planowania ciąży.</span></div>`;
+  const P=cyPatterns();
+  if(P){
+    h+=`<div class="sw-lab">Twoje wzorce</div><div class="cy-pat">`;
+    if(!P.ready) h+=`<p>Wzorce pojawią się po kilku check-inach przed treningiem w różnych fazach cyklu (co najmniej 3 w dwóch fazach). Na razie: ${P.n} ${P.n===1?'check-in':P.n>=2&&P.n<=4?'check-iny':'check-inów'} w fazach cyklu.</p>`;
+    else {
+      h+=`<p style="color:var(--ink-faint);font-size:12px">Energia z check-inu (0–2), średnio w fazie</p>`+CY_PH_ORDER.filter(ph=>P.by[ph]).map(ph=>{ const b=P.by[ph];
+        return `<div class="r"><span>${CY_PH_SHORT[ph]}</span><span class="bar"><i style="width:${Math.round(b.energy/2*100)}%"></i></span><small>${b.energy.toFixed(1).replace('.',',')} · ${b.n} ${b.n===1?'dzień':'dni'}</small></div>`; }).join('');
+      h+=cyInsights(P).map(t=>`<p>${t}</p>`).join('');
+    }
+    h+=`</div>`;
+  }
+  return h;
+}
 // kontekst dla Trenera — tylko za zgodą
 function cyCoachContext(today){
   const c=cyGet(); if(!cyTracking() || c.coach===false) return '';
@@ -6036,6 +6227,8 @@ function cyCoachContext(today){
   { const lg=ps.slice(-3).filter(p=>(cyPeriodLen(p)||0)>7 && !p.auto); if(lg.length) out.push('UWAGA: krwawienie dłuższe niż 7 dni ('+lg.map(p=>prDD(p.s)+': '+cyPeriodLen(p)+' dni').join(', ')+') — delikatnie zasugeruj konsultację z lekarzem, zwłaszcza przy obfitym krwawieniu.'); }
   const since=addDays(today,-14), sy=Object.keys(c.sym||{}).filter(k=>k>=since).sort().map(k=>prDD(k)+': '+c.sym[k].join(', ').toLowerCase());
   if(sy.length) out.push('Objawy (14 dni): '+sy.join('; '));
+  { const f=cyForecast(); if(f) out.push(f.late?'Okres spóźnia się o '+f.late+' dni (prognoza '+prDD(f.from)+'–'+prDD(f.to)+').':'Prognoza następnego okresu: ok. '+prDD(f.next)+' ('+prDD(f.from)+'–'+prDD(f.to)+').');
+    const P=cyPatterns(); if(P && P.ready) out.push('Wzorce z check-inów: '+CY_PH_ORDER.filter(ph=>P.by[ph]&&P.by[ph].n>=3).map(ph=>CY_PH_SHORT[ph].toLowerCase()+' — energia '+P.by[ph].energy.toFixed(1)+'/2 ('+P.by[ph].n+' dni)').join(', ')+'.'); }
   out.push('Zasady: empatycznie i rzeczowo, bez diagnoz; dopasowanie do objawów, nie do kalendarza (różnice między kobietami są duże); decyzja należy do niej. Wzrost wagi przed okresem to zwykle woda — nie obcinaj z tego powodu kalorii. Przy obfitych krwawieniach podpowiadaj produkty z żelazem.');
   // sygnały ostrzegawcze
   const lastS=ps.length?ps[ps.length-1].s:null;
