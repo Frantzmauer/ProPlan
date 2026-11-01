@@ -541,6 +541,56 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 #v-set [data-grp]{display:none}
 #v-set[data-sec="cw"] [data-grp="cw"],#v-set[data-sec="prof"] [data-grp="prof"],#v-set[data-sec="sync"] [data-grp="sync"],
 #v-set[data-sec="rem"] [data-grp="rem"],#v-set[data-sec="data"] [data-grp="data"],#v-set[data-sec="ver"] [data-grp="ver"],#v-set[data-sec="plan"] [data-grp="plan"]{display:block}
+#v-set[data-sec="adm"] [data-grp="adm"]{display:block}
+/* panel administratora (USERS): konta z planami, plany, ustawienia */
+.ap{display:flex;flex-direction:column;gap:12px}
+.ap-tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.ap-tabs button{flex:1;background:none;border:0;border-radius:9px;padding:9px 6px;font-weight:600;color:var(--ink-dim)}
+.ap-tabs button.on{background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.ap-kill{border:1px solid var(--red);background:rgba(226,84,58,.12);border-radius:12px;padding:10px 12px;font-size:13.5px}.ap-kill b{color:var(--red)}
+.ap-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ap-sum div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;min-width:0}
+.ap-sum b{display:block;font-family:var(--font-disp);font-size:24px;font-variant-numeric:tabular-nums}.ap-sum span{font-size:12px;color:var(--ink-dim)}
+.ap-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ap-chips button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;color:var(--ink-dim)}
+.ap-chips button.on{border-color:var(--amber);color:var(--ink);background:var(--amber-soft)}
+.ap-list{display:flex;flex-direction:column;gap:8px}
+.ap-acc{display:grid;grid-template-columns:1fr auto;gap:4px 10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;color:var(--ink)}
+.ap-acc .nm{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
+.ap-acc .meta{font-size:12.5px;color:var(--ink-dim);grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}.ap-acc .ap-bar{grid-column:1/-1}
+.ap-pill{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 7px;white-space:nowrap;background:var(--amber-soft);color:var(--amber)}
+.ap-pill.free{background:#22303a;color:var(--steel)}.ap-pill.tester{background:#2d2236;color:var(--plum)}.ap-pill.adm{background:#2e2a17;color:var(--gold)}.ap-pill.off{background:rgba(226,84,58,.15);color:var(--red)}
+.ap-warn{color:var(--gold)}.ap-bad{color:var(--red)}
+.ap-bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}.ap-bar span{display:block;height:100%;background:var(--amber)}.ap-bar span.hi{background:var(--gold)}.ap-bar span.full{background:var(--red)}
+.ap-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.ap-card-h{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.ap-card-h input{font-family:var(--font-disp);font-size:22px;text-transform:uppercase;background:none;border:0;border-bottom:1px dashed var(--line);padding:2px 0;width:100%;min-width:0;color:var(--ink)}
+.ap-sec{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.ap-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.ap-row label{min-width:0}
+.ap-step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.ap-step button{background:var(--panel2);border:0;width:34px;height:34px;font-size:18px;color:var(--ink)}
+.ap-step input{width:64px;text-align:center;background:var(--bg);border:0;height:34px;color:var(--ink);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.ap-step input::-webkit-inner-spin-button{-webkit-appearance:none}.ap-step input.chg{color:var(--amber);font-weight:700}
+.ap-sw{position:relative;width:44px;height:26px;flex:none}.ap-sw input{position:absolute;inset:0;opacity:0;margin:0}
+.ap-sw i{position:absolute;inset:0;border-radius:99px;background:var(--panel2);border:1px solid var(--line);pointer-events:none}
+.ap-sw i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--ink-dim);transition:transform .15s}
+.ap-sw input:checked+i{background:var(--amber-soft);border-color:var(--amber)}.ap-sw input:checked+i::after{transform:translateX(18px);background:var(--amber)}
+.ap-sw input:focus-visible+i{outline:2px solid var(--amber);outline-offset:2px}
+.ap-note{font-size:13px;color:var(--ink-dim);background:var(--panel2);border-radius:10px;padding:9px 11px}.ap-note b{color:var(--ink)}
+.ap-note.w{color:var(--gold);background:rgba(255,201,74,.08);border:1px solid rgba(255,201,74,.3)}
+.ap-seg{display:flex;flex-wrap:wrap;gap:6px}
+.ap-seg button{flex:1 1 auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13.5px;font-weight:600;color:var(--ink-dim)}
+.ap-seg button.on{border-color:var(--amber);color:var(--ink);background:var(--amber-soft)}
+.ap-chk{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.ap-chk:first-of-type{border-top:0}
+.ap-chk input{width:18px;height:18px;margin-top:2px;accent-color:var(--amber);flex:none}
+.ap-confirm{border:1px solid var(--red);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}.ap-confirm .r{display:flex;gap:8px}.ap-confirm .btn{flex:1}
+.ap-save{position:sticky;bottom:calc(136px + env(safe-area-inset-bottom));z-index:5;display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--amber);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}
+.ap-save span{flex:1;font-size:13.5px}.ap-save .btn{padding:9px 12px;font-size:14px}
+#apSheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
+#apSheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#apSheet .pn{position:relative;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:14px;animation:ehup .25s ease-out}
+#apSheet .eh-head{margin-bottom:0}
+.ap-m .t{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}.ap-m .t b{font-variant-numeric:tabular-nums}
 /* plan konta (USERS, Early Access): licznik pytań do Trenera, okno przed rozmową głosową, pakiet i limity */
 #eaGate{position:fixed;inset:0;z-index:600;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left))}
 #eaGate a{text-decoration:none}#eaGate h2{font-family:var(--font-disp);font-size:30px;margin:0}#eaGate p{margin:0;max-width:34ch;color:var(--ink-dim);line-height:1.5}
@@ -1070,6 +1120,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <button data-rest-list><span class="ic">⏱</span><span class="tx"><b>Przerwy między seriami</b><small id="mmRest"></small></span><span class="go">›</span></button>
     <button data-more="prof"><span class="ic">👤</span><span class="tx"><b>Profil i plan</b><small id="mmProf"></small></span><span class="go">›</span></button>
     <button data-more="plan" id="mmPlanBtn" style="display:none"><span class="ic">💬</span><span class="tx"><b>Pakiet i limity AI</b><small id="mmPlan"></small></span><span class="go">›</span></button>
+    <button data-more="adm" id="mmAdmBtn" style="display:none"><span class="ic">🛡️</span><span class="tx"><b>Konta i plany</b><small id="mmAdm">Administrator · plany, limity, funkcje</small></span><span class="go">›</span></button>
     <button data-more="sync"><span class="ic">☁️</span><span class="tx"><b>Synchronizacja i konta</b><small id="mmSync"></small></span><span class="go">›</span></button>
     <button data-more="rem"><span class="ic">🔔</span><span class="tx"><b>Przypomnienia</b><small id="mmRem"></small></span><span class="go">›</span></button>
     <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Eksport, import, plik, czyszczenie</small></span><span class="go">›</span></button>
@@ -1081,6 +1132,10 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <p class="lib-hint">Wszystkie ćwiczenia z planu. Wejdź w ćwiczenie, nagraj serię (np. z lekkim ciężarem) i dostań ocenę Trenera — niezależnie od treningu.</p>
     <input type="search" class="md-in lib-search" id="libSearch" placeholder="Szukaj ćwiczenia…" autocomplete="off">
     <div id="exLib" class="lib"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px" data-grp="adm">
+    <div class="ap" id="apBox"><div class="md-hint">Ładowanie…</div></div>
   </div>
 
   <div class="section" style="margin-top:14px" data-grp="plan">
@@ -1168,9 +1223,12 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
         </div>
         <div class="md-hint">Pusta nazwa = zaproszony sam ją wybierze. Link działa raz i wygasa po 7 dniach.</div>
         <div id="admLink" style="display:none;margin-top:12px"></div>
+        <div id="admOldList">
         <label class="md-lab" style="margin-top:18px">Konta</label>
         <div id="admTotal" class="md-hint" style="margin:0 0 4px"></div>
         <div id="admUsers"><div class="md-hint">Ładowanie…</div></div>
+        </div>
+        <button class="btn" id="admGoPanel" style="display:none;width:100%;margin-top:14px;font-size:13px;padding:10px">Konta, plany i limity → panel</button>
         <label class="md-lab" style="margin-top:18px">Oczekujące zaproszenia</label>
         <div id="admInvites"></div>
         <button class="btn ghost" id="admRefresh" style="width:100%;margin-top:14px;font-size:13px;padding:10px">Odśwież listę</button>
@@ -1492,6 +1550,8 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <!-- check-in przed treningiem -->
 <!-- Early Access tylko dla planów z funkcją „early” -->
 <div id="eaGate" role="dialog" aria-modal="true" aria-labelledby="eaGateT"><div class="eyebrow">ŻELAZO Early Access</div><h2 id="eaGateT">Nowości wcześniej — w Premium</h2><p>Early Access daje użytkownikom Premium nowe funkcje przed wersją stabilną. Twój plan go nie obejmuje.</p><a class="btn" href="../">Przejdź do wersji stabilnej</a></div>
+<!-- panel administratora: karta konta -->
+<div id="apSheet"><div class="bd" data-apclose></div><div class="pn" id="apPanel" role="dialog" aria-modal="true" aria-labelledby="apTitle"></div></div>
 <!-- plan z limitami: przed rozmową głosową -->
 <div id="vqSheet"><div class="bd" data-vqclose></div><div class="pn" id="vqPanel" role="dialog" aria-modal="true" aria-labelledby="vqTitle"></div></div>
 <div id="ciSheet"><div class="bd" data-ciclose></div><div class="pn" id="ciPanel" role="dialog" aria-modal="true" aria-labelledby="ciTitle"></div></div>
@@ -3827,7 +3887,7 @@ if(btnTestNotif) btnTestNotif.onclick=()=>{
 /* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
 const MORE_TITLES={cw:['Ćwiczenia','Nauka techniki'],prof:['Profil i plan','Profil · kalorie · start'],sync:['Synchronizacja','Chmura · zużycie AI · konta'],
   rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna, beta albo poprzednia'],
-  plan:['Pakiet i limity','Twój plan · Trener AI']};
+  plan:['Pakiet i limity','Twój plan · Trener AI'], adm:['Konta i plany','Administrator · USERS']};
 function moreOpen(sec, fromHistory){
   const v=document.getElementById('v-set'); v.dataset.sec=sec||'';
   const t=MORE_TITLES[sec];
@@ -3836,6 +3896,7 @@ function moreOpen(sec, fromHistory){
   document.getElementById('moreEyebrow').textContent=t?t[1]:'Konfiguracja';
   if(sec==='cw') renderExLib();
   if(sec==='plan'){ renderPlanQuota(); quotaLoad(); }
+  if(sec==='adm') apLoad();
   if(!sec) moreStatus();
   // jeden wpis w historii na podsekcję: „wstecz” zawsze wraca do menu
   try{ if(sec && !fromHistory){ if(history.state&&history.state.more) history.replaceState({more:sec},''); else history.pushState({more:sec},''); }
@@ -4820,6 +4881,11 @@ async function checkAdmin(){
 function setAdmin(on){
   document.getElementById('adminSection').style.display=on?'block':'none';
   verVisible(on);
+  // USERS: konta, plany i limity w osobnym panelu (Więcej → Konta i plany); tu zostają zaproszenia i token
+  const panel=on && APP_VER==='users';
+  document.getElementById('mmAdmBtn').style.display=panel?'':'none';
+  document.getElementById('admOldList').style.display=panel?'none':'';
+  document.getElementById('admGoPanel').style.display=panel?'':'none';
   if(on) loadAdmin();
 }
 const fmtDate=t=>t?new Date(t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})+' '+new Date(t).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}):'—';
@@ -4878,6 +4944,183 @@ async function loadAdmin(){
   document.querySelectorAll('[data-inv-show]').forEach(b=>b.onclick=()=>showInviteLink(b.dataset.invShow, b.dataset.a, +b.dataset.e, 'Zaproszenie'));
   document.querySelectorAll('[data-inv-del]').forEach(b=>b.onclick=async()=>{ if(await adminCall('adminRevokeInvite',{code:b.dataset.invDel})){ document.getElementById('admLink').style.display='none'; loadAdmin(); } });
 }
+/* ---- panel administratora (USERS): konta z planami, plany (limity i funkcje), ustawienia ----
+   Dane z adminList (konta, zużycie, plany, cfg). Plan konta zapisuje się od razu (adminSetPlan);
+   plany i ustawienia zbierają zmiany i idą razem przez „Zapisz” (adminSavePlans, serwer je sprawdza). */
+const AP_FEAT=[['coach','Trener (czat)'],['voice','Rozmowa głosowa'],['form','Ocena techniki z nagrania'],['estimate','Szacowanie kalorii'],['scanner','Skaner kodów'],['early','Early Access']];
+const AP_LIM=[['coach','Pytania do Trenera','mies.'],['form','Oceny techniki','mies.'],['est','Szacowania kalorii','mies.'],['estDay','Szacowania kalorii','dziennie']];
+const AP_CH=[['stable','Stabilna','/ — wszyscy'],['beta','Beta','/beta/ — testerzy'],['early','Early Access','/early/ — Premium'],['users','USERS','/users/ — wersja robocza']];
+// koszt jednej odpowiedzi AI (rachunek z października): Trener ~0,07 $, ocena techniki ~0,09 $, szacowanie ~0,0015 $; 1 $ ≈ 4 zł
+const AP_COST={coach:.07, form:.09, est:.0015}, AP_PLN=4;
+var AP={tab:'acc', filter:'all', q:'', kill:null, stable:false, data:null, plans:null, cfg:null};
+const apClone=o=>JSON.parse(JSON.stringify(o));
+const apPlural=(n,a,b,c)=>n===1?a:(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?b:c;
+async function apLoad(){
+  const box=document.getElementById('apBox');
+  if(!AP.data) box.innerHTML='<div class="md-hint">Ładowanie…</div>';
+  const j=await adminCall('adminList'); if(!j){ if(!AP.data) box.innerHTML='<div class="md-hint">Nie udało się wczytać kont.</div>'; return; }
+  const me=(CLOUD.account||'').toLowerCase();
+  j.users=j.users.filter(u=>u.account!==me).sort((a,b)=>a.account<b.account?-1:1);
+  j.users.unshift({account:me||'administrator', admin:true, lastSeen:Date.now(), usage:j.myUsage||{}});
+  AP.data=j;
+  if(!AP.plans || !apChanges()){ AP.plans=apClone(j.plans); AP.cfg=apClone(j.cfg); }
+  apRender();
+}
+function apEff(u){ return u.admin?AP.cfg.adminPlan:(u.plan||AP.cfg.defaultPlan); }
+function apUse(u){ const x=u.usage||{}; return {coach:x.coach||0, form:x.form||0, est:x.est||0, usd:x.usd||0}; }
+function apRatio(n,m){ return m?n/m:(n?1:0); }
+function apBarCls(r){ return r>=1?'full':r>=.8?'hi':''; }
+function apNear(u){ if(u.legacy) return false; const L=(AP.plans[apEff(u)]||{}).limits||{}, x=apUse(u); return ['coach','form','est'].some(k=>apRatio(x[k],L[k])>=.8); }
+function apPill(p,u){ const P=AP.plans[p]; return `<span class="ap-pill ${u&&u.admin?'adm':p==='free'?'free':p==='tester'?'tester':''}">${u&&u.admin?'Admin · ':''}${esc(P?P.name:p)}</span>`; }
+function apRender(){
+  const box=document.getElementById('apBox'), d=AP.data; if(!d) return;
+  const off=(d.cfg&&d.cfg.off)||[];   // pasek pokazuje stan zapisany na serwerze, nie niezapisane zmiany
+  box.innerHTML=(off.length?`<div class="ap-kill" role="status"><b>Wyłączone dla wszystkich:</b> ${off.map(k=>(AP_FEAT.find(f=>f[0]===k)||[k,k])[1]).join(', ')}. Wyłącznik awaryjny działa w każdej wersji i każdym planie.</div>`:'')+
+    `<div class="ap-tabs" role="tablist">${[['acc','Konta'],['plans','Plany'],['set','Ustawienia']].map(([k,l])=>`<button type="button" role="tab" data-aptab="${k}" class="${AP.tab===k?'on':''}" aria-selected="${AP.tab===k}">${l}</button>`).join('')}</div>`+
+    (AP.tab==='acc'?apViewAcc():AP.tab==='plans'?apViewPlans():apViewSet())+apSaveBar();
+  apBind();
+}
+function apViewAcc(){
+  const d=AP.data, by={};
+  d.users.forEach(u=>{ if(!u.legacy){ const p=apEff(u); by[p]=(by[p]||0)+1; } });
+  const near=d.users.filter(apNear).length, q=AP.q.toLowerCase();
+  const list=d.users.filter(u=>(!q||u.account.includes(q)) && (AP.filter==='all'||(AP.filter==='near'?apNear(u):!u.legacy&&apEff(u)===AP.filter)));
+  return `<div class="ap-sum"><div><b>${d.users.length}</b><span>${apPlural(d.users.length,'konto','konta','kont')}</span></div><div><b>${fmtUsd(d.totalUsd||0)}</b><span>AI w tym miesiącu</span></div><div><b>${near}</b><span>blisko limitu</span></div></div>
+    <div class="md-hint" style="margin:0">${Object.keys(AP.plans).map(p=>`${esc(AP.plans[p].name)}: ${by[p]||0}`).join(' · ')} · bez przypisanego planu → ${esc((AP.plans[AP.cfg.defaultPlan]||{}).name||AP.cfg.defaultPlan)}</div>
+    <input class="md-in" id="apQ" type="search" placeholder="Szukaj konta…" value="${esc(AP.q)}" autocomplete="off">
+    <div class="ap-chips">${[['all','Wszystkie'],...Object.keys(AP.plans).map(p=>[p,AP.plans[p].name]),['near','Blisko limitu']].map(([k,l])=>`<button type="button" data-apf="${esc(k)}" class="${AP.filter===k?'on':''}">${esc(l)}</button>`).join('')}</div>
+    <div class="ap-list">${list.length?list.map(u=>{
+      const x=apUse(u);
+      if(u.legacy) return `<button class="ap-acc" type="button" data-apacc="${esc(u.account)}"><span class="nm"><span>${esc(u.account)}</span><span class="ap-pill adm">stare konto</span></span><span class="md-hint" style="margin:0">${fmtUsd(x.usd)}</span><span class="meta">używa tokenu administratora · wyślij własny link</span></button>`;
+      const p=apEff(u), L=(AP.plans[p]||{}).limits||{}, r=apRatio(x.coach,L.coach);
+      return `<button class="ap-acc" type="button" data-apacc="${esc(u.account)}"><span class="nm"><span>${esc(u.account)}</span>${apPill(p,u)}${!u.admin&&!u.plan?'<span class="md-hint" style="margin:0">domyślny</span>':''}${u.disabled?'<span class="ap-pill off">zablokowane</span>':''}</span><span class="md-hint" style="margin:0">${fmtUsd(x.usd)}</span>
+        <span class="ap-bar"><span class="${apBarCls(r)}" style="width:${Math.min(100,r*100)}%"></span></span>
+        <span class="meta"><span class="${r>=1?'ap-bad':r>=.8?'ap-warn':''}">Trener ${x.coach}/${L.coach}</span><span>Oceny ${x.form}/${L.form}</span><span>Szacowania ${x.est}/${L.est}</span><span>· ${u.admin?'Ty':esc(fmtDate(u.lastSeen))}</span></span></button>`; }).join(''):'<div class="ap-note">Brak kont dla tego filtra.</div>'}</div>`;
+}
+function apWorst(p){ const L=AP.plans[p].limits; return (L.coach*AP_COST.coach + L.form*AP_COST.form + L.est*AP_COST.est)*AP_PLN; }
+const apZl=v=>(Math.round(v*10)/10).toString().replace('.',',')+' zł';
+function apViewPlans(){
+  const saved=AP.data.plans;
+  return Object.keys(AP.plans).map(p=>{
+    const P=AP.plans[p], O=saved[p], users=AP.data.users.filter(u=>!u.legacy&&apEff(u)===p), n=users.length;
+    const over=users.filter(u=>{ const x=apUse(u); return ['coach','form','est'].some(k=>x[k]>P.limits[k]); });
+    return `<div class="ap-card">
+      <div class="ap-card-h"><input aria-label="Nazwa planu ${esc(p)}" data-apname="${esc(p)}" value="${esc(P.name)}" maxlength="30"><span class="md-hint" style="margin:0;white-space:nowrap">${n} ${apPlural(n,'konto','konta','kont')}</span></div>
+      <div class="ap-sec">Limity</div>
+      ${AP_LIM.map(([k,l,per])=>`<div class="ap-row"><label for="apl-${esc(p)}-${k}">${l} <span class="md-hint" style="margin:0;display:inline">/ ${per}</span></label><div class="ap-step"><button type="button" data-apd="-1" data-apl="${esc(p)}.${k}" aria-label="Mniej">−</button><input id="apl-${esc(p)}-${k}" inputmode="numeric" data-aplim="${esc(p)}.${k}" value="${P.limits[k]}" class="${!O||O.limits[k]!==P.limits[k]?'chg':''}"><button type="button" data-apd="1" data-apl="${esc(p)}.${k}" aria-label="Więcej">+</button></div></div>`).join('')}
+      <div class="ap-note">Najgorszy przypadek (wszystkie limity wykorzystane): <b>≈ ${apZl(apWorst(p))}</b> kosztu AI na konto miesięcznie.</div>
+      ${over.length?`<div class="ap-note w">${over.map(u=>esc(u.account)).join(', ')} ${over.length===1?'ma':'mają'} już w tym miesiącu więcej, niż pozwala ten limit — do 1. dnia następnego miesiąca nie wykorzystają tej funkcji.</div>`:''}
+      <div class="ap-sec">Funkcje</div>
+      ${AP_FEAT.map(([k,l])=>`<div class="ap-row"><label for="apf-${esc(p)}-${k}">${l}${(AP.cfg.off||[]).includes(k)?' <span class="ap-bad" style="font-size:12px">· wyłączone dla wszystkich</span>':''}</label><span class="ap-sw"><input type="checkbox" id="apf-${esc(p)}-${k}" data-apfeat="${esc(p)}.${k}" ${P.features[k]!==false?'checked':''}><i></i></span></div>`).join('')}
+      ${!O?`<button class="btn ghost" type="button" data-apdel="${esc(p)}" style="color:var(--red)">Usuń ten nowy plan</button>`:''}
+    </div>`; }).join('')+
+    (Object.keys(AP.plans).length<10?`<button class="btn ghost" type="button" id="apAddPlan">＋ Nowy plan (kopia Premium)</button>`:'')+
+    `<div class="ap-note">Limity i funkcje planu działają w wersjach zaznaczonych w Ustawieniach (dziś: ${AP.cfg.enforce.map(c=>(AP_CH.find(x=>x[0]===c)||[c,c])[1]).join(', ')||'żadnej'}).</div>`;
+}
+function apViewSet(){
+  const segP=(id,val)=>`<div class="ap-seg" id="${id}">${Object.keys(AP.plans).map(k=>`<button type="button" data-app="${esc(k)}" class="${val===k?'on':''}">${esc(AP.plans[k].name)}</button>`).join('')}</div>`;
+  return `<div class="ap-card"><div class="ap-sec">Plan dla kont bez przypisanego planu</div>${segP('apDef',AP.cfg.defaultPlan)}
+      <div class="md-hint" style="margin:0">Dotyczy nowych osób z zaproszenia i kont oznaczonych „domyślny”.</div></div>
+    <div class="ap-card"><div class="ap-sec">Twój plan (administrator)</div>${segP('apAdm',AP.cfg.adminPlan)}
+      <div class="md-hint" style="margin:0">Przełącz na Darmowy, żeby zobaczyć aplikację oczami osoby bez subskrypcji.</div></div>
+    <div class="ap-card"><div class="ap-sec">Limity planów obowiązują w wersjach</div>
+      ${AP_CH.map(([k,l,d])=>`<label class="ap-chk"><input type="checkbox" data-apch="${k}" ${AP.cfg.enforce.includes(k)?'checked':''}><span><b>${l}</b><br><span class="md-hint" style="margin:0">${d}</span></span></label>`).join('')}
+      ${AP.stable?`<div class="ap-confirm"><span><b>Włączyć plany w wersji stabilnej?</b> Po zapisaniu każde konto dostanie limity swojego planu — to start subskrypcji dla wszystkich.</span><div class="r"><button class="btn" type="button" id="apStYes" style="background:var(--red)">Włącz</button><button class="btn ghost" type="button" id="apStNo">Anuluj</button></div></div>`:''}
+      <div class="md-hint" style="margin:0">W wersjach bez zaznaczenia działają stare limity dzienne i tylko wyłącznik awaryjny.</div></div>
+    <div class="ap-card"><div class="ap-sec">Wyłącznik awaryjny</div>
+      <div class="md-hint" style="margin:0">Po zapisaniu wyłącza funkcję we wszystkich wersjach i planach — gdy coś się psuje albo koszty rosną.</div>
+      ${AP_FEAT.filter(f=>f[0]!=='early').map(([k,l])=>`<div class="ap-row"><label for="apk-${k}">${l}</label><span class="ap-sw"><input type="checkbox" id="apk-${k}" data-apkill="${k}" ${(AP.cfg.off||[]).includes(k)?'':'checked'}><i></i></span></div>
+        ${AP.kill===k?`<div class="ap-confirm"><span><b>Wyłączyć: ${l.toLowerCase()}?</b> Wszyscy zobaczą, że funkcja jest teraz niedostępna.</span><div class="r"><button class="btn" type="button" data-apkillyes="${k}" style="background:var(--red)">Wyłącz</button><button class="btn ghost" type="button" data-apkillno>Anuluj</button></div></div>`:''}`).join('')}
+    </div>`;
+}
+function apChanges(){
+  if(!AP.data || !AP.plans) return 0;
+  const A=AP.data.plans, B=AP.plans, a=AP.data.cfg, b=AP.cfg; let n=0;
+  Object.keys(B).forEach(p=>{ const O=A[p], P=B[p]; if(!O){ n++; return; }
+    if(O.name!==P.name) n++; AP_LIM.forEach(([k])=>{ if(O.limits[k]!==P.limits[k]) n++; }); AP_FEAT.forEach(([k])=>{ if((O.features[k]!==false)!==(P.features[k]!==false)) n++; }); });
+  Object.keys(A).forEach(p=>{ if(!B[p]) n++; });
+  ['defaultPlan','adminPlan'].forEach(k=>{ if(a[k]!==b[k]) n++; });
+  if(a.enforce.slice().sort().join()!==b.enforce.slice().sort().join()) n++;
+  if((a.off||[]).slice().sort().join()!==(b.off||[]).slice().sort().join()) n++;
+  return n;
+}
+function apSaveBar(){ const n=apChanges(); return n?`<div class="ap-save"><span>${n} ${apPlural(n,'zmiana','zmiany','zmian')} w planach i ustawieniach</span><button class="btn ghost" type="button" id="apDiscard">Odrzuć</button><button class="btn" type="button" id="apSaveBtn">Zapisz</button></div>`:''; }
+function apSetLim(path,v){ const i=path.lastIndexOf('.'), p=path.slice(0,i), k=path.slice(i+1); AP.plans[p].limits[k]=Math.max(0,Math.min(100000,Math.round(+v||0))); }
+function apBind(){
+  const box=document.getElementById('apBox'), on=(sel,ev,fn)=>box.querySelectorAll(sel).forEach(el=>el[ev]=()=>fn(el));
+  on('[data-aptab]','onclick',b=>{ AP.tab=b.dataset.aptab; AP.kill=null; AP.stable=false; apRender(); });
+  const qi=document.getElementById('apQ'); if(qi) qi.oninput=e=>{ AP.q=e.target.value; const pos=e.target.selectionStart; apRender(); const n=document.getElementById('apQ'); n.focus(); n.setSelectionRange(pos,pos); };
+  on('[data-apf]','onclick',b=>{ AP.filter=b.dataset.apf; apRender(); });
+  on('[data-apacc]','onclick',b=>apOpenAcc(b.dataset.apacc));
+  on('[data-apname]','onchange',i=>{ AP.plans[i.dataset.apname].name=i.value.trim().slice(0,30)||i.dataset.apname; apRender(); });
+  on('[data-apd]','onclick',b=>{ const path=b.dataset.apl, i=path.lastIndexOf('.'), cur=AP.plans[path.slice(0,i)].limits[path.slice(i+1)], st=cur>=100?10:cur>=20?5:1; apSetLim(path, cur+(+b.dataset.apd)*st); apRender(); });
+  on('[data-aplim]','onchange',i=>{ apSetLim(i.dataset.aplim,i.value); apRender(); });
+  on('[data-apfeat]','onchange',i=>{ const path=i.dataset.apfeat, k=path.lastIndexOf('.'); AP.plans[path.slice(0,k)].features[path.slice(k+1)]=i.checked; apRender(); });
+  on('[data-apdel]','onclick',b=>{ delete AP.plans[b.dataset.apdel]; apRender(); });
+  const add=document.getElementById('apAddPlan'); if(add) add.onclick=()=>{ let i=1; while(AP.plans['plan'+i]) i++; const base=AP.plans.premium||AP.plans[Object.keys(AP.plans)[0]]; AP.plans['plan'+i]=Object.assign(apClone(base),{name:'Nowy plan '+i}); apRender(); };
+  on('#apDef [data-app]','onclick',b=>{ AP.cfg.defaultPlan=b.dataset.app; apRender(); });
+  on('#apAdm [data-app]','onclick',b=>{ AP.cfg.adminPlan=b.dataset.app; apRender(); });
+  on('[data-apch]','onchange',i=>{ const k=i.dataset.apch;
+    if(k==='stable' && i.checked){ i.checked=false; AP.stable=true; apRender(); return; }
+    AP.cfg.enforce=i.checked?[...AP.cfg.enforce,k]:AP.cfg.enforce.filter(x=>x!==k); apRender(); });
+  const sy=document.getElementById('apStYes'); if(sy){ sy.onclick=()=>{ AP.cfg.enforce=[...AP.cfg.enforce,'stable']; AP.stable=false; apRender(); }; document.getElementById('apStNo').onclick=()=>{ AP.stable=false; apRender(); }; }
+  on('[data-apkill]','onchange',i=>{ const k=i.dataset.apkill;
+    if(!i.checked){ i.checked=true; AP.kill=k; apRender(); return; }
+    AP.cfg.off=(AP.cfg.off||[]).filter(x=>x!==k); apRender(); });
+  on('[data-apkillyes]','onclick',b=>{ AP.cfg.off=[...(AP.cfg.off||[]),b.dataset.apkillyes]; AP.kill=null; apRender(); });
+  on('[data-apkillno]','onclick',()=>{ AP.kill=null; apRender(); });
+  const dis=document.getElementById('apDiscard'); if(dis) dis.onclick=()=>{ AP.plans=apClone(AP.data.plans); AP.cfg=apClone(AP.data.cfg); AP.kill=null; AP.stable=false; apRender(); };
+  const sv=document.getElementById('apSaveBtn'); if(sv) sv.onclick=async()=>{
+    sv.disabled=true; sv.textContent='Zapisuję…';
+    const r=await adminCall('adminSavePlans',{plans:AP.plans, cfg:AP.cfg});
+    if(r){ AP.data.plans=apClone(r.plans); AP.data.cfg=apClone(r.cfg); AP.plans=apClone(r.plans); AP.cfg=apClone(r.cfg); apRender();
+      showInAppReminder('Zapisano', 'Plany i ustawienia działają od następnego zapytania każdej osoby.'); checkAdmin(); }
+    else apRender();
+  };
+}
+function apOpenAcc(name){
+  const u=AP.data.users.find(x=>x.account===name); if(!u) return;
+  const x=apUse(u), pn=document.getElementById('apPanel');
+  const m=(l,n,max)=>`<div class="ap-m"><div class="t"><span>${l}</span><b>${n} / ${max}</b></div><div class="ap-bar"><span class="${apBarCls(apRatio(n,max))}" style="width:${Math.min(100,apRatio(n,max)*100)}%"></span></div></div>`;
+  const head=`<div class="eh-grab"></div><div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Konto · ${u.admin?'Ty':'ostatnio '+esc(fmtDate(u.lastSeen))}</div><h2 id="apTitle">${esc(u.account)}</h2></div><button class="eh-x" data-apclose aria-label="Zamknij">✕</button></div>`;
+  if(u.legacy){
+    pn.innerHTML=head+`<div class="ap-note">Stare konto: używa Twojego tokenu administratora i nie ma planu. Wyślij mu własny link — dostanie własny token i plan domyślny.</div>
+      <div class="ap-note">Koszt AI w tym miesiącu: <b>${fmtUsd(x.usd)}</b></div>
+      <button class="btn" type="button" data-apact="adminReset">Wyślij własny link</button>`;
+  }else{
+    const p=apEff(u), L=(AP.plans[p]||{}).limits||{};
+    pn.innerHTML=head+(u.admin?`<div class="ap-note">To Twoje konto administratora — jego plan ustawiasz w zakładce Ustawienia.</div>`:`
+      <div class="ap-sec">Plan</div>
+      <div class="ap-seg" id="apAccPlan">${['',...Object.keys(AP.data.plans)].map(k=>`<button type="button" data-app="${esc(k)}" class="${(u.plan||'')===k?'on':''}">${k?esc(AP.data.plans[k].name):'Domyślny ('+esc((AP.data.plans[AP.data.cfg.defaultPlan]||{}).name||'')+')'}</button>`).join('')}</div>
+      <div class="md-hint" style="margin:0">Zmiana działa od następnego zapytania tej osoby. Zużycie w tym miesiącu zostaje i liczy się do nowych limitów.</div>`)+
+      `<div class="ap-sec">${esc(monthName((u.usage||{}).m||todayISO().slice(0,7)))}</div>
+      ${m('Pytania do Trenera',x.coach,L.coach)}${m('Oceny techniki',x.form,L.form)}${m('Szacowania kalorii',x.est,L.est)}
+      <div class="ap-note">Koszt AI w tym miesiącu: <b>${fmtUsd(x.usd)}</b> (≈ ${apZl(x.usd*AP_PLN)})</div>`+
+      (u.admin?'':`<div class="ap-row" style="gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" type="button" style="flex:1" data-apact="adminReset">Nowy link</button>
+        <button class="btn ghost" type="button" style="flex:1" data-apact="${u.disabled?'adminEnable':'adminDisable'}">${u.disabled?'Odblokuj':'Zablokuj'}</button>
+        <button class="btn ghost" type="button" style="flex:1;color:var(--red)" data-apact="adminDelete">Usuń</button></div>`);
+  }
+  document.getElementById('apSheet').style.display='flex';
+  pn.querySelectorAll('[data-apclose]').forEach(b=>b.onclick=apCloseSheet);
+  pn.querySelectorAll('#apAccPlan [data-app]').forEach(b=>b.onclick=async()=>{
+    const r=await adminCall('adminSetPlan',{target:u.account, plan:b.dataset.app}); if(!r) return;
+    u.plan=r.plan||''; apRender(); apOpenAcc(name);
+  });
+  pn.querySelectorAll('[data-apact]').forEach(b=>b.onclick=async()=>{
+    const a=b.dataset.apact, t=u.account;
+    if(a==='adminDelete' && prompt('Usunąć konto „'+t+'” razem z danymi? Plik trafi do kosza Dysku (30 dni na odzyskanie).\nWpisz nazwę konta, aby potwierdzić:')!==t) return;
+    if(a==='adminReset' && !confirm('Wygenerować link dla „'+t+'”? Dostanie własny token; jego dotychczasowy token przestanie działać (dane zostają).')) return;
+    const r=await adminCall(a,{target:t}); if(!r) return;
+    apCloseSheet();
+    if(a==='adminReset'){ document.querySelector('.nav button[data-v="set"]').click(); moreOpen('sync'); showInviteLink(r.code, r.account, r.expires, 'Nowy link logowania'); setTimeout(()=>document.getElementById('admLink').scrollIntoView({block:'center'}),300); }
+    AP.data=null; apLoad(); loadAdmin();
+  });
+}
+function apCloseSheet(){ document.getElementById('apSheet').style.display='none'; }
+document.querySelector('#apSheet .bd').onclick=apCloseSheet;
+document.getElementById('admGoPanel').onclick=()=>moreOpen('adm');
+
 document.getElementById('admInviteBtn').onclick=async()=>{
   const el=document.getElementById('admName'); const name=slugAccount(el.value); el.value=name;
   const r=await adminCall('adminInvite',{name}); if(!r) return;
