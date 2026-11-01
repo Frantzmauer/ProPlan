@@ -771,7 +771,10 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .cy-flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--ink-dim);width:100%}
 .cy-flow button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--ink-dim)}
 .cy-flow button.on{border-color:var(--plum);color:var(--ink);background:rgba(197,139,214,.12)}
-.cy-flow .cy-end{border-style:dashed;color:var(--plum)}
+.cy-row1{display:flex;align-items:center;gap:8px;width:100%;min-width:0}
+.cy-row1 .cy-chip{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;padding:5px 10px}
+.cy-row1 .cy-start,.cy-row1 .cy-end{flex:none;min-height:36px;padding:0 12px;border-radius:999px;border:1px dashed rgba(197,139,214,.6);color:var(--plum);font-weight:600;font-size:13px;white-space:nowrap}
+.cy-row1 .cy-endnote{flex:none;white-space:nowrap}
 .cy-endnote{font-size:12.5px;color:var(--ink-faint)}
 .cy-confirm{width:100%;background:var(--panel);border:1px solid rgba(197,139,214,.5);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
 .cy-confirm b{color:var(--ink);font-weight:600}
@@ -5303,13 +5306,17 @@ function cyRenderBox(iso){
   const today=iso===todayISO(), fl=inf.inPeriod && inf.p && inf.p.flow ? inf.p.flow[iso] : null;
   if(today && inf.p && !inf.p.e && !inf.inPeriod){ cyAutoEnd(inf.p); return cyRenderBox(iso); }   // brak odpowiedzi — koniec przyjęty automatycznie
   const askEnd=today && inf.inPeriod && inf.p && !inf.p.e && inf.day>=3 && inf.p.still!==iso;
-  let h='';
-  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) h+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${CY_PH[inf.phase]||(inf.inPeriod?'okres':'')}</span>`;
-  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>Krwawienie:</span>${[['light','Lekkie'],['medium','Średnie'],['heavy','Obfite']].map(([k,t])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${t}</button>`).join('')}${askEnd?'':inf.p&&inf.p.e?`<span class="cy-endnote">koniec zapisany: ${inf.p.e===iso?'dziś':prDD(inf.p.e)}</span>`:'<button class="cy-end" data-cyend>Okres się skończył</button>'}</div>`;
+  // jedna linia: dzień cyklu + przycisk (początek albo koniec okresu)
+  const PH={period:'okres', foll:'folikularna', ov:'owulacja', lut:'lutealna'};
+  let row='';
+  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) row+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${PH[inf.phase]||(inf.inPeriod?'okres':'')}</span>`;
+  if(today && inf.inPeriod) row+= inf.p && inf.p.e ? `<span class="cy-endnote">koniec: ${inf.p.e===iso?'dziś':prDD(inf.p.e)}</span>` : `<button class="cy-end" data-cyend>Koniec okresu</button>`;
+  else if(today && inf.sit!=='meno') row+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
+  let h=row?`<div class="cy-row1">${row}</div>`:'';
+  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>Krwawienie:</span>${[['light','Lekkie'],['medium','Średnie'],['heavy','Obfite']].map(([k,t])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${t}</button>`).join('')}</div>`;
   if(askEnd) h+=`<div class="cy-confirm"><b>Okres już się skończył?</b><span>Dzień ${inf.day} okresu. Zapisana długość pomoże lepiej dopasować trening w kolejnych cyklach.</span>
     <div class="row"><button class="yes" data-cyendt="0">Tak, dziś</button><button class="yes" data-cyendt="1">Tak, wczoraj</button><button data-cystill>Jeszcze trwa</button></div></div>`;
   if(today && inf.inPeriod && inf.day>7 && !(inf.p.longNote)) h+=`<div class="cy-confirm"><b>Krwawienie trwa już ${inf.day} dni.</b><span>Okres dłuższy niż 7 dni warto skonsultować z lekarzem — zwłaszcza gdy jest obfity albo powtarza się co cykl.</span><div class="row"><button data-cylong>Rozumiem</button></div></div>`;
-  if(today && !inf.inPeriod && inf.sit!=='meno') h+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-cyflow]').forEach(b=>b.onclick=()=>{ cyFlow(iso, b.dataset.cyflow); cyRenderBox(iso); });
   const e=box.querySelector('[data-cyend]'); if(e) e.onclick=()=>{ cyPeriodEnd(iso); cyRenderBox(iso); restToast('Zapisano koniec okresu'); };
