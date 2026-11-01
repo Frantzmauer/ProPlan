@@ -785,6 +785,13 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .cy-pr .g{font-size:12.5px;color:var(--ink-faint);line-height:1.3}
 .cy-pr .g b{color:var(--amber);font-weight:600}
 .cy-pr.warn .md-in{border-color:rgba(255,122,26,.6)}
+.cy-pr2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:6px 8px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.cy-pr2 label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em;min-width:0}
+.cy-pr2 .md-in{min-width:0;width:100%;font-size:14px;padding:9px 8px}
+.cy-pr2 button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink-dim);font-size:16px}
+.cy-pr2 .g{grid-column:1/-1;font-size:12.5px;color:var(--ink-faint);line-height:1.3}
+.cy-pr2 .g b{color:var(--amber);font-weight:600}
+.cy-pr2.warn label:first-child .md-in{border-color:rgba(255,122,26,.6)}
 .cy-pr button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink-dim);font-size:16px}
 .cy-move{margin:12px 14px 0;background:var(--panel2);border:1px solid rgba(197,139,214,.35);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-dim)}
 .cy-move b{color:var(--ink);font-size:15px}
@@ -5343,10 +5350,15 @@ function renderCycle(){
     <div class="cy-row"><div><b>Śledzenie cyklu</b><small>Dopasuje trening, check-in i komentarze do wagi do Twojego cyklu i samopoczucia.</small></div>${sw('on', !!c.on, 'Śledzenie cyklu')}</div>
     ${c.on?`<div class="sw-lab">Twoja sytuacja</div>
       <div class="cy-opts">${CY_SIT.map(([k,t,d])=>`<button class="${c.sit===k?'on':''}" data-cysit="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}<button class="${c.sit==='none'?'on':''}" data-cysit="none"><b>Wolę nie śledzić</b><small>zwykły check-in, nic się nie zmienia</small></button></div>
-      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Zapisane okresy (początek)</div>
+      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Zapisane okresy</div>
         <div class="cy-list">${cyPeriods().slice().reverse().map(p=>{ const pv=cyPeriods().filter(q=>q.s<p.s).pop(), g=pv?cyDiff(pv.s,p.s):null;
           // uwaga stoi przy podejrzanym (późniejszym) wpisie — to on jest zwykle pomyłką
-          return `<div class="cy-pr ${g!=null&&g<15?'warn':''}"><input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}" aria-label="Początek okresu ${prDD(p.s)}"><span class="g">${g==null?'pierwszy zapisany':g<15?'<b>tylko '+g+' dni po poprzednim?</b>':g+' dni po poprzednim'}${cyPeriodLen(p)?'<br>trwał '+cyPeriodLen(p)+' '+(cyPeriodLen(p)===1?'dzień':'dni')+(p.auto?' (przyjęte automatycznie)':''):''}</span><button data-cyrm="${p.s}" aria-label="Usuń okres z ${prDD(p.s)}">✕</button></div>`; }).join('')||'<div class="rs-hint">Brak zapisanych okresów.</div>'}</div>
+          // początek i koniec do poprawienia; koniec może być pusty, póki okres trwa
+          return `<div class="cy-pr2 ${g!=null&&g<15?'warn':''}">
+            <label>Początek<input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}"></label>
+            <label>Koniec<input type="date" class="md-in" data-cyend2="${p.s}" value="${p.e||''}" min="${p.s}" max="${todayISO()}"></label>
+            <button data-cyrm="${p.s}" aria-label="Usuń okres z ${prDD(p.s)}">✕</button>
+            <span class="g">${g==null?'pierwszy zapisany':g<15?'<b>tylko '+g+' dni po poprzednim?</b>':g+' dni po poprzednim'}${cyPeriodLen(p)?' · trwał '+cyPeriodLen(p)+' '+(cyPeriodLen(p)===1?'dzień':'dni')+(p.auto?' (przyjęte automatycznie — popraw, jeśli trzeba)':''):' · koniec niezapisany'}</span></div>`; }).join('')||'<div class="rs-hint">Brak zapisanych okresów.</div>'}</div>
         <div class="cy-pr add"><input type="date" class="md-in" id="cyAdd" max="${todayISO()}" aria-label="Dodaj początek okresu"><span class="g">dodaj wcześniejszy okres</span></div>
         <div class="rs-hint">Najnowszy okres jest na górze. ✕ usuwa tylko ten jeden wpis.</div>`:''}
       <div class="sw-lab">Prywatność</div>
@@ -5359,6 +5371,10 @@ function renderCycle(){
     const c2=Object.assign({}, cyGet()), ps=cyPeriods();
     if(ps.some(p=>p.s===v)){ renderCycle(); return; }   // taki wpis już jest
     ps.forEach(p=>{ if(p.s===old){ p.s=v; if(p.e && p.e<v) p.e=null; p.flow={}; } }); c2.periods=ps; cySave(c2); renderToday(); renderCycle(); });
+  panel.querySelectorAll('[data-cyend2]').forEach(inp=>inp.onchange=()=>{ const st=inp.dataset.cyend2, v=inp.value;
+    if(v && (v<st || v>todayISO())){ renderCycle(); return; }   // koniec nie przed początkiem i nie w przyszłości
+    const c2=Object.assign({}, cyGet()), ps=cyPeriods();
+    ps.forEach(p=>{ if(p.s===st){ p.e=v||null; delete p.auto; delete p.still; } }); c2.periods=ps; cySave(c2); renderToday(); renderCycle(); restToast(v?'Zapisano koniec okresu · '+prDD(v):'Usunięto datę końca'); });
   panel.querySelectorAll('[data-cyrm]').forEach(b=>b.onclick=()=>{ const c2=Object.assign({}, cyGet()); c2.periods=cyPeriods().filter(p=>p.s!==b.dataset.cyrm); cySave(c2); renderToday(); renderCycle(); restToast('Usunięto wpis'); });
   const ad=document.getElementById('cyAdd');
   if(ad) ad.onchange=()=>{ if(!ad.value) return; const c2=Object.assign({}, cyGet()), ps=cyPeriods(); if(!ps.some(p=>p.s===ad.value)){ ps.push({s:ad.value, e:addDays(ad.value,4), flow:{}}); c2.periods=ps; cySave(c2); } renderToday(); renderCycle(); };
