@@ -1041,7 +1041,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
   <div class="section" style="margin-top:14px" data-grp="ver">
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
-      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.1</b><span>sprawdzona wersja</span></a>
+      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.2</b><span>sprawdzona wersja</span></a>
       <a class="ver-btn" id="verBeta" href="./"><b>Beta</b><span>nowości przed wydaniem · do testów</span></a>
       <a class="ver-btn" id="verOld" href="../v1.0/"><b>Poprzednia · v1.0</b><span>stary wygląd — gdyby coś nie działało</span></a>
     </div>
@@ -3783,7 +3783,7 @@ function moreStatus(){
   set('mmProf', `${p.name||'bez imienia'} · ${S.kcalGoal||DEFAULT_KCAL} kcal · start ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
   set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
-  set('mmVer', APP_VER==='stable' ? 'Stabilna · v1.1' : 'Beta');
+  set('mmVer', APP_VER==='stable' ? 'Stabilna · v1.2' : 'Beta');
   { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
     if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
     set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?' · synchronizowane':' · tylko na tym telefonie') : 'Wyłączone · dobrowolne'); }
@@ -4624,12 +4624,12 @@ if(APP_VER==="stable"){
   document.getElementById('verStable').href='./'; document.getElementById('verBeta').href='beta/'; document.getElementById('verOld').href='v1.0/';
   document.querySelectorAll('.beta-tag').forEach(x=>x.remove());
 }
-// jednorazowo po aktualizacji do 1.1: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
-const APP_REL='1.1';
+// jednorazowo po aktualizacji do 1.2: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
+const APP_REL='1.2';
 try{
   if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
-    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.1 — co nowego',
-      'Zakładki Trening i Dieta z przełącznikiem dni na dole. Tryb treningu: serie, przerwy, pauza i podsumowanie. Historia ćwiczeń i rekordy. Ocena techniki z nagrania. Trener mówi głosem, przesuwa dni i ustala kroki. Działa też bez internetu. Stary wygląd: Więcej → Wersja aplikacji → v1.0.'), 1200);
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.2 — co nowego',
+      'Zamień ćwiczenie, gdy brakuje sprzętu albo coś boli. Własne przerwy dla każdego ćwiczenia (ustawia je też Trener). Check-in przed treningiem: sen, zakwasy i energia dopasowują trening. Cykl i samopoczucie — dobrowolnie, w Więcej. Wykres 1RM nie spada już do zera przy seriach powyżej 12 powtórzeń.'), 1200);
     localStorage.setItem('zelazo_seen_rel', APP_REL);
   }
 }catch(e){}
