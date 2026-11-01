@@ -75,12 +75,12 @@ var FORM_PER_DAY = 15;       // limit analiz techniki z nagrania na konto dzienn
 // Obie właściwości (plans, cfg) zmienia administrator; bez nich działają wartości domyślne poniżej.
 // ============================================================
 var CHANNELS = ['stable', 'beta', 'early', 'users'];
-var FEATURES = ['coach', 'voice', 'form', 'estimate', 'scanner', 'early'];
+var FEATURES = ['coach', 'voice', 'form', 'estimate', 'photo', 'scanner', 'early'];
 var LIMIT_KEYS = ['coach', 'form', 'est', 'estDay'];
 function allOn() { var f = {}; FEATURES.forEach(function (k) { f[k] = true; }); return f; }
 var DEFAULT_PLANS = {
   free:    { name: 'Darmowy', limits: { coach: 5,  form: 1,  est: 30,  estDay: 20 },
-             features: { coach: true, voice: false, form: true, estimate: true, scanner: true, early: false } },
+             features: { coach: true, voice: false, form: true, estimate: true, photo: false, scanner: true, early: false } },
   premium: { name: 'Premium', limits: { coach: 30, form: 10, est: 300, estDay: 20 }, features: allOn() },
   tester:  { name: 'Tester',  limits: { coach: 60, form: 20, est: 600, estDay: 40 }, features: allOn() }
 };
@@ -353,6 +353,16 @@ function doPost(e) {
       var re = estimateMeal(req.desc || '', me.account);
       if (monthly && re.ok) re.quota = quotaView(me);
       return out(re);
+    }
+    if (req.action === 'estimatePhoto') {
+      if (!feats.estimate || !feats.photo) return out(offError('photo', 'Szacowanie ze zdjęcia', req));
+      var limp = monthly
+        ? monthLimit(me, 'est', 'szacowań kalorii') || rateLimit(me.account, 'est', quotaView(me).est.day, 'szacowań kalorii')
+        : rateLimit(me.account, 'est', ESTIMATE_PER_DAY, 'szacowań');
+      if (limp) { if (monthly && !limp.quota) limp.quota = quotaView(me); return out(limp); }
+      var rp = estimatePhoto(req, me.account);
+      if (monthly && rp.ok) rp.quota = quotaView(me);
+      return out(rp);
     }
     if (req.action === 'form') {
       if (!feats.form) return out(offError('form', 'Ocena techniki z nagrania', req));
@@ -733,6 +743,46 @@ function formCheck(req, acc) {
 }
 
 // ---- szacowanie kalorii i makro z opisu posiłku (Claude API) ----
+// ZDJĘCIE POSIŁKU → składniki z gramaturami, kcal i makro (Claude z obrazem). Zdjęcie nie jest zapisywane.
+function estimatePhoto(req, acc) {
+  if (!CLAUDE_API_KEY) return { ok: false, error: 'Brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
+  var img = String(req.image || '');
+  if (!/^[A-Za-z0-9+/=]+$/.test(img) || img.length < 1000 || img.length > 900000) return { ok: false, error: 'Nieprawidłowe zdjęcie — zrób je jeszcze raz.' };
+  var note = String(req.note || '').slice(0, 300);
+  var prompt =
+    'Na zdjęciu jest posiłek. Rozpoznaj składniki i oszacuj ich ilości oraz wartości odżywcze. ' +
+    'Szacuj porcje po wielkości talerza i sztućców; uwzględnij tłuszcz do smażenia i sosy, których może nie być dobrze widać. ' +
+    (note ? 'Dopisek użytkownika: "' + note + '". ' : '') +
+    'Zwróć WYŁĄCZNIE obiekt JSON bez komentarzy: ' +
+    '{"opis":"krótka nazwa posiłku po polsku","pewnosc":"wysoka|srednia|niska","uwaga":"jedno zdanie, czego nie widać dobrze (albo pusty tekst)",' +
+    '"skladniki":[{"nazwa":"po polsku","gramy":liczba,"kcal":liczba,"b":liczba,"w":liczba,"t":liczba}]} ' +
+    'gdzie b=białko, w=węglowodany, t=tłuszcz w gramach, liczby całkowite, wartości dla podanej ilości. ' +
+    'Jeśli na zdjęciu nie ma jedzenia, zwróć {"opis":"","pewnosc":"niska","uwaga":"Nie widzę posiłku na zdjęciu.","skladniki":[]}.';
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json',
+    headers: { 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 800, messages: [{ role: 'user', content: [
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } },
+      { type: 'text', text: prompt } ] }] }),
+    muteHttpExceptions: true
+  });
+  var code = res.getResponseCode();
+  if (code === 429 || code === 529) return { ok: false, error: 'Serwer AI jest teraz przeciążony — spróbuj za chwilę.' };
+  if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
+  var data = JSON.parse(res.getContentText());
+  recordUsage(acc, 'est', data.model || CLAUDE_MODEL, data.usage);
+  var text = '';
+  (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
+  var m = text.match(/\{[\s\S]*\}/);
+  if (!m) return { ok: false, error: 'Nie udało się odczytać wyniku — spróbuj jeszcze raz.' };
+  var r; try { r = JSON.parse(m[0]); } catch (e) { return { ok: false, error: 'Nie udało się odczytać wyniku — spróbuj jeszcze raz.' }; }
+  var num = function (v, max) { v = Math.round(Number(v) || 0); return Math.max(0, Math.min(max, v)); };
+  var items = (r.skladniki || []).slice(0, 12).map(function (x) {
+    return { n: String(x.nazwa || 'Składnik').slice(0, 60), g: num(x.gramy, 3000), kcal: num(x.kcal, 5000), p: num(x.b, 500), c: num(x.w, 800), f: num(x.t, 500) };
+  }).filter(function (x) { return x.g > 0 || x.kcal > 0; });
+  var conf = ['wysoka', 'srednia', 'niska'].indexOf(r.pewnosc) >= 0 ? r.pewnosc : 'srednia';
+  return { ok: true, name: String(r.opis || '').slice(0, 80), conf: conf, note: String(r.uwaga || '').slice(0, 200), items: items };
+}
 function estimateMeal(desc, acc) {
   if (!CLAUDE_API_KEY) return { ok: false, error: 'Brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
   if (!desc) return { ok: false, error: 'Pusty opis' };
@@ -967,6 +1017,13 @@ function mergeState(local, inc){
     if(a.session||b.session) m.session = (!b.session || (a.session && (a.session.end||0)>=(b.session.end||0))) ? a.session : b.session;
     // samopoczucie przed treningiem (beta): nowsza odpowiedź wygrywa
     if(a.checkin||b.checkin) m.checkin = (!b.checkin || (a.checkin && (a.checkin.at||0)>=(b.checkin.at||0))) ? a.checkin : b.checkin;
+    // godzina zjedzenia posiłku z planu (minuty od północy; -1 = pominięty): nowsza zmiana wygrywa
+    if(a.ate||b.ate){
+      m.ate={}; var ak={};
+      Object.keys(a.ate||{}).forEach(function(k){ak[k]=1;}); Object.keys(b.ate||{}).forEach(function(k){ak[k]=1;});
+      Object.keys(ak).forEach(function(k){ var va=a.ate&&a.ate[k], vb=b.ate&&b.ate[k];
+        m.ate[k]=(va!==undefined&&vb!==undefined) ? pick('ate:'+k, va, vb, false) : (va!==undefined?va:vb); });
+    }
     out.log[iso]=m;
   });
 
