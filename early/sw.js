@@ -1,12 +1,14 @@
 // ŻELAZO — działanie bez internetu (np. siłownia w piwnicy).
-// Kopia dla /early/ (Early Access) — własna pamięć podręczna, niezależna od stabilnej i bety.
+// Ten sam plik dla każdej wersji (stabilna w katalogu głównym, /beta/, /early/, /users/) — każda ma własną kopię i pamięć podręczną.
+// Źródło: src/sw.js, rozkładane przez tools/build.py.
 // Strony: najpierw sieć (świeża wersja), po 3 s albo bez sieci — kopia z telefonu (osobno dla każdego adresu).
 // Ikony, manifest i czcionki: kopia od razu, odświeżana w tle.
 // Apps Script (POST: synchronizacja, Trener) i MediaPipe zawsze idą przez sieć.
-const PREFIX='zelazo-early-v';
-const CACHE=PREFIX+'1';
+const DIR=(location.pathname.match(/\/(beta|early|users)\/sw\.js$/)||[])[1]||'';
+const PREFIX=DIR?'zelazo-'+DIR+'-v':'zelazo-v';
+const CACHE=PREFIX+'2';
 const PAGE=new URL('./', location).href;
-const ICONS='../icons/';
+const ICONS=DIR?'../icons/':'icons/';
 const CORE=[PAGE,'manifest.webmanifest',...['icon.svg','favicon-32.png','apple-touch-icon.png','icon-192.png','icon-512.png','icon-maskable-512.png'].map(f=>ICONS+f)];
 
 self.addEventListener('install', e=>{

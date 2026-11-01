@@ -1,7 +1,7 @@
 {
   "name": "ŻELAZO Early Access — plan, trening, dieta",
   "short_name": "ŻELAZO EA",
-  "description": "6-miesięczny plan treningowy i dieta z Trenerem AI — wersja Early Access z miesięcznymi limitami.",
+  "description": "6-miesięczny plan treningowy i dieta z Trenerem AI — nowości wcześniej dla Premium.",
   "lang": "pl",
   "id": "./",
   "start_url": "./",
@@ -11,8 +11,23 @@
   "background_color": "#0e1114",
   "theme_color": "#0e1114",
   "icons": [
-    { "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "../icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "../icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

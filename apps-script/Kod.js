@@ -63,13 +63,60 @@ var INVITE_DAYS = 7;
 var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
 var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dziennie
 var FORM_PER_DAY = 15;       // limit analiz techniki z nagrania na konto dziennie
-// Early Access (plan: 'month'): limity miesięczne na konto. Darmowy plan czeka na płatności —
-// do tego czasu każde konto Early Access ma limity Premium (planOf).
-var PLAN_LIMITS = {
-  premium: { coach: 30, form: 10, est: 300 },
-  free:    { coach: 5,  form: 1,  est: 30 }
+
+// ============================================================
+// PLANY (SUBSKRYPCJE), FUNKCJE I LIMITY
+//   plans = {free:{name, limits:{coach,form,est,estDay}, features:{coach,voice,...}}, premium:{...}, tester:{...}}
+//   cfg   = {enforce:[wersje], defaultPlan, adminPlan, off:[funkcje]}
+//   user_<konto>.plan = nazwa planu (brak → cfg.defaultPlan)
+// Limity i funkcje planu obowiązują w wersjach z cfg.enforce (na start: USERS i Early Access).
+// Po uruchomieniu USERS dla wszystkich dopisz tam pozostałe wersje.
+// cfg.off = wyłącznik awaryjny: te funkcje są wyłączone wszędzie, w każdej wersji i każdym planie.
+// Obie właściwości (plans, cfg) zmienia administrator; bez nich działają wartości domyślne poniżej.
+// ============================================================
+var CHANNELS = ['stable', 'beta', 'early', 'users'];
+var FEATURES = ['coach', 'voice', 'form', 'estimate', 'scanner', 'early'];
+var LIMIT_KEYS = ['coach', 'form', 'est', 'estDay'];
+function allOn() { var f = {}; FEATURES.forEach(function (k) { f[k] = true; }); return f; }
+var DEFAULT_PLANS = {
+  free:    { name: 'Darmowy', limits: { coach: 5,  form: 1,  est: 30,  estDay: 20 },
+             features: { coach: true, voice: false, form: true, estimate: true, scanner: true, early: false } },
+  premium: { name: 'Premium', limits: { coach: 30, form: 10, est: 300, estDay: 20 }, features: allOn() },
+  tester:  { name: 'Tester',  limits: { coach: 60, form: 20, est: 600, estDay: 40 }, features: allOn() }
 };
-var MONTH_EST_PER_DAY = 20;  // Early Access: szacowania kalorii dziennie (ponad limit miesięczny)
+// konta bez przypisanego planu dostają Premium, żeby nikt z obecnych użytkowników niczego nie stracił
+var DEFAULT_CFG = { enforce: ['users', 'early'], defaultPlan: 'premium', adminPlan: 'premium', off: [] };
+function getPlans() { return getJSON('plans') || DEFAULT_PLANS; }
+function getCfg() {
+  var c = getJSON('cfg') || {};
+  Object.keys(DEFAULT_CFG).forEach(function (k) { if (c[k] === undefined) c[k] = DEFAULT_CFG[k]; });
+  return c;
+}
+function planOf(me) {
+  var P = getPlans(), c = getCfg();
+  var n = me.admin ? c.adminPlan : (me.user && me.user.plan) || c.defaultPlan;
+  return P[n] ? n : (P[c.defaultPlan] ? c.defaultPlan : Object.keys(P)[0]);
+}
+function channelOf(req) {
+  var ch = String(req.channel || (req.plan === 'month' ? 'early' : 'stable'));   // stara Early Access wysyłała plan:'month'
+  return ch === 'zeta' ? 'beta' : (CHANNELS.indexOf(ch) >= 0 ? ch : 'stable');
+}
+function isEnforced(req) { return getCfg().enforce.indexOf(channelOf(req)) >= 0; }
+function featuresFor(me, req) {
+  var c = getCfg(), P = getPlans()[planOf(me)] || {}, pf = P.features || {}, enforced = isEnforced(req), f = {};
+  FEATURES.forEach(function (k) { f[k] = c.off.indexOf(k) < 0 && (!enforced || pf[k] !== false); });
+  return f;
+}
+// to, co aplikacja dostaje przy starcie i przy liczniku: plan, funkcje, a w wersjach z limitami — stan limitów
+function planView(me, req) {
+  var name = planOf(me), enforced = isEnforced(req);
+  var v = { plan: name, planName: (getPlans()[name] || {}).name || name, enforced: enforced, features: featuresFor(me, req) };
+  if (enforced && me.account) v.quota = quotaView(me);
+  return v;
+}
+function offError(k, label, req) {
+  return { ok: false, off: k, error: 'Niedostępne ' + (isEnforced(req) ? 'w Twoim planie' : 'teraz') + ': ' + label.charAt(0).toLowerCase() + label.slice(1) + '.' };
+}
 
 // same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
 function propNames() {
@@ -116,14 +163,14 @@ function rateLimit(acc, kind, max, label) {
   c.put(k, String(n + 1), 24 * 60 * 60);
   return null;
 }
-// miesięczne limity Early Access: liczą się tylko udane odpowiedzi (licznik zużycia AI, recordUsage)
-function planOf(acc) { return 'premium'; }
-function quotaView(acc) {
-  var u = usageView(acc), L = PLAN_LIMITS[planOf(acc)];
-  return { m: u.m, plan: planOf(acc), coach: { n: u.coach, max: L.coach }, form: { n: u.form, max: L.form }, est: { n: u.est, max: L.est, day: MONTH_EST_PER_DAY } };
+// miesięczne limity planu: liczą się tylko udane odpowiedzi (licznik zużycia AI, recordUsage)
+function quotaView(me) {
+  var name = planOf(me), u = usageView(me.account), L = (getPlans()[name] || {}).limits || {};
+  return { m: u.m, plan: name, coach: { n: u.coach, max: L.coach || 0 }, form: { n: u.form, max: L.form || 0 },
+           est: { n: u.est, max: L.est || 0, day: L.estDay || 0 } };
 }
-function monthLimit(acc, kind, label) {
-  var q = quotaView(acc), max = q[kind].max;
+function monthLimit(me, kind, label) {
+  var q = quotaView(me), max = q[kind].max;
   if (q[kind].n < max) return null;
   return { ok: false, limit: kind, quota: q, error: 'Limit ' + max + ' ' + label + ' w tym miesiącu wykorzystany. Nowe od 1. dnia następnego miesiąca.' };
 }
@@ -162,7 +209,7 @@ function adminAction(req) {
     Object.keys(all).forEach(function (k) {
       if (k.indexOf('user_') === 0) {
         var u = JSON.parse(all[k]);
-        users.push({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h });
+        users.push({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h, plan: u.plan || '' });
       } else if (k.indexOf('inv_') === 0) {
         var i = JSON.parse(all[k]);
         if (now > i.expires) { PROPS.deleteProperty(k); return; }
@@ -180,7 +227,7 @@ function adminAction(req) {
     users.forEach(function (u) { if (!u.usage) u.usage = usageView(u.account); });
     var mine = usageView(me), total = mine.usd, totalAll = mine.all;
     users.forEach(function (u) { total += u.usage.usd; totalAll += u.usage.all; });
-    return { ok: true, users: users, invites: invites, myUsage: mine, totalUsd: total, totalAllUsd: totalAll };
+    return { ok: true, users: users, invites: invites, myUsage: mine, totalUsd: total, totalAllUsd: totalAll, plans: getPlans(), cfg: getCfg() };
   }
   if (a === 'adminInvite') {
     var acc = cleanAccount(req.name);
@@ -196,6 +243,17 @@ function adminAction(req) {
     PROPS.setProperty('SECRET', ns);
     return { ok: true, token: ns };
   }
+  if (a === 'adminPlans') {
+    return { ok: true, plans: getPlans(), cfg: getCfg(), features: FEATURES, channels: CHANNELS, limits: LIMIT_KEYS };
+  }
+  if (a === 'adminSavePlans') {
+    var cp = cleanPlans(req.plans);
+    if (cp.error) return { ok: false, error: cp.error };
+    var cc = cleanCfg(req.cfg || getCfg(), cp.plans);
+    if (cc.error) return { ok: false, error: cc.error };
+    setJSON('plans', cp.plans); setJSON('cfg', cc.cfg);
+    return { ok: true, plans: cp.plans, cfg: cc.cfg };
+  }
   if (a === 'adminRevokeInvite') {
     PROPS.deleteProperty('inv_' + (req.code || '').toString().replace(/[^a-zA-Z0-9]/g, ''));
     return { ok: true };
@@ -204,6 +262,13 @@ function adminAction(req) {
   // stare konto (tylko plik danych) — wolno mu wysłać link, który nada własny token
   if (!u && a === 'adminReset' && ACCOUNT_RE.test(target) && dataFile(target, false)) u = { created: Date.now() };
   if (!u) return { ok: false, error: 'Nie ma takiego konta' };
+  if (a === 'adminSetPlan') {
+    var pn = String(req.plan || '');
+    if (pn && !getPlans()[pn]) return { ok: false, error: 'Nie ma takiego planu' };
+    if (pn) u.plan = pn; else delete u.plan;   // pusty = plan domyślny z cfg
+    setJSON('user_' + target, u);
+    return { ok: true, plan: u.plan || '' };
+  }
   if (a === 'adminDisable' || a === 'adminEnable') {
     u.disabled = (a === 'adminDisable'); setJSON('user_' + target, u);
     return { ok: true };
@@ -225,6 +290,33 @@ function adminAction(req) {
   return { ok: false, error: 'Nieznana akcja administratora' };
 }
 
+// sprawdzenie planów i ustawień od administratora (nazwy, liczby, znane funkcje i wersje)
+function cleanPlans(p) {
+  if (!p || typeof p !== 'object') return { error: 'Brak planów' };
+  var outP = {}, names = Object.keys(p);
+  if (!names.length || names.length > 10) return { error: 'Od 1 do 10 planów' };
+  for (var i = 0; i < names.length; i++) {
+    var n = names[i], src = p[n] || {};
+    if (!/^[a-z][a-z0-9_]{1,19}$/.test(n)) return { error: 'Zły identyfikator planu: ' + n };
+    var lim = {}, f = {};
+    for (var j = 0; j < LIMIT_KEYS.length; j++) {
+      var v = Number((src.limits || {})[LIMIT_KEYS[j]]);
+      if (!(v >= 0 && v <= 100000) || Math.floor(v) !== v) return { error: 'Plan ' + n + ': limit ' + LIMIT_KEYS[j] + ' musi być liczbą całkowitą 0–100000' };
+      lim[LIMIT_KEYS[j]] = v;
+    }
+    FEATURES.forEach(function (k) { f[k] = (src.features || {})[k] !== false; });
+    outP[n] = { name: String(src.name || n).slice(0, 30), limits: lim, features: f };
+  }
+  return { plans: outP };
+}
+function cleanCfg(c, plans) {
+  var enforce = (c.enforce || []).filter(function (x) { return CHANNELS.indexOf(x) >= 0; });
+  var off = (c.off || []).filter(function (x) { return FEATURES.indexOf(x) >= 0; });
+  if (!plans[c.defaultPlan]) return { error: 'Plan domyślny musi istnieć' };
+  if (!plans[c.adminPlan]) return { error: 'Plan administratora musi istnieć' };
+  return { cfg: { enforce: enforce, defaultPlan: c.defaultPlan, adminPlan: c.adminPlan, off: off } };
+}
+
 // ---- wejście HTTP (aplikacja wywołuje POST z text/plain) ----
 function doPost(e) {
   try {
@@ -239,7 +331,7 @@ function doPost(e) {
 
     var me = auth(req);
     if (!me) return out({ ok: false, error: 'Zły token' });
-    if (req.action === 'ping') return out({ ok: true, pong: true, admin: me.admin });
+    if (req.action === 'ping') return out(Object.assign({ ok: true, pong: true, admin: me.admin }, planView(me, req)));
     if (String(req.action).indexOf('admin') === 0) {
       if (!me.admin) return out({ ok: false, error: 'Brak uprawnień' });
       return out(withLock(function () { return adminAction(req); }));
@@ -247,32 +339,35 @@ function doPost(e) {
     if (!me.account) return out({ ok: false, error: 'Brak nazwy konta' });
     if (me.user) touchUser(me.account, me.user);
 
+    // limity planu tylko w wersjach z cfg.enforce; wszędzie indziej dotychczasowe limity dzienne
+    var monthly = isEnforced(req), feats = featuresFor(me, req);
+    if (req.action === 'usage') {
+      return out(Object.assign({ ok: true, usage: usageView(me.account) }, planView(me, req)));
+    }
     if (req.action === 'estimate') {
-      var monthlyEst = req.plan === 'month';
-      var lim = monthlyEst
-        ? monthLimit(me.account, 'est', 'szacowań kalorii') || rateLimit(me.account, 'est', MONTH_EST_PER_DAY, 'szacowań kalorii')
+      if (!feats.estimate) return out(offError('estimate', 'Szacowanie kalorii', req));
+      var lim = monthly
+        ? monthLimit(me, 'est', 'szacowań kalorii') || rateLimit(me.account, 'est', quotaView(me).est.day, 'szacowań kalorii')
         : rateLimit(me.account, 'est', ESTIMATE_PER_DAY, 'szacowań');
-      if (lim) { if (monthlyEst && !lim.quota) lim.quota = quotaView(me.account); return out(lim); }
+      if (lim) { if (monthly && !lim.quota) lim.quota = quotaView(me); return out(lim); }
       var re = estimateMeal(req.desc || '', me.account);
-      if (monthlyEst && re.ok) re.quota = quotaView(me.account);
+      if (monthly && re.ok) re.quota = quotaView(me);
       return out(re);
     }
-    if (req.action === 'usage') {
-      return out({ ok: true, usage: usageView(me.account), quota: quotaView(me.account) });
-    }
-    var monthly = req.plan === 'month';   // tylko wersja Early Access; pozostałe zostają przy limitach dziennych
     if (req.action === 'form') {
-      var limf = (monthly && monthLimit(me.account, 'form', 'ocen techniki')) || rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
+      if (!feats.form) return out(offError('form', 'Ocena techniki z nagrania', req));
+      var limf = (monthly && monthLimit(me, 'form', 'ocen techniki')) || rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
       if (limf) return out(limf);
       var rf = formCheck(req, me.account);
-      if (monthly && rf.ok) rf.quota = quotaView(me.account);
+      if (monthly && rf.ok) rf.quota = quotaView(me);
       return out(rf);
     }
     if (req.action === 'coach') {
-      var limc = (monthly && monthLimit(me.account, 'coach', 'pytań do Trenera')) || rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
+      if (!feats.coach) return out(offError('coach', 'Rozmowa z Trenerem', req));
+      var limc = (monthly && monthLimit(me, 'coach', 'pytań do Trenera')) || rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
       if (limc) return out(limc);
       var rc = coachReply(req, me.account);
-      if (monthly && rc.ok) rc.quota = quotaView(me.account);
+      if (monthly && rc.ok) rc.quota = quotaView(me);
       return out(rc);
     }
     if (req.action === 'pull') {

@@ -540,7 +540,31 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .more-back{min-height:40px;padding:0 12px 0 6px;margin:0 0 8px -6px;color:var(--steel);font-size:15px;font-weight:600;border-radius:10px}
 #v-set [data-grp]{display:none}
 #v-set[data-sec="cw"] [data-grp="cw"],#v-set[data-sec="prof"] [data-grp="prof"],#v-set[data-sec="sync"] [data-grp="sync"],
-#v-set[data-sec="rem"] [data-grp="rem"],#v-set[data-sec="data"] [data-grp="data"],#v-set[data-sec="ver"] [data-grp="ver"]{display:block}
+#v-set[data-sec="rem"] [data-grp="rem"],#v-set[data-sec="data"] [data-grp="data"],#v-set[data-sec="ver"] [data-grp="ver"],#v-set[data-sec="plan"] [data-grp="plan"]{display:block}
+/* plan konta (USERS, Early Access): licznik pytań do Trenera, okno przed rozmową głosową, pakiet i limity */
+#eaGate{position:fixed;inset:0;z-index:600;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left))}
+#eaGate a{text-decoration:none}#eaGate h2{font-family:var(--font-disp);font-size:30px;margin:0}#eaGate p{margin:0;max-width:34ch;color:var(--ink-dim);line-height:1.5}
+.cq-chip{display:none;align-items:center;gap:4px;font-size:12.5px;font-weight:600;padding:5px 9px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.cq-chip.low{color:var(--amber);border-color:var(--amber)}
+.cq-chip.out{color:var(--red);border-color:var(--red)}
+#coachLimit{display:none;border:1px solid var(--red);background:rgba(226,84,58,.1);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;margin-top:6px}
+#coachLimit .btn{display:block;margin-top:8px;font-size:13px;padding:9px 12px}
+.coach-b .ea-note{display:block;margin-top:4px;font-size:12px;color:var(--ink-dim)}
+#vqSheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
+#vqSheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#vqSheet .pn{position:relative;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px;animation:ehup .25s ease-out}
+#vqSheet .eh-head{margin-bottom:0}
+#vqSheet p{margin:0;font-size:15px;line-height:1.5}
+#vqSheet label{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-dim)}
+.pq{display:flex;flex-direction:column;gap:14px}
+.pq-top{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.pq-top b{display:block;font-size:16px}.pq-top small{color:var(--ink-dim);font-size:13px}
+.pq-badge{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bg);background:var(--amber);border-radius:6px;padding:4px 7px;white-space:nowrap}
+.pq-m .t{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-bottom:6px}
+.pq-m .t b{font-family:var(--font-disp);font-size:19px;white-space:nowrap}
+.pq-bar{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.pq-bar span{display:block;height:100%;background:var(--amber);border-radius:99px}
+.pq-bar span.full{background:var(--red)}
 #v-set[data-sec]:not([data-sec=""]) #moreMenu{display:none}
 /* biblioteka ćwiczeń w Więcej */
 .lib-hint{font-size:13px;color:var(--ink-dim);margin-bottom:10px}
@@ -1045,6 +1069,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <button data-cycle id="mmCycleBtn"><span class="ic">🌙</span><span class="tx"><b>Cykl i samopoczucie</b><small id="mmCycle"></small></span><span class="go">›</span></button>
     <button data-rest-list><span class="ic">⏱</span><span class="tx"><b>Przerwy między seriami</b><small id="mmRest"></small></span><span class="go">›</span></button>
     <button data-more="prof"><span class="ic">👤</span><span class="tx"><b>Profil i plan</b><small id="mmProf"></small></span><span class="go">›</span></button>
+    <button data-more="plan" id="mmPlanBtn" style="display:none"><span class="ic">💬</span><span class="tx"><b>Pakiet i limity AI</b><small id="mmPlan"></small></span><span class="go">›</span></button>
     <button data-more="sync"><span class="ic">☁️</span><span class="tx"><b>Synchronizacja i konta</b><small id="mmSync"></small></span><span class="go">›</span></button>
     <button data-more="rem"><span class="ic">🔔</span><span class="tx"><b>Przypomnienia</b><small id="mmRem"></small></span><span class="go">›</span></button>
     <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Eksport, import, plik, czyszczenie</small></span><span class="go">›</span></button>
@@ -1058,11 +1083,17 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     <div id="exLib" class="lib"></div>
   </div>
 
+  <div class="section" style="margin-top:14px" data-grp="plan">
+    <div class="panel panel-pad pq" id="planBox"></div>
+  </div>
+
   <div class="section" style="margin-top:14px" data-grp="ver">
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
       <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.2</b><span>sprawdzona wersja</span></a>
-      <a class="ver-btn" id="verBeta" href="./"><b>Beta</b><span>nowości przed wydaniem · do testów</span></a>
+      <a class="ver-btn" id="verBeta" href="../beta/"><b>Beta</b><span>nowości przed wydaniem · do testów</span></a>
+      <a class="ver-btn" id="verEarly" href="../early/" style="display:none"><b>Early Access</b><span>nowości przed stabilną · dla Premium</span></a>
+      <a class="ver-btn" id="verUsers" href="../users/" style="display:none"><b>USERS</b><span>konta, plany i limity · wersja robocza</span></a>
       <a class="ver-btn" id="verOld" href="../v1.0/"><b>Poprzednia · v1.0</b><span>stary wygląd — gdyby coś nie działało</span></a>
     </div>
     <div class="ver-hint">Wszystkie wersje mają te same dane i synchronizację. Ikona na ekranie głównym otwiera wersję stabilną.</div>
@@ -1357,12 +1388,12 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <div id="coachDialog">
   <div class="md-card">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <div class="md-title" style="margin:0;flex:1">Zapytaj Trenera</div>
+      <div class="md-title" style="margin:0;flex:1;min-width:0">Zapytaj Trenera</div>
       <button class="btn ghost" id="coachSpeak" style="font-size:15px;padding:5px 9px" aria-pressed="true" aria-label="Czytaj odpowiedzi na głos">🔊</button>
       <button class="btn ghost" id="coachClear" style="font-size:12px;padding:7px 10px">Wyczyść</button>
       <button class="btn ghost" id="coachClose" style="font-size:12px;padding:7px 10px">Zamknij</button>
     </div>
-    <div class="md-hint" style="margin:0 0 6px">Trener to AI (Claude). Do odpowiedzi dostaje Twoje dane z aplikacji — tylko Twoje. Nie zastępuje lekarza.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin:0 0 6px"><button class="cq-chip" id="coachQuota" type="button" aria-label="Pytania do Trenera w tym miesiącu"></button><div class="md-hint" style="margin:0;flex:1;min-width:0">Trener to AI (Claude). Do odpowiedzi dostaje Twoje dane z aplikacji — tylko Twoje. Nie zastępuje lekarza.</div></div>
     <div id="coachSetup" class="note" style="display:none">Aby rozmawiać z Trenerem, włącz synchronizację w chmurze. <button class="btn" id="coachGoSync" style="font-size:12px;padding:7px 10px;margin-top:8px">Przejdź do ustawień</button></div>
     <div id="coachMsgs"></div>
     <div id="coachChips">
@@ -1374,6 +1405,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
     </div>
     <div class="coach-att" id="coachAtt" style="display:none"></div>
     <div class="md-voice" id="coachVoice" style="display:none"></div>
+    <div id="coachLimit" role="status"></div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <textarea class="md-in" id="coachIn" rows="2" placeholder="Napisz albo powiedz pytanie…" style="resize:none;font-size:15px;flex:1;min-width:0"></textarea>
       <button class="mic" id="coachMic" type="button" aria-label="Powiedz pytanie do Trenera" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
@@ -1458,6 +1490,10 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 <!-- cykl i samopoczucie -->
 <div id="cySheet"><div class="bd" data-cyclose></div><div class="pn" id="cyPanel" role="dialog" aria-modal="true" aria-labelledby="cyTitle"></div></div>
 <!-- check-in przed treningiem -->
+<!-- Early Access tylko dla planów z funkcją „early” -->
+<div id="eaGate" role="dialog" aria-modal="true" aria-labelledby="eaGateT"><div class="eyebrow">ŻELAZO Early Access</div><h2 id="eaGateT">Nowości wcześniej — w Premium</h2><p>Early Access daje użytkownikom Premium nowe funkcje przed wersją stabilną. Twój plan go nie obejmuje.</p><a class="btn" href="../">Przejdź do wersji stabilnej</a></div>
+<!-- plan z limitami: przed rozmową głosową -->
+<div id="vqSheet"><div class="bd" data-vqclose></div><div class="pn" id="vqPanel" role="dialog" aria-modal="true" aria-labelledby="vqTitle"></div></div>
 <div id="ciSheet"><div class="bd" data-ciclose></div><div class="pn" id="ciPanel" role="dialog" aria-modal="true" aria-labelledby="ciTitle"></div></div>
 
 <!-- historia ćwiczenia: wykres, rekordy, treningi -->
@@ -1970,12 +2006,14 @@ function scheduleCloudPush(){
 }
 
 // wspólne wywołanie do Apps Script. Używamy text/plain, by uniknąć preflightu CORS.
+// wersja aplikacji z adresu: stabilna w katalogu głównym, pozostałe w /beta/, /early/, /users/ (funkcja, bo potrzebna od startu)
+function appChannel(){ return (location.pathname.match(/\/(beta|zeta|early|users)\/(index\.html)?$/)||[])[1]||'stable'; }
 async function cloudCall(action, payload){
-  const body=JSON.stringify(Object.assign({action, token:CLOUD.token, account:(CLOUD.account||'').trim().toLowerCase()}, payload||{}));
+  const body=JSON.stringify(Object.assign({action, token:CLOUD.token, account:(CLOUD.account||'').trim().toLowerCase(), channel:appChannel()}, payload||{}));
   const res=await fetch(CLOUD.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
   const txt=await res.text();
   let j; try{ j=JSON.parse(txt); }catch(e){ throw new Error('Zła odpowiedź serwera (sprawdź URL wdrożenia)'); }
-  if(!j.ok) throw new Error(j.error||'Błąd serwera');
+  if(!j.ok){ const e=new Error(j.error||'Błąd serwera'); e.data=j; throw e; }
   return j;
 }
 
@@ -3788,7 +3826,8 @@ if(btnTestNotif) btnTestNotif.onclick=()=>{
 // Trening i Dieta pokazują ten sam dzień; pasek dnia i przełącznik tylko w nich
 /* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
 const MORE_TITLES={cw:['Ćwiczenia','Nauka techniki'],prof:['Profil i plan','Profil · kalorie · start'],sync:['Synchronizacja','Chmura · zużycie AI · konta'],
-  rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna, beta albo poprzednia']};
+  rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna, beta albo poprzednia'],
+  plan:['Pakiet i limity','Twój plan · Trener AI']};
 function moreOpen(sec, fromHistory){
   const v=document.getElementById('v-set'); v.dataset.sec=sec||'';
   const t=MORE_TITLES[sec];
@@ -3796,6 +3835,7 @@ function moreOpen(sec, fromHistory){
   document.getElementById('moreTitle').textContent=t?t[0]:'Ustawienia';
   document.getElementById('moreEyebrow').textContent=t?t[1]:'Konfiguracja';
   if(sec==='cw') renderExLib();
+  if(sec==='plan'){ renderPlanQuota(); quotaLoad(); }
   if(!sec) moreStatus();
   // jeden wpis w historii na podsekcję: „wstecz” zawsze wraca do menu
   try{ if(sec && !fromHistory){ if(history.state&&history.state.more) history.replaceState({more:sec},''); else history.pushState({more:sec},''); }
@@ -3808,7 +3848,8 @@ function moreStatus(){
   set('mmProf', `${p.name||'bez imienia'} · ${S.kcalGoal||DEFAULT_KCAL} kcal · start ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
   set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
-  set('mmVer', APP_VER==='stable' ? 'Stabilna · v1.2' : 'Beta');
+  set('mmVer', ({stable:'Stabilna · v1.2', early:'Early Access', users:'USERS'})[APP_VER] || 'Beta');
+  { const q=quotaCur(); set('mmPlan', q ? `Zostało ${quotaLeft('coach')} z ${q.coach.max} pytań · ${quotaLeft('form')} z ${q.form.max} nagrań · ${quotaLeft('est')} z ${q.est.max} szacowań` : 'Limity Trenera AI', q&&quotaLeft('coach')===0); }
   { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
     if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
     set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?' · synchronizowane':' · tylko na tym telefonie') : 'Wyłączone · dobrowolne'); }
@@ -4107,17 +4148,22 @@ document.getElementById('mdEstimate').onclick=async()=>{
   const msg=document.getElementById('mdEstMsg');
   if(!desc){ document.getElementById('mdTxt').focus(); return; }
   if(!CLOUD.url||!CLOUD.token){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Najpierw skonfiguruj synchronizację w chmurze (URL + token) w „Więcej".'; return; }
+  if(quotaLeft('est')===0){   // plan z limitami: miesięczny limit szacowań
+    msg.style.display='block'; msg.style.color='var(--red)';
+    msg.textContent='Limit '+quotaCur().est.max+' szacowań w tym miesiącu wykorzystany. Nowe od '+quotaReset()+'. Kalorie i makro możesz wpisać ręcznie.'; return;
+  }
   const btn=document.getElementById('mdEstimate');
   const old=btn.textContent; btn.textContent='⏳ Szacuję...'; btn.disabled=true;
   msg.style.display='block'; msg.style.color='var(--steel)'; msg.textContent='Pytam Claude o wartości odżywcze…';
   try{
     const j=await cloudCall('estimate',{desc});
+    if(j.quota) quotaSet(j.quota);
     document.getElementById('mdKcal').value=j.kcal||'';
     document.getElementById('mdP').value=j.p||'';
     document.getElementById('mdC').value=j.c||'';
     document.getElementById('mdF').value=j.f||'';
-    msg.textContent='Oszacowano: '+(j.kcal||0)+' kcal · B '+(j.p||0)+' / W '+(j.c||0)+' / T '+(j.f||0)+'. Możesz poprawić.';
-  }catch(e){ msg.style.color='var(--red)'; msg.textContent='Nie udało się oszacować: '+e.message; }
+    msg.textContent='Oszacowano: '+(j.kcal||0)+' kcal · B '+(j.p||0)+' / W '+(j.c||0)+' / T '+(j.f||0)+'. Możesz poprawić.'+(quotaCur()?' Zostało '+quotaLeft('est')+' z '+quotaCur().est.max+' szacowań w tym miesiącu.':'');
+  }catch(e){ if(e.data && e.data.quota) quotaSet(e.data.quota); msg.style.color='var(--red)'; msg.textContent='Nie udało się oszacować: '+e.message+(e.data&&e.data.limit?' Kalorie i makro możesz wpisać ręcznie.':''); }
   btn.textContent=old; btn.disabled=false;
 };
 
@@ -4423,7 +4469,7 @@ function renderCoach(){
   document.getElementById('coachSetup').style.display=ready?'none':'block';
   document.getElementById('coachChips').style.display=(ready&&!h.length)?'flex':'none';
   box.innerHTML=(h.length?'':`<div class="coach-b a">Cześć${S.profile&&S.profile.name?', '+esc(S.profile.name):''}! Jestem Twoim Trenerem. Widzę Twoje treningi, dietę, wagę i postępy — zapytaj, co poprawić, jak dobrać ciężary albo jakie suplementy mają sens.</div>`)+
-    h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>')+(m.att?`<span class="att">📎 ${m.att.n} klatek: ${esc(m.att.ex)}</span>`:''):coachMd(m.content)}${m.kind==='form'?`<button class="coach-ask-vid" data-att="${esc(m.id)}">📎 Zapytaj o to nagranie</button>`:''}</div>`+(m.proposal?propCard(m,i):'')).join('')+
+    h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>')+(m.att?`<span class="att">📎 ${m.att.n} klatek: ${esc(m.att.ex)}</span>`:''):coachMd(m.content)+(m.local?'<span class="ea-note">bez AI · nie liczy się do limitu</span>':'')}${m.kind==='form'?`<button class="coach-ask-vid" data-att="${esc(m.id)}">📎 Zapytaj o to nagranie</button>`:''}</div>`+(m.proposal?propCard(m,i):'')).join('')+
     (coachBusy?'<div class="coach-b a" style="color:var(--ink-dim)">Trener myśli…</div>':'');
   box.scrollTop=box.scrollHeight;
   box.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{ const m=loadCoach().find(x=>x.id===b.dataset.att); if(m){ coachAtt={id:m.id, ex:m.ex||'nagranie', t:m.t}; renderCoachAtt(); document.getElementById('coachIn').focus(); } });
@@ -4541,6 +4587,16 @@ async function coachAttImages(att){
 async function coachSend(text, {voice=false}={}){
   text=(text||'').trim(); if(!text||coachBusy) return;
   coachSpeakStop();
+  // krótkie podziękowanie w trwającej rozmowie: odpowiedź bez AI, nie zjada limitu
+  if(planEnforced() && EA_SHORT.test(text) && loadCoach().length){
+    const h0=loadCoach(), a=EA_LOCAL[Math.floor(Math.random()*EA_LOCAL.length)];
+    h0.push({role:'user',content:text, id:coachId(), t:Date.now(), local:1});
+    h0.push({role:'assistant',content:a, id:coachId(), t:Date.now(), local:1}); saveCoach(h0);
+    document.getElementById('coachIn').value=''; renderCoach();
+    if(voice && coachSpeakOn()) coachSpeak(a, ()=>coachVoice.say('')); else if(voice) coachVoice.say('');
+    return;
+  }
+  if(quotaLeft('coach')===0){ quotaUi(); if(voice) coachVoice.say(''); return; }
   if(!navigator.onLine){ coachVoice.say('Brak internetu — Trener odpowie, gdy wróci zasięg. Wiadomość czeka w polu.','info'); return; }
   const att=coachAtt; coachAtt=null;
   const um={role:'user',content:text, id:coachId(), t:Date.now()};
@@ -4556,12 +4612,14 @@ async function coachSend(text, {voice=false}={}){
         const hh=loadCoach(), me=hh.find(x=>x.id===um.id); if(me){ me.att={ex:att.ex, n:imgs.length}; saveCoach(hh); renderCoach(); }
       }
     }
-    const msgs=h.slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
+    const msgs=h.filter(m=>!m.local).slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
     const j=await cloudCall('coach',Object.assign({messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia','przerwy']}, extra));
+    if(j.quota) quotaSet(j.quota);
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
     reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');
   }catch(e){
+    if(e.data && e.data.quota) quotaSet(e.data.quota);
     const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+(netDown(e)?'Brak połączenia z internetem. Spróbuj ponownie, gdy wróci zasięg.':e.message), id:coachId(), t:Date.now()}); saveCoach(h2);
   }
   coachBusy=false; renderCoach();
@@ -4570,7 +4628,9 @@ async function coachSend(text, {voice=false}={}){
   if(voice && reply && coachSpeakOn() && coachOpen()) coachSpeak(reply, ()=>{ if(coachOpen()) coachVoice.start(); });
   else if(voice) coachVoice.say('');
 }
-function openCoach(){ document.getElementById('coachDialog').classList.add('show'); renderCoach(); coachSpeakUi(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
+function openCoach(){
+  if(!featOn('coach')){ showInAppReminder('Trener jest wyłączony', 'Rozmowa z Trenerem jest teraz niedostępna'+(planEnforced()?' w Twoim planie.':'.')); return; }
+  document.getElementById('coachDialog').classList.add('show'); renderCoach(); coachSpeakUi(); quotaUi(); quotaLoad(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
 const coachOpen=()=>document.getElementById('coachDialog').classList.contains('show');
 document.getElementById('coachFab').onclick=openCoach;
 document.getElementById('coachClose').onclick=()=>{ coachVoice.stop(); coachSpeakStop(); coachVoice.say(''); document.getElementById('coachDialog').classList.remove('show'); };
@@ -4622,6 +4682,114 @@ document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='E
 document.querySelectorAll('#coachChips button').forEach(b=>b.onclick=()=>coachSend(b.textContent));
 document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('coachDialog').classList.remove('show'); document.querySelector('.nav button[data-v="set"]').click(); moreOpen('sync'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),300); };
 
+/* ---- plan konta, funkcje i miesięczne limity ----
+   Serwer zwraca plan konta (np. Darmowy, Premium), włączone funkcje i to, czy w tej wersji obowiązują limity planu
+   (cfg.enforce na serwerze — dziś USERS i Early Access). W pozostałych wersjach działa tylko wyłącznik awaryjny funkcji.
+   Limity liczy serwer (tylko udane odpowiedzi AI); tutaj ostatni znany stan, żeby licznik był widoczny od razu i bez zasięgu.
+   Krótkie „dzięki” / „ok” w trwającej rozmowie dostają odpowiedź bez AI. Szacowanie kalorii ma osobny limit dzienny. */
+const EA_SHORT=/^\s*(dzięki|dziękuję|dziekuje|dzieki|thx|ok|okej|okay|super|spoko|jasne|git|👍|💪|🙏)[\s!.]*$/i;
+const EA_LOCAL=['Do usług 💪','Powodzenia na treningu!','Jasne — pisz, gdy coś będzie potrzebne.'];
+var PLAN=null;
+try{ PLAN=JSON.parse(localStorage.getItem('zelazo_plan_'+appChannel())||'null'); }catch(e){}
+function planEnforced(){ return PLAN ? !!PLAN.enforced : ['early','users'].includes(appChannel()); }
+function featOn(k){ return !PLAN || !PLAN.features || PLAN.features[k]!==false; }
+function planSet(j){
+  if(!j || !j.features) return;   // stary serwer bez planów
+  PLAN={plan:j.plan, planName:j.planName||j.plan, features:j.features, enforced:!!j.enforced};
+  try{ localStorage.setItem('zelazo_plan_'+appChannel(), JSON.stringify(PLAN)); }catch(e){}
+  if(j.quota) quotaSet(j.quota); else quotaUi();
+  applyFeatures();
+}
+// pokaż albo ukryj elementy według planu i wyłącznika awaryjnego
+function applyFeatures(){
+  const show=(id,on)=>{ const el=document.getElementById(id); if(el) el.style.display=on?'':'none'; };
+  show('coachFab', featOn('coach')); show('coachMic', featOn('voice'));
+  show('mdEstimate', featOn('estimate')); show('mdScan', featOn('scanner'));
+  show('mmPlanBtn', planEnforced());
+  document.getElementById('eaGate').style.display=(appChannel()==='early' && PLAN && !featOn('early'))?'flex':'none';
+}
+var QUOTA=null;
+try{ QUOTA=JSON.parse(localStorage.getItem('zelazo_quota')||'null'); }catch(e){}
+// zapamiętany stan z poprzedniego miesiąca → licznik od zera
+function quotaCur(){
+  if(!planEnforced() || !QUOTA || !QUOTA.coach || !QUOTA.form) return null;
+  if(typeof QUOTA.est!=='object' || !QUOTA.est) QUOTA.est={n:+QUOTA.est||0, max:300, day:20};   // zapis sprzed limitu szacowań
+  const m=todayISO().slice(0,7);
+  return QUOTA.m===m ? QUOTA : {m, coach:{n:0,max:QUOTA.coach.max}, form:{n:0,max:QUOTA.form.max}, est:{n:0,max:QUOTA.est.max,day:QUOTA.est.day}};
+}
+// funkcje (nie const): moreStatus pyta o licznik, zanim skrypt dojdzie do tego miejsca
+function quotaLeft(k){ const q=quotaCur(); return q ? Math.max(0, q[k].max-q[k].n) : null; }
+function quotaReset(){ return '1 '+['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'][(new Date().getMonth()+1)%12]; }
+function quotaSet(q){
+  if(!q || !q.coach || !q.form) return;
+  QUOTA=q; try{ localStorage.setItem('zelazo_quota', JSON.stringify(q)); }catch(e){}
+  quotaUi();
+}
+async function quotaLoad(){
+  if(!(CLOUD.on && CLOUD.url && CLOUD.token) || !navigator.onLine || !planEnforced()) return;
+  try{ planSet(await cloudCall('usage', {})); }catch(e){}
+}
+function quotaUi(){
+  const chip=document.getElementById('coachQuota'), lim=document.getElementById('coachLimit'), q=quotaCur();
+  const sec=document.getElementById('v-set').dataset.sec;
+  if(sec==='plan') renderPlanQuota();
+  if(!q){ chip.style.display='none'; lim.style.display='none'; return; }
+  const left=quotaLeft('coach'), out=left===0;
+  chip.style.display='inline-flex'; chip.textContent='💬 '+left+' z '+q.coach.max;
+  chip.classList.toggle('low', left>0 && left<=3); chip.classList.toggle('out', out);
+  lim.style.display=out?'block':'none';
+  if(out){
+    lim.innerHTML=`<b>Limit ${q.coach.max} pytań na ${MONTHS_PL[+q.m.slice(5,7)-1]} wykorzystany.</b> Nowe pytania od ${quotaReset()}. Plan, tryb treningu, check-in i przerwy działają dalej bez limitu.<button class="btn" id="coachTopUp" type="button">Dokup 20 pytań · 4,99 zł</button>`;
+    document.getElementById('coachTopUp').onclick=()=>showInAppReminder('Dokupienie pytań — wkrótce', 'Płatności jeszcze nie działają. Limit odnowi się '+quotaReset()+'.');
+  }
+  ['coachIn','coachSend','coachMic'].forEach(id=>{ document.getElementById(id).disabled=out; });
+  document.getElementById('coachChips').style.opacity=out?'.4':'';
+  document.getElementById('coachChips').style.pointerEvents=out?'none':'';
+}
+document.getElementById('coachQuota').onclick=()=>{
+  document.getElementById('coachClose').click();
+  document.querySelector('.nav button[data-v="set"]').click(); moreOpen('plan');
+};
+function renderPlanQuota(){
+  const box=document.getElementById('planBox'); if(!box) return;
+  if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
+    box.innerHTML='<div class="md-hint" style="margin:0">Limity Trenera liczy serwer — włącz synchronizację (Więcej → Synchronizacja i konta), żeby je zobaczyć.</div>'; return;
+  }
+  const q=quotaCur();
+  if(!q){ box.innerHTML='<div class="md-hint" style="margin:0">Wczytuję limity…</div>'; return; }
+  const meter=(label,n,max)=>`<div class="pq-m"><div class="t"><span>${label}</span><b>${n} / ${max}</b></div><div class="pq-bar"><span class="${n>=max?'full':''}" style="width:${Math.min(100,Math.round(n/max*100))}%"></span></div></div>`;
+  box.innerHTML=`<div class="pq-top"><div><b>${esc((PLAN&&PLAN.planName)||'Twój plan')}</b><small>Limity odnawiają się ${quotaReset()}</small></div><span class="pq-badge">${MONTHS_PL[+q.m.slice(5,7)-1]}</span></div>
+    ${meter('Pytania do Trenera', q.coach.n, q.coach.max)}
+    ${meter('Oceny techniki z nagrania', q.form.n, q.form.max)}
+    ${meter('Szacowanie kalorii posiłków', q.est.n, q.est.max)}
+    <div class="md-hint" style="margin:-8px 0 0">Tekstem albo głosem — tak samo. Najwyżej ${q.est.day} dziennie. Nie zjada pytań do Trenera.</div>
+    <div class="md-hint" style="margin:0">Bez limitu: plan treningu i diety, ręczne wpisywanie kalorii, tryb treningu, rekordy, przerwy, check-in, cykl, praca offline. Krótkie „dzięki” i „ok” do Trenera nie liczą się do limitu.</div>`;
+}
+// przed pierwszą rozmową głosową: każda wypowiedź to 1 pytanie
+var vqOk=false;
+function vqMuted(){ try{ return localStorage.getItem('zelazo_voice_note')==='off'; }catch(e){ return false; } }
+document.getElementById('coachMic').addEventListener('click', e=>{
+  if(!planEnforced() || vqOk || vqMuted() || coachVoice.active()) return;
+  e.stopImmediatePropagation(); openVoiceQuota();
+}, true);
+function openVoiceQuota(){
+  const q=quotaCur(), left=quotaLeft('coach');
+  document.getElementById('vqPanel').innerHTML=`<div class="eh-grab"></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Twój plan</div><h2 id="vqTitle">Rozmowa głosowa</h2></div><button class="eh-x" data-vqclose aria-label="Zamknij">✕</button></div>
+    <p>Każda Twoja wypowiedź to <b>1 pytanie</b> z limitu.${q?` Zostało Ci <b>${left} z ${q.coach.max}</b>.`:''}</p>
+    <p style="color:var(--ink-dim);font-size:14px">Wskazówka: powiedz całe pytanie naraz, np. „Bolą mnie kolana przy przysiadzie, co zmienić w treningu i ile ciężaru?”.</p>
+    <button class="btn" id="vqGo" type="button">MÓW</button>
+    <button class="btn ghost" data-vqclose type="button">Wolę napisać</button>
+    <label><input type="checkbox" id="vqMute"> Nie pokazuj więcej</label>`;
+  const sh=document.getElementById('vqSheet'); sh.style.display='flex';
+  const close=()=>{
+    if(document.getElementById('vqMute').checked){ try{ localStorage.setItem('zelazo_voice_note','off'); }catch(e){} }
+    sh.style.display='none';
+  };
+  sh.querySelectorAll('[data-vqclose]').forEach(b=>b.onclick=()=>{ close(); document.getElementById('coachIn').focus(); });
+  document.getElementById('vqGo').onclick=()=>{ close(); vqOk=true; document.getElementById('coachMic').click(); };
+}
+
 // ---- zużycie AI (koszt Trenera i szacowania kalorii, liczony na serwerze z tokenów × cennik) ----
 const fmtUsd=v=>'$'+(v>0&&v<0.01?v.toFixed(3):v.toFixed(2));
 const MONTHS_PL=['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
@@ -4640,17 +4808,18 @@ async function loadUsage(){
         <div class="b"><div class="n">${u.est}</div><div class="l">Szacowania kalorii</div></div>
       </div>
       <div class="md-hint" style="margin-top:10px">${u.prev?'Poprzedni miesiąc ('+esc(monthName(u.prev.m))+'): '+fmtUsd(u.prev.usd)+' · ':''}Łącznie od początku: ${fmtUsd(u.all)}.
-      Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. Limit: 30 pytań do Trenera i 40 szacowań dziennie.</div>`;
+      Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. ${planEnforced()?'Limity Twojego planu: Więcej → Pakiet i limity AI.':'Limit: 30 pytań do Trenera i 40 szacowań dziennie.'}</div>`;
   }catch(e){ sec.style.display='none'; }
 }
 
 // ---- panel administratora (widoczny tylko z tokenem administratora) ----
 async function checkAdmin(){
   if(!CLOUD.url||!CLOUD.token) return;
-  try{ const j=await cloudCall('ping',{}); setAdmin(!!j.admin); }catch(e){ setAdmin(false); }
+  try{ const j=await cloudCall('ping',{}); setAdmin(!!j.admin); planSet(j); }catch(e){ setAdmin(false); }
 }
 function setAdmin(on){
   document.getElementById('adminSection').style.display=on?'block':'none';
+  verVisible(on);
   if(on) loadAdmin();
 }
 const fmtDate=t=>t?new Date(t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})+' '+new Date(t).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}):'—';
@@ -4786,13 +4955,35 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) netResy
 setTimeout(updateNetPill, 0);   // po całym skrypcie — WO jest zadeklarowane niżej
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(()=>{});
 
-const APP_VER=(location.pathname.match(/\/(beta|zeta)\/(index\.html)?$/)||[])[1]||"stable";
-document.getElementById(APP_VER==="stable"?"verStable":"verBeta").classList.add("on");
-// ten sam plik działa jako stabilna (katalog główny) i beta (/beta/) — linki i znaczek zależą od adresu
-if(APP_VER==="stable"){
-  document.getElementById('verStable').href='./'; document.getElementById('verBeta').href='beta/'; document.getElementById('verOld').href='v1.0/';
-  document.querySelectorAll('.beta-tag').forEach(x=>x.remove());
+const APP_VER=appChannel();
+document.getElementById(({stable:'verStable', early:'verEarly', users:'verUsers'})[APP_VER]||'verBeta').classList.add('on');
+// wszystkie wersje budowane z jednego źródła (tools/build.py) — linki i znaczek zależą od adresu
+{ const up=APP_VER==='stable'?'':'../';
+  [['verStable',up||'./'],['verBeta',up+'beta/'],['verEarly',up+'early/'],['verUsers',up+'users/'],['verOld',up+'v1.0/']].forEach(([id,h])=>{ document.getElementById(id).href=h; }); }
+if(APP_VER==='stable') document.querySelectorAll('.beta-tag').forEach(x=>x.remove());
+// Early Access i USERS widać w wersji, w której jesteś, i u administratora
+function verVisible(admin){
+  document.getElementById('verEarly').style.display=(admin || APP_VER==='early' || APP_VER==='users')?'':'none';
+  document.getElementById('verUsers').style.display=(admin || APP_VER==='users')?'':'none';
 }
+verVisible(false);
+setTimeout(applyFeatures, 0);   // ostatni znany plan z telefonu; serwer potwierdzi przy starcie (checkAdmin)
+// pierwsze otwarcie USERS: po co ta wersja
+try{
+  if(APP_VER==='users' && localStorage.getItem('zelazo_seen_users')!=='1'){
+    setTimeout(()=>showInAppReminder('ŻELAZO USERS',
+      'Wersja robocza kont i planów: tu powstają plany Darmowy i Premium, limity, panel administratora i płatności. Funkcje są takie jak w becie. Twój plan i limity: Więcej → Pakiet i limity AI.'), 1200);
+    localStorage.setItem('zelazo_seen_users','1');
+  }
+}catch(e){}
+// pierwsze otwarcie Early Access
+try{
+  if(APP_VER==='early' && localStorage.getItem('zelazo_seen_ea')!=='1'){
+    setTimeout(()=>showInAppReminder('ŻELAZO Early Access',
+      'Nowe funkcje przed wersją stabilną — dla Premium. Limity Twojego planu widzisz w rozmowie z Trenerem i w Więcej → Pakiet i limity AI. Krótkie „dzięki” i „ok” nie liczą się do limitu.'), 1200);
+    localStorage.setItem('zelazo_seen_ea','1');
+  }
+}catch(e){}
 // jednorazowo po aktualizacji do 1.2: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
 const APP_REL='1.2';
 try{
@@ -6049,12 +6240,21 @@ function openFormCheck(name, setInfo, opts){
     fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
   }
+  if(!featOn('form')){
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania jest teraz niedostępna${planEnforced()?' w Twoim planie':''}. Wskazówki i filmy z techniką działają dalej.</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    document.querySelector('[data-fc-close]').onclick=fcClose; return;
+  }
+  if(quotaLeft('form')===0){   // plan z limitami: nie każ nagrywać, gdy limit ocen wykorzystany
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Limit ${quotaCur().form.max} ocen techniki w tym miesiącu wykorzystany. Nowe od ${quotaReset()}. Wskazówki i filmy z techniką działają dalej.</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    document.querySelector('[data-fc-close]').onclick=fcClose; return;
+  }
   const view=camView(name);
   fcShow(`<p class="fc-sub"><b>${esc(name)}</b>${FC.set?' · '+esc(FC.set):''}</p>${head}
     <ul class="fc-tips">
       <li>Postaw telefon <b>${view}</b>, 2–3 m od siebie, na wysokości bioder (np. oparty o ławkę).</li>
       <li>Całe ciało i sztanga/hantle w kadrze przez całą serię; dobre światło.</li>
       <li>Nagraj całą serię (5–40 s). Film zostaje na telefonie — do Trenera trafi kilka klatek i pomiary.</li>
+      ${quotaCur()?`<li>Ocena zużywa 1 z ${quotaCur().form.max} ocen w tym miesiącu — zostało <b>${quotaLeft('form')}</b>.</li>`:''}
     </ul>
     <div class="fc-btns">
       <button class="fc-btn main" id="fcRecBtn">📹 NAGRAJ SERIĘ</button>
@@ -6170,9 +6370,11 @@ async function fcRun(file){
     const jpg=chosen.map(f=>f.c.toDataURL('image/jpeg',0.72));
     fcProgress(2, 'zwykle 10–30 s');
     const j=await cloudCall('form', {exercise:FC.ex, set:FC.set, view:camView(FC.ex), metrics, frames:jpg.map(d=>d.split(',')[1])});
+    if(j.quota) quotaSet(j.quota);
     FC.busy=false;
     fcSaveAndShow(j.result, metrics, rec);
   }catch(e){
+    if(e.data && e.data.quota) quotaSet(e.data.quota);
     FC.busy=false;
     const msg=/Failed to fetch|NetworkError|Load failed/i.test(e.message)?'Brak połączenia — spróbuj ponownie, gdy złapiesz zasięg.':e.message==='timeout'?'Nie udało się odczytać nagrania. Spróbuj krótszego filmu albo nagraj ponownie.':e.message;
     fcShow(`<p class="fc-sub">${esc(msg)}</p><div class="fc-btns"><button class="fc-btn" id="fcRetry">Spróbuj ponownie</button><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
