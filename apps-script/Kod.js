@@ -63,8 +63,13 @@ var INVITE_DAYS = 7;
 var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
 var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dziennie
 var FORM_PER_DAY = 15;       // limit analiz techniki z nagrania na konto dziennie
-var MONTH_COACH = 30;        // Early Access (plan: 'month'): pytania do Trenera na konto miesięcznie
-var MONTH_FORM = 10;         // Early Access: oceny techniki z nagrania na konto miesięcznie
+// Early Access (plan: 'month'): limity miesięczne na konto. Darmowy plan czeka na płatności —
+// do tego czasu każde konto Early Access ma limity Premium (planOf).
+var PLAN_LIMITS = {
+  premium: { coach: 30, form: 10, est: 300 },
+  free:    { coach: 5,  form: 1,  est: 30 }
+};
+var MONTH_EST_PER_DAY = 20;  // Early Access: szacowania kalorii dziennie (ponad limit miesięczny)
 
 // same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
 function propNames() {
@@ -112,12 +117,13 @@ function rateLimit(acc, kind, max, label) {
   return null;
 }
 // miesięczne limity Early Access: liczą się tylko udane odpowiedzi (licznik zużycia AI, recordUsage)
+function planOf(acc) { return 'premium'; }
 function quotaView(acc) {
-  var u = usageView(acc);
-  return { m: u.m, coach: { n: u.coach, max: MONTH_COACH }, form: { n: u.form, max: MONTH_FORM }, est: u.est };
+  var u = usageView(acc), L = PLAN_LIMITS[planOf(acc)];
+  return { m: u.m, plan: planOf(acc), coach: { n: u.coach, max: L.coach }, form: { n: u.form, max: L.form }, est: { n: u.est, max: L.est, day: MONTH_EST_PER_DAY } };
 }
-function monthLimit(acc, kind, max, label) {
-  var q = quotaView(acc);
+function monthLimit(acc, kind, label) {
+  var q = quotaView(acc), max = q[kind].max;
   if (q[kind].n < max) return null;
   return { ok: false, limit: kind, quota: q, error: 'Limit ' + max + ' ' + label + ' w tym miesiącu wykorzystany. Nowe od 1. dnia następnego miesiąca.' };
 }
@@ -242,22 +248,28 @@ function doPost(e) {
     if (me.user) touchUser(me.account, me.user);
 
     if (req.action === 'estimate') {
-      var lim = rateLimit(me.account, 'est', ESTIMATE_PER_DAY, 'szacowań');
-      return out(lim || estimateMeal(req.desc || '', me.account));
+      var monthlyEst = req.plan === 'month';
+      var lim = monthlyEst
+        ? monthLimit(me.account, 'est', 'szacowań kalorii') || rateLimit(me.account, 'est', MONTH_EST_PER_DAY, 'szacowań kalorii')
+        : rateLimit(me.account, 'est', ESTIMATE_PER_DAY, 'szacowań');
+      if (lim) { if (monthlyEst && !lim.quota) lim.quota = quotaView(me.account); return out(lim); }
+      var re = estimateMeal(req.desc || '', me.account);
+      if (monthlyEst && re.ok) re.quota = quotaView(me.account);
+      return out(re);
     }
     if (req.action === 'usage') {
       return out({ ok: true, usage: usageView(me.account), quota: quotaView(me.account) });
     }
     var monthly = req.plan === 'month';   // tylko wersja Early Access; pozostałe zostają przy limitach dziennych
     if (req.action === 'form') {
-      var limf = (monthly && monthLimit(me.account, 'form', MONTH_FORM, 'ocen techniki')) || rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
+      var limf = (monthly && monthLimit(me.account, 'form', 'ocen techniki')) || rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
       if (limf) return out(limf);
       var rf = formCheck(req, me.account);
       if (monthly && rf.ok) rf.quota = quotaView(me.account);
       return out(rf);
     }
     if (req.action === 'coach') {
-      var limc = (monthly && monthLimit(me.account, 'coach', MONTH_COACH, 'pytań do Trenera')) || rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
+      var limc = (monthly && monthLimit(me.account, 'coach', 'pytań do Trenera')) || rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
       if (limc) return out(limc);
       var rc = coachReply(req, me.account);
       if (monthly && rc.ok) rc.quota = quotaView(me.account);

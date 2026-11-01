@@ -3817,7 +3817,7 @@ function moreStatus(){
   set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
   set('mmVer', APP_VER==='stable' ? 'Stabilna · v1.1' : APP_VER==='early' ? 'Early Access' : 'Beta');
-  { const q=quotaCur(); set('mmPlan', q ? `Zostało ${quotaLeft('coach')} z ${q.coach.max} pytań · ${quotaLeft('form')} z ${q.form.max} nagrań` : 'Early Access · 30 pytań i 10 nagrań miesięcznie', q&&quotaLeft('coach')===0); }
+  { const q=quotaCur(); set('mmPlan', q ? `Zostało ${quotaLeft('coach')} z ${q.coach.max} pytań · ${quotaLeft('form')} z ${q.form.max} nagrań · ${quotaLeft('est')} z ${q.est.max} szacowań` : 'Early Access · 30 pytań, 10 nagrań, 300 szacowań miesięcznie', q&&quotaLeft('coach')===0); }
   { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
     if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
     set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?' · synchronizowane':' · tylko na tym telefonie') : 'Wyłączone · dobrowolne'); }
@@ -3972,17 +3972,22 @@ document.getElementById('mdEstimate').onclick=async()=>{
   const msg=document.getElementById('mdEstMsg');
   if(!desc){ document.getElementById('mdTxt').focus(); return; }
   if(!CLOUD.url||!CLOUD.token){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Najpierw skonfiguruj synchronizację w chmurze (URL + token) w „Więcej".'; return; }
+  if(quotaLeft('est')===0){   // Early Access: miesięczny limit szacowań
+    msg.style.display='block'; msg.style.color='var(--red)';
+    msg.textContent='Limit '+quotaCur().est.max+' szacowań w tym miesiącu wykorzystany. Nowe od '+quotaReset()+'. Kalorie i makro możesz wpisać ręcznie.'; return;
+  }
   const btn=document.getElementById('mdEstimate');
   const old=btn.textContent; btn.textContent='⏳ Szacuję...'; btn.disabled=true;
   msg.style.display='block'; msg.style.color='var(--steel)'; msg.textContent='Pytam Claude o wartości odżywcze…';
   try{
-    const j=await cloudCall('estimate',{desc});
+    const j=await cloudCall('estimate',{desc, plan:'month'});
+    if(j.quota) quotaSet(j.quota);
     document.getElementById('mdKcal').value=j.kcal||'';
     document.getElementById('mdP').value=j.p||'';
     document.getElementById('mdC').value=j.c||'';
     document.getElementById('mdF').value=j.f||'';
-    msg.textContent='Oszacowano: '+(j.kcal||0)+' kcal · B '+(j.p||0)+' / W '+(j.c||0)+' / T '+(j.f||0)+'. Możesz poprawić.';
-  }catch(e){ msg.style.color='var(--red)'; msg.textContent='Nie udało się oszacować: '+e.message; }
+    msg.textContent='Oszacowano: '+(j.kcal||0)+' kcal · B '+(j.p||0)+' / W '+(j.c||0)+' / T '+(j.f||0)+'. Możesz poprawić.'+(quotaCur()?' Zostało '+quotaLeft('est')+' z '+quotaCur().est.max+' szacowań w tym miesiącu.':'');
+  }catch(e){ if(e.data && e.data.quota) quotaSet(e.data.quota); msg.style.color='var(--red)'; msg.textContent='Nie udało się oszacować: '+e.message+(e.data&&e.data.limit?' Kalorie i makro możesz wpisać ręcznie.':''); }
   btn.textContent=old; btn.disabled=false;
 };
 
@@ -4510,8 +4515,9 @@ try{ QUOTA=JSON.parse(localStorage.getItem('zelazo_quota')||'null'); }catch(e){}
 // zapamiętany stan z poprzedniego miesiąca → licznik od zera
 function quotaCur(){
   if(!QUOTA || !QUOTA.coach || !QUOTA.form) return null;
+  if(typeof QUOTA.est!=='object' || !QUOTA.est) QUOTA.est={n:+QUOTA.est||0, max:300, day:20};   // zapis sprzed limitu szacowań
   const m=todayISO().slice(0,7);
-  return QUOTA.m===m ? QUOTA : {m, coach:{n:0,max:QUOTA.coach.max}, form:{n:0,max:QUOTA.form.max}, est:0};
+  return QUOTA.m===m ? QUOTA : {m, coach:{n:0,max:QUOTA.coach.max}, form:{n:0,max:QUOTA.form.max}, est:{n:0,max:QUOTA.est.max,day:QUOTA.est.day}};
 }
 // funkcje (nie const): moreStatus pyta o licznik, zanim skrypt dojdzie do tego miejsca
 function quotaLeft(k){ const q=quotaCur(); return q ? Math.max(0, q[k].max-q[k].n) : null; }
@@ -4535,7 +4541,7 @@ function quotaUi(){
   chip.classList.toggle('low', left>0 && left<=3); chip.classList.toggle('out', out);
   lim.style.display=out?'block':'none';
   if(out){
-    lim.innerHTML=`<b>Limit ${q.coach.max} pytań na ${MONTHS_PL[+q.m.slice(5,7)-1]} wykorzystany.</b> Nowe pytania od ${quotaReset()}. Plan, check-in, przerwy i szacowanie kalorii działają dalej bez limitu.<button class="btn" id="coachTopUp" type="button">Dokup 20 pytań · 4,99 zł</button>`;
+    lim.innerHTML=`<b>Limit ${q.coach.max} pytań na ${MONTHS_PL[+q.m.slice(5,7)-1]} wykorzystany.</b> Nowe pytania od ${quotaReset()}. Plan, tryb treningu, check-in i przerwy działają dalej bez limitu.<button class="btn" id="coachTopUp" type="button">Dokup 20 pytań · 4,99 zł</button>`;
     document.getElementById('coachTopUp').onclick=()=>showInAppReminder('Dokupienie pytań — wkrótce', 'W Early Access płatności jeszcze nie działają. Limit odnowi się '+quotaReset()+'.');
   }
   ['coachIn','coachSend','coachMic'].forEach(id=>{ document.getElementById(id).disabled=out; });
@@ -4557,8 +4563,9 @@ function renderPlanQuota(){
   box.innerHTML=`<div class="pq-top"><div><b>Early Access</b><small>Limity odnawiają się ${quotaReset()}</small></div><span class="pq-badge">${MONTHS_PL[+q.m.slice(5,7)-1]}</span></div>
     ${meter('Pytania do Trenera', q.coach.n, q.coach.max)}
     ${meter('Oceny techniki z nagrania', q.form.n, q.form.max)}
-    <div class="pq-m"><div class="t"><span>Szacowanie kalorii posiłków</span><b>${q.est||0} · bez limitu</b></div><div class="md-hint" style="margin:0">Osobny limit dzienny (40) — nie zjada pytań do Trenera.</div></div>
-    <div class="md-hint" style="margin:0">Bez limitu: plan treningu i diety, tryb treningu, rekordy, przerwy, check-in, cykl, praca offline. Krótkie „dzięki” i „ok” do Trenera nie liczą się do limitu.</div>`;
+    ${meter('Szacowanie kalorii posiłków', q.est.n, q.est.max)}
+    <div class="md-hint" style="margin:-8px 0 0">Tekstem albo głosem — tak samo. Najwyżej ${q.est.day} dziennie. Nie zjada pytań do Trenera.</div>
+    <div class="md-hint" style="margin:0">Bez limitu: plan treningu i diety, ręczne wpisywanie kalorii, tryb treningu, rekordy, przerwy, check-in, cykl, praca offline. Krótkie „dzięki” i „ok” do Trenera nie liczą się do limitu.</div>`;
 }
 // przed pierwszą rozmową głosową: każda wypowiedź to 1 pytanie
 var vqOk=false;
@@ -4603,7 +4610,7 @@ async function loadUsage(){
         <div class="b"><div class="n">${u.est}</div><div class="l">Szacowania kalorii</div></div>
       </div>
       <div class="md-hint" style="margin-top:10px">${u.prev?'Poprzedni miesiąc ('+esc(monthName(u.prev.m))+'): '+fmtUsd(u.prev.usd)+' · ':''}Łącznie od początku: ${fmtUsd(u.all)}.
-      Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. Limit Early Access: 30 pytań do Trenera i 10 ocen techniki miesięcznie, 40 szacowań kalorii dziennie.</div>`;
+      Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. Limit Early Access: 30 pytań do Trenera, 10 ocen techniki i 300 szacowań kalorii miesięcznie (szacowań najwyżej 20 dziennie).</div>`;
   }catch(e){ sec.style.display='none'; }
 }
 
@@ -4760,7 +4767,7 @@ if(APP_VER==="stable"){
 try{
   if(localStorage.getItem('zelazo_seen_ea')!=='1'){
     setTimeout(()=>showInAppReminder('ŻELAZO Early Access',
-      'Ta wersja testuje miesięczne limity Trenera AI: 30 pytań i 10 ocen techniki z nagrania. Licznik widzisz w rozmowie z Trenerem i w Więcej → Pakiet i limity AI. Krótkie „dzięki” i „ok” nie liczą się do limitu.'), 1200);
+      'Ta wersja testuje miesięczne limity Trenera AI: 30 pytań, 10 ocen techniki z nagrania i 300 szacowań kalorii. Licznik widzisz w rozmowie z Trenerem i w Więcej → Pakiet i limity AI. Krótkie „dzięki” i „ok” nie liczą się do limitu.'), 1200);
     localStorage.setItem('zelazo_seen_ea','1');
   }
 }catch(e){}
