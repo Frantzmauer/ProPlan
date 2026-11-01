@@ -629,6 +629,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .eh-chips button.on{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
 .eh-chart{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 6px 4px}
 .eh-chart svg{display:block;width:100%;height:auto}
+.eh-note{font-size:13px;line-height:1.45;color:var(--ink-dim);margin-top:-4px}
 .eh-chart text{font-family:var(--font-body);font-size:10px;fill:var(--ink-faint)}
 .eh-chart .ph{font-family:var(--font-disp);font-size:11px;letter-spacing:.1em;fill:var(--amber)}
 .eh-sel{background:var(--panel2);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px;display:flex;flex-direction:column;gap:3px}
@@ -4740,7 +4741,10 @@ function ehMetrics(kind){
 }
 function ehChart(h,an){
   const W=340,H=196,L=38,R=12,T=18,B=26, k=EH.metric, today=todayISO();
-  const pts=an.map((s,i)=>({t:parseISO(s.iso).getTime()+432e5, y:k==='e1'?Math.round(s.m.e1*2)/2:s.m[k], pr:s.prs.includes(k), i, today:s.iso===today}));
+  const all=an.map((s,i)=>({t:parseISO(s.iso).getTime()+432e5, y:k==='e1'?Math.round(s.m.e1*2)/2:s.m[k], pr:s.prs.includes(k), i, today:s.iso===today}));
+  // 1RM: trening bez serii do 12 powtórzeń nie ma szacunku — pomijamy go, zamiast rysować 0
+  const pts=k==='e1'?all.filter(p=>p.y>0):all, skipped=all.length-pts.length;
+  if(pts.length<2) return {svg:null, sel:EH.sel==null?an.length-1:EH.sel, skipped};
   const lo=Math.min(...pts.map(p=>p.y)), hi=Math.max(...pts.map(p=>p.y));
   const pad=(hi-lo)*0.12||Math.max(1,hi*0.05), raw=(hi-lo+2*pad)/4, mag=Math.pow(10,Math.floor(Math.log10(raw)));
   const step=[1,2,2.5,5,10].find(m=>m*mag>=raw)*mag;
@@ -4757,8 +4761,8 @@ function ehChart(h,an){
     g+=`<line x1="${X(f)}" x2="${X(f)}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 3"/><text x="${X(f)+4}" y="${H-8}">${MON[d.getMonth()]}</text>`;
   }
   g+=`<path d="${pts.map((p,i)=>(i?'L':'M')+X(p.t).toFixed(1)+','+Y(p.y).toFixed(1)).join(' ')}" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/>`;
-  const sel=EH.sel==null?pts.length-1:EH.sel, sp=pts[sel];
-  g+=`<line x1="${X(sp.t)}" x2="${X(sp.t)}" y1="${T}" y2="${H-B}" stroke="var(--ink-dim)" stroke-dasharray="3 3"/>`;
+  const sel=EH.sel==null?pts[pts.length-1].i:EH.sel, sp=pts.find(p=>p.i===sel);
+  if(sp) g+=`<line x1="${X(sp.t)}" x2="${X(sp.t)}" y1="${T}" y2="${H-B}" stroke="var(--ink-dim)" stroke-dasharray="3 3"/>`;
   pts.forEach(p=>{
     const cx=X(p.t), cy=Y(p.y);
     g+=p.pr?`<circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--gold)" stroke="var(--bg)" stroke-width="1.5"/>`:`<circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/>`;
@@ -4768,13 +4772,16 @@ function ehChart(h,an){
   // pola dotyku szersze niż kropki
   const hw=Math.max(7,Math.min(20,(W-L-R)/pts.length/2));
   pts.forEach(p=>{ g+=`<rect data-ept="${p.i}" x="${X(p.t)-hw}" y="${T}" width="${hw*2}" height="${H-T-B}" fill="transparent" style="cursor:pointer"/>`; });
-  return {svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wykres: ${esc(h.n)}">${g}</svg>`, sel};
+  return {svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wykres: ${esc(h.n)}">${g}</svg>`, sel, skipped};
 }
 function renderExHist(){
   const h=exIndex()[EH.n]; if(!h){ closeExHist(); return; }
   const an=prAnalyze(h), b=prBest(h.kind,an), u=prUnit(h.kind), K=h.kind;
-  const {svg,sel}=ehChart(h,an), s=an[sel], today=todayISO();
-  const val=k=>k==='e1'?'≈ '+prE1(s.m.e1)+' kg':k==='vol'?prNum(s.m.vol)+' '+(K==='kg'?'kg':u):prTopText(K,s);
+  const {svg,sel,skipped}=ehChart(h,an), s=an[sel], today=todayISO();
+  const e1note=EH.metric!=='e1'||!skipped?'':svg
+    ?`<div class="eh-note">Pominięte treningi (${skipped}): same serie powyżej 12 powtórzeń, z nich nie liczymy 1RM. Postęp przy wielu powtórzeniach widać w zakładkach Ciężar i Objętość.</div>`
+    :`<div class="eh-note">Za mało serii do 12 powtórzeń, żeby pokazać trend 1RM. Przy wielu powtórzeniach postęp widać w zakładkach Ciężar i Objętość.</div>`;
+  const val=k=>k==='e1'?(s.m.e1>0?'≈ '+prE1(s.m.e1)+' kg':'— (serie powyżej 12 powt.)'):k==='vol'?prNum(s.m.vol)+' '+(K==='kg'?'kg':u):prTopText(K,s);
   const tiles=K==='kg'
     ?[['Najcięższa seria',prTopText(K,b.top),b.top.iso],['1RM szacowany',b.e1.m.e1?'≈ '+prE1(b.e1.m.e1)+' kg':'—',b.e1.iso],['Objętość treningu',b.vol.full?prNum(b.vol.m.vol)+' kg':'—',b.vol.full?b.vol.iso:null]]
     :[[K==='time'?'Najdłużej':'Najlepsza seria',prTopText(K,b.top),b.top.iso],['Suma w treningu',b.vol.full?prNum(b.vol.m.vol)+' '+u:'—',b.vol.full?b.vol.iso:null],['Treningi',String(an.length),an[0].iso]];
@@ -4789,7 +4796,7 @@ function renderExHist(){
   document.getElementById('ehPanel').innerHTML=`<div class="eh-grab"></div>
     <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Historia · ${an.length} ${an.length===1?'trening':an.length%10>=2&&an.length%10<=4&&(an.length%100<10||an.length%100>=20)?'treningi':'treningów'}</div><h2 id="ehTitle">${esc(h.n)}</h2></div>
       <button class="eh-x" data-ehclose aria-label="Zamknij">✕</button></div>
-    ${an.length>1?`<div class="eh-chips">${ehMetrics(K).map(([k,l])=>`<button data-emetric="${k}" class="${EH.metric===k?'on':''}">${l}</button>`).join('')}</div><div class="eh-chart">${svg}</div>`:''}
+    ${an.length>1?`<div class="eh-chips">${ehMetrics(K).map(([k,l])=>`<button data-emetric="${k}" class="${EH.metric===k?'on':''}">${l}</button>`).join('')}</div>${svg?`<div class="eh-chart">${svg}</div>`:''}${e1note}`:''}
     <div class="eh-sel"><div class="d">${s.iso===today?'Dziś · ':''}${DOW_SHORT[parseISO(s.iso).getDay()]} ${prDD(s.iso)}</div><div><b>${prSetsText(K,s.sets)}</b></div>
       <div class="m">${ehMetrics(K).filter(([k])=>k!==EH.metric).map(([k,l])=>l+': '+val(k)).join(' · ')}</div>
       ${s.prs.length?`<div class="b" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">${chips(s.prs)}</div>`:''}</div>
