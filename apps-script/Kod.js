@@ -63,6 +63,8 @@ var INVITE_DAYS = 7;
 var ESTIMATE_PER_DAY = 40;   // limit szacowań kalorii na konto dziennie (koszt idzie z Twojego klucza)
 var COACH_PER_DAY = 30;      // limit wiadomości do Trenera AI na konto dziennie
 var FORM_PER_DAY = 15;       // limit analiz techniki z nagrania na konto dziennie
+var MONTH_COACH = 30;        // Early Access (plan: 'month'): pytania do Trenera na konto miesięcznie
+var MONTH_FORM = 10;         // Early Access: oceny techniki z nagrania na konto miesięcznie
 
 // same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
 function propNames() {
@@ -108,6 +110,16 @@ function rateLimit(acc, kind, max, label) {
   if (n >= max) return { ok: false, error: 'Dzienny limit ' + label + ' wyczerpany (' + max + '). Wróć jutro.' };
   c.put(k, String(n + 1), 24 * 60 * 60);
   return null;
+}
+// miesięczne limity Early Access: liczą się tylko udane odpowiedzi (licznik zużycia AI, recordUsage)
+function quotaView(acc) {
+  var u = usageView(acc);
+  return { m: u.m, coach: { n: u.coach, max: MONTH_COACH }, form: { n: u.form, max: MONTH_FORM }, est: u.est };
+}
+function monthLimit(acc, kind, max, label) {
+  var q = quotaView(acc);
+  if (q[kind].n < max) return null;
+  return { ok: false, limit: kind, quota: q, error: 'Limit ' + max + ' ' + label + ' w tym miesiącu wykorzystany. Nowe od 1. dnia następnego miesiąca.' };
 }
 function withLock(fn) {
   var lock = LockService.getScriptLock();
@@ -234,15 +246,22 @@ function doPost(e) {
       return out(lim || estimateMeal(req.desc || '', me.account));
     }
     if (req.action === 'usage') {
-      return out({ ok: true, usage: usageView(me.account) });
+      return out({ ok: true, usage: usageView(me.account), quota: quotaView(me.account) });
     }
+    var monthly = req.plan === 'month';   // tylko wersja Early Access; pozostałe zostają przy limitach dziennych
     if (req.action === 'form') {
-      var limf = rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
-      return out(limf || formCheck(req, me.account));
+      var limf = (monthly && monthLimit(me.account, 'form', MONTH_FORM, 'ocen techniki')) || rateLimit(me.account, 'form', FORM_PER_DAY, 'analiz techniki');
+      if (limf) return out(limf);
+      var rf = formCheck(req, me.account);
+      if (monthly && rf.ok) rf.quota = quotaView(me.account);
+      return out(rf);
     }
     if (req.action === 'coach') {
-      var limc = rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
-      return out(limc || coachReply(req, me.account));
+      var limc = (monthly && monthLimit(me.account, 'coach', MONTH_COACH, 'pytań do Trenera')) || rateLimit(me.account, 'coach', COACH_PER_DAY, 'pytań do Trenera');
+      if (limc) return out(limc);
+      var rc = coachReply(req, me.account);
+      if (monthly && rc.ok) rc.quota = quotaView(me.account);
+      return out(rc);
     }
     if (req.action === 'pull') {
       return out({ ok: true, data: read(me.account) });
@@ -306,9 +325,9 @@ function recordUsage(acc, kind, model, u) {
 function usageView(acc) {
   var r = getJSON('use_' + acc);
   var m = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM');
-  if (!r) return { m: m, usd: 0, n: 0, coach: 0, est: 0, all: 0, prev: null };
-  if (r.m !== m) return { m: m, usd: 0, n: 0, coach: 0, est: 0, all: r.all || 0, prev: { m: r.m, usd: r.usd || 0, n: r.n || 0 } };
-  return { m: r.m, usd: r.usd || 0, n: r.n || 0, coach: r.coach || 0, est: r.est || 0, all: r.all || 0, prev: r.prev || null };
+  if (!r) return { m: m, usd: 0, n: 0, coach: 0, est: 0, form: 0, all: 0, prev: null };
+  if (r.m !== m) return { m: m, usd: 0, n: 0, coach: 0, est: 0, form: 0, all: r.all || 0, prev: { m: r.m, usd: r.usd || 0, n: r.n || 0 } };
+  return { m: r.m, usd: r.usd || 0, n: r.n || 0, coach: r.coach || 0, est: r.est || 0, form: r.form || 0, all: r.all || 0, prev: r.prev || null };
 }
 
 // ============================================================
