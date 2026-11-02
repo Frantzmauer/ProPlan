@@ -7,6 +7,11 @@ import { checkinVerdict } from './lib/checkin';
 import { e1rm, prMetrics, prAnalyze, prBest } from './lib/records';
 import { MEAL_LATE, EVENING, DEFAULT_TIMES, usualTime, mealEntry, stampKind, hm } from './lib/mealtime';
 import { mergeState, COACH_KEEP } from './lib/merge.js';
+import { KEYS, readJSON, writeJSON } from './lib/storage';
+import { defaultState, migrateState, hasUserData, mark, touch, fieldTime, normalizeIncoming } from './lib/state';
+import { channelFromPath, apiCall, isNetworkError, EMPTY_CLOUD } from './lib/api';
+import { planFromServer, planEnforcedFor, featureOn, currentQuota, quotaLeftOf, resetLabel } from './lib/plan';
+import { createSync } from './lib/sync';
 
 /* ============================================================
    DANE PLANU  (przeniesione 1:1 z planu + silnik faz)
@@ -427,102 +432,46 @@ function phaseInfo(week){
 /* ============================================================
    STAN / STORAGE
    ============================================================ */
-const LS='zelazo_v1';
+const LS=KEYS.STATE;
 let S = load();
 function load(){
-  let r=null;
-  try{r=JSON.parse(localStorage.getItem(LS));}catch(e){}
-  if(r){
-    // migracja: dołóż pola, których mogło nie być we wcześniejszych wersjach
-    if(!r.profile) r.profile={weight:104,height:186,age:45,sex:'m',activity:1.465,name:''};
-    if(!r.custom) r.custom={};
-    if(r.kcalGoal===undefined) r.kcalGoal=DEFAULT_KCAL;
-    return r;
-  }
-  return {startDate:upcomingMondayISO(), kcalGoal:DEFAULT_KCAL, profile:{weight:104,height:186,age:45,sex:'m',activity:1.465,name:''}, log:{}, weights:[], custom:{}, shop:{}, shopT:{}, reminders:{on:false,workout:"17:30",meal:"12:00",water:"15:00",weight:"07:00"}, streak:0, lastStreakDay:null};
+  const r=readJSON(LS, null);
+  return r ? migrateState(r, DEFAULT_KCAL) : defaultState(upcomingMondayISO(), DEFAULT_KCAL);
 }
 // czy na urządzeniu są czyjeś dane (dziennik, waga, obwody, posiłki, profil)
-function deviceHasData(){
-  return Object.keys(S.log||{}).length>0 || (S.weights||[]).length>0 || (S.measures||[]).length>0
-    || Object.keys(S.custom||{}).length>0 || !!(S.profile && S.profile.name);
-}
-function save(){exIdxCache=null; localStorage.setItem(LS,JSON.stringify(S)); if(fileHandle) scheduleFileWrite(); scheduleCloudPush();}
-function touch(L){ if(L) L._m=Date.now(); }
-// znacznik czasu pojedynczego pola (dla scalania „nowsza zmiana wygrywa")
-function mark(L, field){ if(!L)return; if(!L._t)L._t={}; L._t[field]=Date.now(); L._m=Date.now(); }
-function fieldTime(L, field){ return (L&&L._t&&L._t[field])||L&&L._m||0; }
+function deviceHasData(){ return hasUserData(S); }
+function save(){exIdxCache=null; writeJSON(LS, S); if(fileHandle) scheduleFileWrite(); scheduleCloudPush();}
 
 /* ============================================================
    KONFIGURACJA CHMURY (Apps Script) — osobno od S, per urządzenie
    ============================================================ */
-const CLOUD_LS='zelazo_cloud';
+const CLOUD_LS=KEYS.CLOUD;
 let CLOUD = loadCloud();
-function loadCloud(){
-  try{const r=JSON.parse(localStorage.getItem(CLOUD_LS));if(r)return r;}catch(e){}
-  return {url:'', token:'', account:'', on:false, lastSync:0, lastError:''};
-}
-function saveCloud(){ localStorage.setItem(CLOUD_LS, JSON.stringify(CLOUD)); }
+function loadCloud(){ return readJSON(CLOUD_LS, null) || Object.assign({}, EMPTY_CLOUD); }
+function saveCloud(){ writeJSON(CLOUD_LS, CLOUD); }
 
-let cloudPushTimer=null, cloudBusy=false;
-function scheduleCloudPush(){
-  if(!CLOUD.on || !CLOUD.url) return;
-  clearTimeout(cloudPushTimer);
-  cloudPushTimer=setTimeout(function run(){
-    // nie synchronizuj w trakcie pisania — poczekaj, aż użytkownik skończy
-    if(isEditing()){ cloudPushTimer=setTimeout(run, 1500); return; }
-    cloudPush();
-  }, 2000); // debounce 2 s po ostatniej zmianie
-}
+// synchronizacja (lib/sync.ts): wysyłka 2 s po ostatniej zmianie, nie w trakcie pisania
+const SYNC=createSync({
+  cloud:()=>CLOUD, saveCloud, call:(a,p)=>cloudCall(a,p),
+  getState:()=>S, setState:m=>{ S=m; writeJSON(LS, S); refreshAllViews(); },
+  merge:(a,b)=>mergeState(a, normalizeIncoming(b)),
+  status:t=>refreshCloudUI(t), editing:isEditing, isNetErr:netDown, afterPush:()=>updateNetPill(),
+});
+function scheduleCloudPush(){ SYNC.schedule(); }
 
 // wspólne wywołanie do Apps Script. Używamy text/plain, by uniknąć preflightu CORS.
 // wersja aplikacji z adresu: stabilna w katalogu głównym, pozostałe w /beta/, /early/, /users/ (funkcja, bo potrzebna od startu)
-function appChannel(){ return (location.pathname.match(/\/(beta|zeta|early|users)\/(index\.html)?$/)||[])[1]||'stable'; }
-async function cloudCall(action, payload){
-  const body=JSON.stringify(Object.assign({action, token:CLOUD.token, account:(CLOUD.account||'').trim().toLowerCase(), channel:appChannel()}, payload||{}));
-  const res=await fetch(CLOUD.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
-  const txt=await res.text();
-  let j; try{ j=JSON.parse(txt); }catch(e){ throw new Error('Zła odpowiedź serwera (sprawdź URL wdrożenia)'); }
-  if(!j.ok){ const e=new Error(j.error||'Błąd serwera'); e.data=j; throw e; }
-  return j;
-}
-
-// Zabezpieczenie: dane z serwera bez znaczników czasu (stary skrypt .gs) dostają
-// bardzo stary znacznik (1), żeby świeże lokalne odznaczenia zawsze wygrywały.
-function normalizeIncoming(inc){
-  if(!inc || typeof inc!=='object') return inc;
-  if(inc.shop){
-    if(!inc.shopT) inc.shopT={};
-    Object.keys(inc.shop).forEach(k=>{ if(inc.shopT[k]===undefined) inc.shopT[k]=1; });
-  }
-  return inc;
-}
-async function cloudPush(){
-  if(!CLOUD.on || !CLOUD.url || cloudBusy) return;
-  if(!CLOUD.account){ CLOUD.lastError='Brak nazwy konta'; saveCloud(); refreshCloudUI(); return; }
-  cloudBusy=true; refreshCloudUI('...zapisywanie');
-  const acc=CLOUD.account;
-  try{
-    // wyślij nasz stan; serwer scali z tym, co ma, i zwróci wynik scalenia
-    const j=await cloudCall('push', {data:S, clientMerge:true});
-    // w międzyczasie zmieniono konto (np. dołączenie nowej osoby) — nie wpuszczaj danych poprzedniego
-    if(j.data && CLOUD.account===acc){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
-    CLOUD.lastSync=Date.now(); CLOUD.lastError=''; CLOUD.pending=false;
-  }catch(e){ if(netDown(e)){ CLOUD.pending=true; CLOUD.lastError=''; } else CLOUD.lastError=e.message; }
-  cloudBusy=false; saveCloud(); refreshCloudUI(); updateNetPill();
-}
+function appChannel(){ return channelFromPath(location.pathname); }
+function cloudCall(action, payload){ return apiCall(CLOUD, appChannel(), action, payload||{}); }
+function cloudPush(){ return SYNC.push(); }
 async function cloudPull({silent}={}){
-  if(!CLOUD.url){ if(!silent) alert('Najpierw wpisz URL skryptu.'); return; }
-  if(!CLOUD.account){ if(!silent) alert('Wpisz nazwę konta.'); return; }
-  cloudBusy=true; refreshCloudUI('...pobieranie');
-  const acc=CLOUD.account;
-  try{
-    const j=await cloudCall('pull', {});
-    if(j.data && CLOUD.account===acc){ S=mergeState(S, normalizeIncoming(j.data)); localStorage.setItem(LS, JSON.stringify(S)); refreshAllViews(); }
-    CLOUD.lastSync=Date.now(); CLOUD.lastError='';
-    if(!silent) showInAppReminder('✅ Zsynchronizowano','Dane pobrane i scalone.');
-  }catch(e){ if(netDown(e)){ CLOUD.pending=true; if(!silent) alert('Brak internetu. Dane są zapisane na telefonie — zsynchronizuję je, gdy wróci zasięg.'); }
-    else { CLOUD.lastError=e.message; if(!silent) alert('Błąd synchronizacji: '+e.message); } }
-  cloudBusy=false; saveCloud(); refreshCloudUI();
+  const r=await SYNC.pull();
+  if(silent) return;
+  if(r.skipped==='url') alert('Najpierw wpisz URL skryptu.');
+  else if(r.skipped==='account') alert('Wpisz nazwę konta.');
+  else if(r.ok) showInAppReminder('✅ Zsynchronizowano','Dane pobrane i scalone.');
+  else if(r.offline) alert('Brak internetu. Dane są zapisane na telefonie — zsynchronizuję je, gdy wróci zasięg.');
+  else alert('Błąd synchronizacji: '+r.error);
 }
 async function cloudTest(){
   if(!CLOUD.url){ alert('Wpisz URL skryptu.'); return; }
@@ -2846,7 +2795,7 @@ if(INVITE){
       const j=JSON.parse(await res.text());
       if(!j.ok) throw new Error(j.error||'Błąd serwera');
       const same=(CLOUD.account||'').toLowerCase()===j.account;
-      clearTimeout(cloudPushTimer);   // nic nie może już trafić na poprzednie konto
+      SYNC.cancel();   // nic nie może już trafić na poprzednie konto
       // nowa osoba: wszystko z poprzedniego konta znika z urządzenia (chyba że świadomie przenosi swoje dane)
       if(!same && joinChoice!=='move'){ localStorage.removeItem(LS); S=load(); if(fileHandle) unlinkFile(); }
       // nowe konto: żadnych cudzych domyślnych danych — profil wypełnia sam zaproszony
@@ -3279,14 +3228,12 @@ document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('co
    Krótkie „dzięki” / „ok” w trwającej rozmowie dostają odpowiedź bez AI. Szacowanie kalorii ma osobny limit dzienny. */
 const EA_SHORT=/^\s*(dzięki|dziękuję|dziekuje|dzieki|thx|ok|okej|okay|super|spoko|jasne|git|👍|💪|🙏)[\s!.]*$/i;
 const EA_LOCAL=['Do usług 💪','Powodzenia na treningu!','Jasne — pisz, gdy coś będzie potrzebne.'];
-var PLAN=null;
-try{ PLAN=JSON.parse(localStorage.getItem('zelazo_plan_'+appChannel())||'null'); }catch(e){}
-function planEnforced(){ return PLAN ? !!PLAN.enforced : ['early','users'].includes(appChannel()); }
-function featOn(k){ return !PLAN || !PLAN.features || PLAN.features[k]!==false; }
+var PLAN=readJSON(KEYS.plan(appChannel()), null);
+function planEnforced(){ return planEnforcedFor(PLAN, appChannel()); }
+function featOn(k){ return featureOn(PLAN, k); }
 function planSet(j){
-  if(!j || !j.features) return;   // stary serwer bez planów
-  PLAN={plan:j.plan, planName:j.planName||j.plan, features:j.features, enforced:!!j.enforced};
-  try{ localStorage.setItem('zelazo_plan_'+appChannel(), JSON.stringify(PLAN)); }catch(e){}
+  const p=planFromServer(j); if(!p) return;   // stary serwer bez planów
+  PLAN=p; writeJSON(KEYS.plan(appChannel()), PLAN);
   if(j.quota) quotaSet(j.quota); else quotaUi();
   applyFeatures();
 }
@@ -3298,21 +3245,15 @@ function applyFeatures(){
   show('mmPlanBtn', planEnforced());
   document.getElementById('eaGate').style.display=(appChannel()==='early' && PLAN && !featOn('early'))?'flex':'none';
 }
-var QUOTA=null;
-try{ QUOTA=JSON.parse(localStorage.getItem('zelazo_quota')||'null'); }catch(e){}
-// zapamiętany stan z poprzedniego miesiąca → licznik od zera
-function quotaCur(){
-  if(!planEnforced() || !QUOTA || !QUOTA.coach || !QUOTA.form) return null;
-  if(typeof QUOTA.est!=='object' || !QUOTA.est) QUOTA.est={n:+QUOTA.est||0, max:300, day:20};   // zapis sprzed limitu szacowań
-  const m=todayISO().slice(0,7);
-  return QUOTA.m===m ? QUOTA : {m, coach:{n:0,max:QUOTA.coach.max}, form:{n:0,max:QUOTA.form.max}, est:{n:0,max:QUOTA.est.max,day:QUOTA.est.day}};
-}
+var QUOTA=readJSON(KEYS.QUOTA, null);
+// zapamiętany stan z poprzedniego miesiąca → licznik od zera (lib/plan.ts)
+function quotaCur(){ return currentQuota(QUOTA, planEnforced(), todayISO().slice(0,7)); }
 // funkcje (nie const): moreStatus pyta o licznik, zanim skrypt dojdzie do tego miejsca
-function quotaLeft(k){ const q=quotaCur(); return q ? Math.max(0, q[k].max-q[k].n) : null; }
-function quotaReset(){ return '1 '+['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'][(new Date().getMonth()+1)%12]; }
+function quotaLeft(k){ return quotaLeftOf(quotaCur(), k); }
+function quotaReset(){ return resetLabel(); }
 function quotaSet(q){
   if(!q || !q.coach || !q.form) return;
-  QUOTA=q; try{ localStorage.setItem('zelazo_quota', JSON.stringify(q)); }catch(e){}
+  QUOTA=q; writeJSON(KEYS.QUOTA, q);
   quotaUi();
 }
 async function quotaLoad(){
@@ -3709,7 +3650,7 @@ function refreshSyncUI(){
 /* ---- praca bez internetu ----
    Kopia aplikacji na telefonie (sw.js, tylko /beta/). Zmiany zapisują się lokalnie jak zawsze;
    bez sieci synchronizacja czeka (CLOUD.pending) i rusza sama po powrocie zasięgu. */
-function netDown(e){ return !navigator.onLine || /failed to fetch|load failed|networkerror|network request failed/i.test((e&&e.message)||''); }
+function netDown(e){ return isNetworkError(e, navigator.onLine); }
 var netPillT=null;
 function updateNetPill(flash){
   const p=document.getElementById('netPill'), t=document.getElementById('netTxt'); if(!p) return;
