@@ -1,0 +1,19 @@
+{
+  // Przejście na TypeScript stopniowo: nowe i wydzielane moduły w .ts (sprawdzane ściśle),
+  // app/main.js zostaje JavaScriptem i nie jest sprawdzany, dopóki nie zostanie podzielony.
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": ["app/**/*.ts", "app/**/*.js", "tests/**/*.ts"],
+  "exclude": ["app/sw.js"]
+}

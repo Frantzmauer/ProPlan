@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ŻELAZO — budowanie wersji z jednego źródła (src/).
+"""ŻELAZO — budowanie wersji z jednego źródła (app/, pakowane przez Vite).
 
 Wszystkie wersje to ta sama aplikacja. Różnią się tylko adresem, znaczkiem przy logo,
 nazwą ikony na telefonie i własną kopią offline (sw.js). O funkcjach i limitach
@@ -12,16 +12,19 @@ Wersje:
   stable  /        wszyscy — sprawdzone funkcje
 
 Użycie:
-  python3 tools/build.py beta users                 # nowa funkcja: beta + USERS z bieżącego src/
+  python3 tools/build.py beta users                 # nowa funkcja: beta + USERS z bieżącego app/
   python3 tools/build.py stable early --from <ref>  # po testach: stabilna + Early Access z przetestowanego commita
   python3 tools/build.py --check                    # czy pliki wersji zgadzają się ze źródłem (bez zapisu)
 
---from bierze src/ z podanego commita/tagu (git show), żeby do stabilnej nie trafiło nic,
-co doszło do źródła po testach.
+Najpierw Vite buduje dist/ (index.html + assets/ z hashami w nazwach), potem każda wersja dostaje
+kopię z wypełnionymi miejscami: ikony, manifest, nazwa na ekranie głównym, znaczek.
+--from buduje z app/ podanego commita/tagu (git archive do katalogu tymczasowego), żeby do stabilnej
+nie trafiło nic, co doszło do źródła po testach.
 """
-import json, os, subprocess, sys
+import json, os, shutil, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SLOT = 'https://zelazo.invalid/'   # to samo co SLOT w vite.config.js
 
 CHANNELS = {
     'stable': {'dir': '.',     'icons': 'icons/',    'apple': 'ŻELAZO',    'tag': '',
@@ -37,19 +40,28 @@ CHANNELS = {
                'name': 'ŻELAZO USERS — konta i plany', 'short': 'ŻELAZO U',
                'desc': 'ŻELAZO — wersja robocza kont, planów i limitów.'},
 }
+SOURCES = ['app', 'vite.config.js', 'package.json', 'package-lock.json']
 
 
-def source(path, ref):
+def vite_build(ref):
+    """Zwraca katalog dist/ zbudowany z bieżącego app/ albo z app/ podanego commita."""
     if not ref:
-        return open(os.path.join(ROOT, path), encoding='utf-8').read()
-    return subprocess.run(['git', 'show', f'{ref}:{path}'], cwd=ROOT, check=True,
-                          capture_output=True).stdout.decode('utf-8')
+        subprocess.run(['npx', 'vite', 'build', '--logLevel', 'warn'], cwd=ROOT, check=True)
+        return os.path.join(ROOT, 'dist')
+    tmp = tempfile.mkdtemp(prefix='zelazo-build-')
+    arc = subprocess.run(['git', 'archive', ref, '--'] + SOURCES, cwd=ROOT, check=True, capture_output=True).stdout
+    subprocess.run(['tar', '-x', '-C', tmp], input=arc, check=True)
+    os.symlink(os.path.join(ROOT, 'node_modules'), os.path.join(tmp, 'node_modules'))
+    subprocess.run(['npx', 'vite', 'build', '--logLevel', 'warn'], cwd=tmp, check=True)
+    return os.path.join(tmp, 'dist')
 
 
-def render(ch, html, sw):
+def render(ch, dist):
     c = CHANNELS[ch]
-    page = html.replace('%%ICONS%%', c['icons']).replace('%%APPLE_TITLE%%', c['apple']).replace('%%TAG%%', c['tag'])
-    assert '%%' not in page, f'{ch}: zostało miejsce do wypełnienia'
+    page = open(os.path.join(dist, 'index.html'), encoding='utf-8').read()
+    page = (page.replace(SLOT + 'icons/', c['icons']).replace(SLOT + 'manifest.webmanifest', 'manifest.webmanifest')
+                .replace('%%APPLE_TITLE%%', c['apple']).replace('%%TAG%%', c['tag']))
+    assert '%%' not in page and SLOT not in page, f'{ch}: zostało miejsce do wypełnienia'
     icons = c['icons']
     manifest = {
         'name': c['name'], 'short_name': c['short'], 'description': c['desc'], 'lang': 'pl',
@@ -61,7 +73,10 @@ def render(ch, html, sw):
             {'src': icons + 'icon-maskable-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
         ],
     }
-    return {'index.html': page, 'sw.js': sw, 'manifest.webmanifest': json.dumps(manifest, ensure_ascii=False, indent=2) + '\n'}
+    files = {'index.html': page, 'manifest.webmanifest': json.dumps(manifest, ensure_ascii=False, indent=2) + '\n',
+             'sw.js': open(os.path.join(os.path.dirname(dist), 'app', 'sw.js'), encoding='utf-8').read()}
+    assets = {n: open(os.path.join(dist, 'assets', n), 'rb').read() for n in sorted(os.listdir(os.path.join(dist, 'assets')))}
+    return files, assets
 
 
 def main(argv):
@@ -82,20 +97,31 @@ def main(argv):
         chans = list(CHANNELS)
     if not chans:
         sys.exit(__doc__)
-    html, sw = source('src/index.html', ref), source('src/sw.js', ref)
+    dist = vite_build(ref)
     stale = []
     for ch in chans:
         d = os.path.join(ROOT, CHANNELS[ch]['dir'])
-        for name, text in render(ch, html, sw).items():
+        files, assets = render(ch, dist)
+        ad = os.path.join(d, 'assets')
+        if check:
+            for name, text in files.items():
+                p = os.path.join(d, name)
+                if not os.path.exists(p) or open(p, encoding='utf-8').read() != text: stale.append(os.path.relpath(p, ROOT))
+            have = sorted(os.listdir(ad)) if os.path.isdir(ad) else []
+            if have != list(assets) or any(open(os.path.join(ad, n), 'rb').read() != b for n, b in assets.items()):
+                stale.append(os.path.relpath(ad, ROOT) + '/')
+            continue
+        os.makedirs(d, exist_ok=True)
+        for name, text in files.items():
             p = os.path.join(d, name)
-            cur = open(p, encoding='utf-8').read() if os.path.exists(p) else None
-            if check:
-                if cur != text: stale.append(os.path.relpath(p, ROOT))
-                continue
-            os.makedirs(d, exist_ok=True)
-            if cur != text:
-                open(p, 'w', encoding='utf-8').write(text)
-                print('zapisano', os.path.relpath(p, ROOT))
+            if not os.path.exists(p) or open(p, encoding='utf-8').read() != text:
+                open(p, 'w', encoding='utf-8').write(text); print('zapisano', os.path.relpath(p, ROOT))
+        # assets/: dokładnie bieżący pakiet (stare pliki z hashami usuwane)
+        if os.path.isdir(ad): shutil.rmtree(ad)
+        os.makedirs(ad)
+        for n, b in assets.items():
+            open(os.path.join(ad, n), 'wb').write(b)
+        print('zapisano', os.path.relpath(ad, ROOT) + '/', '(' + ', '.join(assets) + ')')
     if check:
         print('różni się od źródła: ' + ', '.join(stale) if stale else 'wszystkie wersje zgodne ze źródłem')
         return 1 if stale else 0

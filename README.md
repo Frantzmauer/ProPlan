@@ -17,8 +17,26 @@ Aplikacja działa pod: https://frantzmauer.github.io/ProPlan/
 
 ## Wersje i jedno źródło
 
-Kod aplikacji jest w `src/` (`index.html`, `sw.js`). Pliki wersji (`index.html`, `beta/`, `early/`, `users/`)
-**nie są edytowane ręcznie** — składa je `tools/build.py`. `v1.0/` to zamrożona stara wersja.
+Kod aplikacji jest w `app/` i jest pakowany przez **Vite** (przygotowanie pod aplikację mobilną w Capacitor):
+
+| Ścieżka | Co to jest |
+|---|---|
+| `app/index.html` | układ strony (miejsca `%%…%%` wypełnia `tools/build.py` dla każdej wersji) |
+| `app/styles.css` | wygląd |
+| `app/main.js` | główny moduł — dzielony stopniowo na moduły w `app/lib/` |
+| `app/lib/*.ts` | wydzielone moduły w TypeScript (np. `dates.ts`); `*.js` czekają na przejście na TS |
+| `app/sw.js` | praca bez internetu (kopiowany do każdej wersji bez zmian) |
+| `tests/unit/` | testy logiki (Vitest) · `tests/e2e/` — testy ekranów (Playwright, telefon 375 px) |
+
+Pliki wersji (`index.html`, `assets/`, `beta/`, `early/`, `users/`) **nie są edytowane ręcznie** — składa je `tools/build.py`.
+`v1.0/` to zamrożona stara wersja.
+
+```bash
+npm install                 # raz, po pobraniu repozytorium
+npm run dev                 # podgląd lokalny (jak beta) z automatycznym odświeżaniem
+npm run check               # TypeScript + ESLint + testy logiki
+npm run test:e2e            # testy ekranów (po python3 tools/build.py beta users)
+```
 
 | Wersja | Adres | Dla kogo |
 |---|---|---|
@@ -28,7 +46,7 @@ Kod aplikacji jest w `src/` (`index.html`, `sw.js`). Pliki wersji (`index.html`,
 | Stabilna | `/` | wszyscy — sprawdzone funkcje (po uruchomieniu USERS dla wszystkich zostanie ukryta) |
 
 ```bash
-python3 tools/build.py beta users                  # nowa funkcja: beta + USERS z bieżącego src/
+python3 tools/build.py beta users                  # nowa funkcja: beta + USERS z bieżącego app/
 python3 tools/build.py stable early --from <ref>   # po testach: stabilna + Early Access z przetestowanego commita
 python3 tools/build.py --check                     # czy wersje zgadzają się ze źródłem
 ```
