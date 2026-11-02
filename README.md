@@ -23,8 +23,15 @@ Kod aplikacji jest w `app/` i jest pakowany przez **Vite** (przygotowanie pod ap
 |---|---|
 | `app/index.html` | układ strony (miejsca `%%…%%` wypełnia `tools/build.py` dla każdej wersji) |
 | `app/styles.css` | wygląd |
-| `app/main.js` | główny moduł — dzielony stopniowo na moduły w `app/lib/` |
-| `app/lib/*.ts` | wydzielone moduły w TypeScript (np. `dates.ts`); `*.js` czekają na przejście na TS |
+| `app/main.js` | start aplikacji: importuje moduły i uruchamia ich kod startowy (`__init_N`) w stałej kolejności |
+| `app/screens/` | ekrany: dzień i trening, tryb treningu, historia, dieta, postęp, zakupy, Więcej, Trener, konta, panel admina |
+| `app/features/` | funkcje: cykl, check-in, przerwy, Zamień, skaner, ocena techniki, przypomnienia, plan i limity |
+| `app/core/`, `app/plan/`, `app/diet/`, `app/ui/` | stan i synchronizacja, kopia danych, dane planu, skalowanie posiłków, dyktowanie |
+| `app/lib/*.ts` | obliczenia, dane i synchronizacja w TypeScript — bez ekranu, z testami |
+
+Moduły ekranów tylko deklarują funkcje i zmienne (`export let`); kod wykonywany przy starcie jest w `__init_N`.
+Dzięki temu moduły mogą się nawzajem importować bez względu na kolejność. Zmienną innego modułu
+zmienia się przez jego funkcję `__set_nazwa(...)` (np. `__set_S`).
 | `app/sw.js` | praca bez internetu (kopiowany do każdej wersji bez zmian) |
 | `tests/unit/` | testy logiki (Vitest) · `tests/e2e/` — testy ekranów (Playwright, telefon 375 px) |
 
