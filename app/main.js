@@ -1,6 +1,11 @@
 // ŻELAZO — główny moduł aplikacji (dzielony stopniowo na moduły w app/lib/).
 import './styles.css';
-import { todayISO, parseISO, addDays } from './lib/dates';
+import { todayISO, parseISO, addDays, daysBetween, minuteOfDay } from './lib/dates';
+import { TREND, estimateExpenditure, proposeGoal } from './lib/trend';
+import { cycleGaps, cycleLength, cycleDay, cycleForecast, cyclePatterns, phaseNote } from './lib/cycle';
+import { checkinVerdict } from './lib/checkin';
+import { e1rm, prMetrics, prAnalyze, prBest } from './lib/records';
+import { MEAL_LATE, EVENING, DEFAULT_TIMES, usualTime, mealEntry, stampKind, hm } from './lib/mealtime';
 import { mergeState, COACH_KEEP } from './lib/merge.js';
 
 /* ============================================================
@@ -1862,11 +1867,9 @@ function renderWeight(){
    c.ate dla własnych. Gdy odhaczasz posiłek ponad 45 min po swojej zwykłej porze, aplikacja pyta, o której był.
    Zwykła pora = mediana z 28 dni (domyślne pory, gdy danych jest mniej niż 3). Bez godziny zjedzenia przy zapisie
    ponad 2 h po zwykłej porze przyjmujemy zwykłą porę — inaczej stare wieczorne wpisy wyglądałyby na „na bieżąco”. */
-const MT_DEF={'Śniadanie':480,'Przekąska':660,'Obiad':840,'Po treningu':1080,'Kolacja':1170};
-const MT_LATE=45, MT_EVE=20*60+30;
+const MT_LATE=MEAL_LATE, MT_EVE=EVENING;
 var MT={ask:null, replace:null, src:null, usual:null, usualDay:null};
-const mtMin=t=>{ const d=new Date(t); return d.getHours()*60+d.getMinutes(); };
-const mtHM=m=>String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const mtMin=minuteOfDay, mtHM=hm;
 function mtNowMin(){ return mtMin(Date.now()); }
 function mtAteNow(iso){ return iso===todayISO() ? mtNowMin() : null; }
 function mtUsual(tag){
@@ -1879,16 +1882,12 @@ function mtUsual(tag){
     DIET[dow].meals.forEach((sl,k)=>{ if(sl.tag!==tag || !L.meals['m'+k]) return;
       const a=L.ate&&L.ate['m'+k]; if(a>=0){ vals.push(a); return; }
       const t=L._t&&L._t['meal:m'+k]; if(t && todayISO(new Date(t))===iso) vals.push(mtMin(t)); }); }
-  vals.sort((a,b)=>a-b);
-  return MT.usual[tag] = vals.length>=3 ? vals[Math.floor(vals.length/2)] : (MT_DEF[tag]||720);
+  return MT.usual[tag] = usualTime(vals, tag);
 }
 // jeden zapis posiłku: kiedy zjedzony, kiedy zapisany
 function mtEntry(iso, L, key, tag){
   const t=L._t&&L._t['meal:'+key]; if(!t) return null;
-  const a=L.ate&&L.ate[key], logDay=todayISO(new Date(t)), logMin=mtMin(t)+(logDay>iso?1440*cyDiff(iso,logDay):0);
-  const usual=mtUsual(tag);
-  const ate = a>=0 ? a : (logMin-usual>120 ? usual : logMin);
-  return {ate, logged:logMin, lag:logMin-ate};
+  return mealEntry(iso, t, L.ate&&L.ate[key], mtUsual(tag));
 }
 function mtStampHtml(iso, L, key, on){
   if(L.ate && L.ate[key]===-1 && !on) return '<span class="mt-st skip">pominięty</span>';
@@ -1898,15 +1897,14 @@ function mtStampHtml(iso, L, key, on){
   return mtStamp(e);
 }
 function mtStampCustom(iso, c){
-  if(!c._t) return '';
-  const logDay=todayISO(new Date(c._t)), logged=mtMin(c._t)+(logDay>iso?1440*cyDiff(iso,logDay):0);
-  if(logDay<iso) return '';
-  return mtStamp({ate:c.ate>=0?c.ate:logged, logged, lag:logged-(c.ate>=0?c.ate:logged)});
+  if(!c._t || todayISO(new Date(c._t))<iso) return '';
+  return mtStamp(mealEntry(iso, c._t, c.ate, Infinity));   // własny posiłek: bez godziny = zjedzony przy zapisie
 }
 function mtStamp(e){
-  if(e.lag<=MT_LATE) return `<span class="mt-st now">✓ ${mtHM(e.logged)} · na bieżąco</span>`;
-  if(e.logged>=1440) return `<span class="mt-st eve">zjedzony ${mtHM(e.ate)} · uzupełniony później</span>`;
-  if(e.logged>=MT_EVE) return `<span class="mt-st eve">zjedzony ${mtHM(e.ate)} · uzupełniony wieczorem</span>`;
+  const k=stampKind(e);
+  if(k==='now') return `<span class="mt-st now">✓ ${mtHM(e.logged)} · na bieżąco</span>`;
+  if(k==='after') return `<span class="mt-st eve">zjedzony ${mtHM(e.ate)} · uzupełniony później</span>`;
+  if(k==='eve') return `<span class="mt-st eve">zjedzony ${mtHM(e.ate)} · uzupełniony wieczorem</span>`;
   return `<span class="mt-st late">zjedzony ${mtHM(e.ate)} · zapisany ${mtHM(e.logged)}</span>`;
 }
 // odhaczenie posiłku: dziś i późno → pytanie o godzinę; dawny dzień → zwykła pora
@@ -2081,7 +2079,7 @@ document.getElementById('mdPhoto').onclick=phOpen;
    Propozycja zachowuje zamierzony deficyt (wzór − cel), najwyżej ±300 kcal naraz i co najmniej 14 dni po poprzedniej
    zmianie z trendu; tempo spadku nie szybsze niż 1% masy ciała na tydzień.
    Stan w S.adj.kcal = {hist:[{d,kcal,prev}], last:{at,d,from,to,tdee}, snooze:'RRRR-MM-DD'} — synchronizowany z ustawieniami. */
-const TD_WIN=28, TD_SPAN=14, TD_WN=6, TD_DAYS=10, TD_EVERY=14;
+const TD_WIN=TREND.WINDOW, TD_SPAN=TREND.MIN_SPAN, TD_WN=TREND.MIN_WEIGHINGS, TD_DAYS=TREND.MIN_DAYS, TD_EVERY=TREND.EVERY;
 function kcalAdj(){ if(!S.adj) S.adj={}; if(!S.adj.kcal) S.adj.kcal={hist:[]}; if(!S.adj.kcal.hist) S.adj.kcal.hist=[]; return S.adj.kcal; }
 // zmiana celu kalorii od dziś (suwak, Trener, trend wagi) — do liczenia starych dni
 function kcalRecord(kcal, prev){
@@ -2106,27 +2104,12 @@ function dayIntake(iso){
   return {kcal, items, full: items>=3 || kcal>=0.7*goal || (resolved && items>=1)};
 }
 function tdeeEstimate(){
-  const today=todayISO(), from=addDays(today,-TD_WIN), to=addDays(today,-1);
-  const ws=(S.weights||[]).filter(w=>w.d>=from && w.d<=today && w.w>0).sort((a,b)=>a.d<b.d?-1:1);
-  const span=ws.length>1 ? cyDiff(ws[0].d, ws[ws.length-1].d) : 0;
-  const days=[]; for(let d=from; d<=to; d=addDays(d,1)){ const x=dayIntake(d); if(x && x.full) days.push(x.kcal); }
-  const need={w:ws.length, span, days:days.length};
-  if(ws.length<TD_WN || span<TD_SPAN || days.length<TD_DAYS) return {ok:false, need};
-  // trend wagi: nachylenie prostej (kg na dzień) — mniej czułe na wodę niż różnica pierwszego i ostatniego ważenia
-  const xs=ws.map(w=>cyDiff(ws[0].d, w.d)), mx=xs.reduce((a,b)=>a+b,0)/xs.length, my=ws.reduce((a,w)=>a+w.w,0)/ws.length;
-  let num=0, den=0; ws.forEach((w,i)=>{ num+=(xs[i]-mx)*(w.w-my); den+=(xs[i]-mx)**2; });
-  const slope=den ? num/den : 0, avg=days.reduce((a,b)=>a+b,0)/days.length, tdee=Math.round(avg - slope*7700);
-  if(tdee<1200 || tdee>5500) return {ok:false, need, odd:true};
-  return {ok:true, need, tdee, avg:Math.round(avg), weekly:slope*7, formula:estMaintenance(), weight:ws[ws.length-1].w};
+  const today=todayISO(), from=addDays(today,-TD_WIN), to=addDays(today,-1), days=[];
+  for(let d=from; d<=to; d=addDays(d,1)){ const x=dayIntake(d); if(x && x.full) days.push(x.kcal); }
+  const e=estimateExpenditure(S.weights||[], days, today);
+  return e.ok ? Object.assign({formula:estMaintenance()}, e) : e;
 }
-function tdeeProposal(e){
-  const goal=S.kcalGoal||DEFAULT_KCAL, deficit=e.formula-goal;   // zamierzony deficyt z obecnego celu
-  let to=Math.round((e.tdee-deficit)/100)*100;
-  to=Math.max(goal-300, Math.min(goal+300, to));
-  const maxDef=e.weight*0.01*7700/7;                               // 1% masy ciała na tydzień
-  if(e.tdee-to>maxDef) to=Math.ceil((e.tdee-maxDef)/100)*100;
-  return Math.max(1500, Math.min(3200, to));
-}
+function tdeeProposal(e){ return proposeGoal(e, S.kcalGoal||DEFAULT_KCAL, e.formula); }
 const tdFmt=v=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2).replace('.',',');
 function renderTdee(){
   const box=document.getElementById('tdeeCard'); if(!box) return;
@@ -3833,26 +3816,6 @@ function exIndex(){
   Object.values(idx).forEach(h=>{ h.kind=h.timed?'time':(h.sess.some(s=>s.sets.some(x=>x.kg>0))?'kg':'reps'); });
   return exIdxCache=idx;
 }
-function e1rm(kg,r){ return kg>0 && r>=1 && r<=12 ? kg*(1+r/30) : 0; }
-function prMetrics(kind,s){
-  if(kind==='kg') return {top:Math.max(...s.sets.map(x=>x.kg)), e1:Math.max(...s.sets.map(x=>e1rm(x.kg,x.r))), vol:s.sets.reduce((a,x)=>a+x.kg*x.r,0)};
-  return {top:Math.max(...s.sets.map(x=>x.r)), e1:0, vol:s.sets.reduce((a,x)=>a+x.r,0)};
-}
-function prAnalyze(h){
-  const best={top:0,e1:0,vol:0}, seen=[];
-  return h.sess.map((s,i)=>{
-    const m=prMetrics(h.kind,s), prs=[];
-    if(i>0){
-      if(m.top>best.top) prs.push('top');
-      if(h.kind==='kg' && best.e1>0 && m.e1>best.e1+0.01) prs.push('e1');
-      if(s.full && best.vol>0 && m.vol>best.vol) prs.push('vol');
-      if(h.kind==='kg' && !prs.includes('top') && s.sets.some(x=>x.kg>0 && x.r>Math.max(0,...seen.filter(y=>y.kg>=x.kg).map(y=>y.r)))) prs.push('reps');
-    }
-    best.top=Math.max(best.top,m.top); best.e1=Math.max(best.e1,m.e1); if(s.full) best.vol=Math.max(best.vol,m.vol);
-    seen.push(...s.sets);
-    return Object.assign({},s,{m,prs});
-  });
-}
 function prFmt(x){ return String(Math.round(x*10)/10).replace('.',','); }
 function prE1(x){ return prFmt(Math.round(x*2)/2); }
 function prNum(x){ return Math.round(x).toLocaleString('pl-PL'); }
@@ -3867,11 +3830,6 @@ function prSetsText(kind,sets){
   if(kind!=='kg') return sets.map(x=>x.r).join(', ')+' '+prUnit(kind);
   const kgs=[...new Set(sets.map(x=>x.kg))];
   return kgs.length===1 ? (kgs[0]?prFmt(kgs[0])+' kg × ':'')+sets.map(x=>x.r).join(', ') : sets.map(x=>prFmt(x.kg)+'×'+x.r).join(', ');
-}
-function prBest(kind,an){
-  const pick=f=>an.reduce((b,s)=>(!b||f(s)>f(b))?s:b,null);
-  return {top:pick(s=>s.m.top*1000+(kind==='kg'?Math.max(...s.sets.filter(x=>x.kg===s.m.top).map(x=>x.r)):0)),
-    e1:kind==='kg'?pick(s=>s.m.e1):null, vol:pick(s=>s.full?s.m.vol:-1)};
 }
 var IC_HIST='<svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M5 15l4-4 3 3 6-7"/><path d="M15 7h3v3"/></svg>';
 // przycisk pod ćwiczeniem na karcie dnia
@@ -4312,21 +4270,8 @@ var CI_Q=[
 ];
 function ciLight(L){ const c=L && L.checkin; return !!(c && (c.plan==='light' || c.plan==='light2')); }
 function ciVerdict(a, iso, sym){
-  if(['sleep','sore','energy'].some(k=>a[k]==null)) return null;
-  const s=a.sleep+a.sore+a.energy, inf=cyInfo(iso||todayISO()), sy=new Set(sym||[]);
-  // cykl: decydują objawy; faza to tylko kontekst
-  if(inf && inf.sit!=='preg'){
-    if(inf.inPeriod && (sy.has('Skurcze')||sy.has('Obfite krwawienie')) && s<=3) return {c:'low', plan:'light', move:true, rest:true, t:'Okres z objawami', d:'Do wyboru: lżejszy trening (−10%, przerwy +30 s, bez mocnego obciążania brzucha) albo lekki ruch — 20–30 min spaceru i mobilności często łagodzi skurcze.'};
-    if(inf.phase==='lut' && (sy.size>=2 || s<=3)) return {c:'mid', plan:'light', rest:true, t:'Gorsze dni przed okresem', d:'Proponuję lżej: ciężar −10% i przerwy dłuższe o 30 s. Ten tydzień bywa trudniejszy — to normalne i przejściowe.'};
-    // Twoje wzorce: w fazie, w której energia jest u Ciebie zwykle niższa, przy granicznym samopoczuciu proponujemy lżej
-    const pn=cyPhaseNote(inf.phase);
-    if(pn && pn.low && s===4) return {c:'mid', plan:'light', rest:true, t:'Twoja słabsza faza', d:'Z Twoich check-inów: w tej fazie energia jest u Ciebie zwykle niższa. Proponuję lżej (−10%, przerwy +30 s) — jeśli w trakcie poczujesz moc, wróć do planu.'};
-    if(pn && pn.high && s>=5) return {c:'ok', plan:'normal', t:'Twoja mocna faza', d:'Z Twoich check-inów: to zwykle Twoje najlepsze dni. Trenujesz według planu — dobry moment na rekord.'};
-    if(pn && pn.low && s>=5) return {c:'ok', plan:'normal', t:'Dobra forma', d:'Ta faza bywa u Ciebie słabsza, ale dziś czujesz się dobrze — trenujesz według planu.'};
-  }
-  if(s>=4) return {c:'ok', plan:'normal', t:'Dobra forma', d:inf && inf.phase==='foll' ? 'Trenujesz według planu. U wielu kobiet to dobry moment na mocniejszy trening — jeśli czujesz moc, spróbuj rekordu.' : 'Trenujesz według planu.'};
-  if(s>=2) return {c:'mid', plan:'light', t:'Gorszy dzień', d:'Proponuję lżej: ciężar −10%, serie bez zmian. Technika i ruch są dziś ważniejsze niż rekordy.'};
-  return {c:'low', plan:'light2', t:'Mocne zmęczenie', d:'Proponuję lżej: ciężar −10% i jedna seria mniej w każdym ćwiczeniu — albo przesuń trening na inny dzień.'};
+  const inf=cyInfo(iso||todayISO());
+  return checkinVerdict(a, inf, sym||[], inf && inf.sit!=='preg' ? cyPhaseNote(inf.phase) : null);
 }
 function ciIcons(c){ return CI_Q.map(q=>c[q.k]!=null?q.o[c[q.k]][0]:'').join(''); }
 function ciChip(L, iso){
@@ -4433,23 +4378,13 @@ function cySave(c){
   else if(S.cyc && !S.cyc.off){ S.cyc={at:c.at, off:true}; save(); }   // usuń kopię z serwera
 }
 function cyTracking(){ const c=cyGet(); return !!(c.on && c.sit && c.sit!=='none'); }
-function cyDiff(a,b){ return Math.round((parseISO(b)-parseISO(a))/864e5); }
+function cyDiff(a,b){ return daysBetween(a,b); }
 function cyPeriods(){ return ((cyGet().periods)||[]).slice().sort((a,b)=>a.s<b.s?-1:1); }
-function cyLen(){
-  const s=cyPeriods().map(p=>p.s), d=[];
-  for(let i=1;i<s.length;i++){ const x=cyDiff(s[i-1],s[i]); if(x>=15 && x<=60) d.push(x); }
-  const last=d.slice(-6); return last.length ? Math.round(last.reduce((a,b)=>a+b,0)/last.length) : 28;
-}
+function cyLen(){ return cycleLength(cyPeriods()); }
 var CY_PH={period:'okres', foll:'faza folikularna', ov:'okolice owulacji', lut:'faza lutealna'};
 function cyInfo(iso){
   if(!cyTracking()) return null;
-  const c=cyGet(), ps=cyPeriods().filter(p=>p.s<=iso), p=ps[ps.length-1];
-  if(!p) return {day:null, phase:null, inPeriod:false, sit:c.sit};
-  const day=cyDiff(p.s, iso)+1, inPeriod=p.e ? iso<=p.e : (day<=7 || !!(p.still && iso<=addDays(p.still,1))), L=cyLen();
-  let phase=null;
-  if(c.sit==='natural' && day<=L+10) phase = inPeriod ? 'period' : day<=L-16 ? 'foll' : day<=L-12 ? 'ov' : 'lut';
-  else if(inPeriod) phase='period';
-  return {day, phase, inPeriod, p, len:L, sit:c.sit};
+  return cycleDay(cyPeriods(), cyGet().sit, iso);
 }
 function cySym(iso){ return ((cyGet().sym||{})[iso])||[]; }
 function cySetSym(iso, list){ const c=Object.assign({}, cyGet()); c.sym=Object.assign({}, c.sym||{}); if(list.length) c.sym[iso]=list; else delete c.sym[iso]; cySave(c); }
@@ -4585,43 +4520,22 @@ function cyWeightNote(){
    Prognoza: ostatni okres + średnia długość cyklu, rozrzut z odchylenia (min. 2 dni, przy nieregularnym 4, max 7).
    Wzorce: check-iny (sen, zakwasy, energia 0–2) i objawy pogrupowane po fazach — tylko naturalny cykl,
    co najmniej 3 check-iny w dwóch fazach. Wszystko liczone na telefonie z danych, które już są. */
-function cyGaps(){ const s=cyPeriods().map(p=>p.s), d=[]; for(let i=1;i<s.length;i++){ const x=cyDiff(s[i-1],s[i]); if(x>=15 && x<=60) d.push(x); } return d.slice(-6); }
+function cyGaps(){ return cycleGaps(cyPeriods()); }
 function cyForecast(){
   if(!cyTracking()) return null;
-  const c=cyGet(); if(c.sit!=='natural' && c.sit!=='irregular') return null;
-  const ps=cyPeriods(); if(!ps.length) return null;
-  const g=cyGaps(), L=cyLen(), today=todayISO();
-  const sd=g.length>=3 ? Math.sqrt(g.reduce((a,x)=>a+(x-L)**2,0)/g.length) : null;
-  const spread=Math.min(7, Math.max(c.sit==='irregular'?4:2, sd!=null?Math.round(sd):3));
-  const next=addDays(ps[ps.length-1].s, L), to=addDays(next,spread);
-  return {next, from:addDays(next,-spread), to, in:cyDiff(today,next), L, n:g.length, min:g.length?Math.min(...g):null, max:g.length?Math.max(...g):null,
-    pre:addDays(next,-7), late: today>to ? cyDiff(to,today) : 0, sit:c.sit};
+  return cycleForecast(cyPeriods(), cyGet().sit, todayISO());
 }
 const CY_PH_ORDER=['period','foll','ov','lut'];
 const CY_PH_SHORT={period:'Okres', foll:'Folikularna', ov:'Owulacja', lut:'Lutealna'};
 const CY_PH_IN={period:'w czasie okresu', foll:'w fazie folikularnej', ov:'w okolicach owulacji', lut:'w fazie lutealnej'};
 function cyPatterns(){
   if(!cyTracking() || cyGet().sit!=='natural') return null;
-  const by={}, tot={n:0,e:0};
-  Object.keys(S.log||{}).forEach(iso=>{
-    const ci=S.log[iso].checkin; if(!ci || ci.energy==null || ci.plan==='skip') return;
-    const inf=cyInfo(iso); if(!inf || !inf.phase) return;
-    const b=by[inf.phase]||(by[inf.phase]={n:0,energy:0,sleep:0,sore:0});
-    b.n++; b.energy+=ci.energy; b.sleep+=ci.sleep||0; b.sore+=ci.sore||0; tot.n++; tot.e+=ci.energy;
-  });
-  Object.values(by).forEach(b=>{ b.energy/=b.n; b.sleep/=b.n; b.sore/=b.n; });
-  const sym={}, raw=cyGet().sym||{};
-  Object.keys(raw).forEach(iso=>{ const inf=cyInfo(iso); if(!inf || !inf.phase) return; raw[iso].forEach(x=>{ const o=sym[x]||(sym[x]={n:0}); o.n++; o[inf.phase]=(o[inf.phase]||0)+1; }); });
-  const ready=Object.values(by).filter(b=>b.n>=3).length>=2;
-  return {by, sym, ready, n:tot.n, overall:tot.n?tot.e/tot.n:0};
+  const points=Object.keys(S.log||{}).map(iso=>({iso, ci:S.log[iso].checkin}))
+    .filter(x=>x.ci && x.ci.energy!=null && x.ci.plan!=='skip').map(x=>({iso:x.iso, energy:x.ci.energy, sleep:x.ci.sleep, sore:x.ci.sore}));
+  return cyclePatterns(points, cyGet().sym||{}, iso=>{ const inf=cyInfo(iso); return inf && inf.phase; });
 }
 // czy ta faza jest u Ciebie zwykle słabsza / mocniejsza niż średnio (energia w check-inie)
-function cyPhaseNote(phase){
-  const P=cyPatterns(); if(!P || !P.ready || !phase) return null;
-  const b=P.by[phase]; if(!b || b.n<3) return null;
-  const d=b.energy-P.overall;
-  return d<=-0.35 ? {low:true, b} : d>=0.35 ? {high:true, b} : null;
-}
+function cyPhaseNote(phase){ return phaseNote(cyPatterns(), phase); }
 function cyInsights(P){
   const out=[], ok=Object.entries(P.by).filter(([,b])=>b.n>=3).sort((a,b)=>a[1].energy-b[1].energy);
   if(ok.length>=2){ const lo=ok[0], hi=ok[ok.length-1];

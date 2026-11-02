@@ -18,3 +18,14 @@ export function addDays(iso: string, n: number): string {
   d.setDate(d.getDate() + n);
   return todayISO(d);
 }
+
+/** Liczba dni od a do b (b później → wynik dodatni); zaokrąglenie zjada godzinę zmiany czasu. */
+export function daysBetween(a: string, b: string): number {
+  return Math.round((parseISO(b).getTime() - parseISO(a).getTime()) / 864e5);
+}
+
+/** Minuta doby (0–1439) chwili t w czasie lokalnym. */
+export function minuteOfDay(t: number): number {
+  const d = new Date(t);
+  return d.getHours() * 60 + d.getMinutes();
+}
