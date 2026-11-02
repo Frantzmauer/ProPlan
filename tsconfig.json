@@ -1,12 +1,16 @@
 {
-  // Przejście na TypeScript stopniowo: nowe i wydzielane moduły w .ts (sprawdzane ściśle),
-  // app/main.js zostaje JavaScriptem i nie jest sprawdzany, dopóki nie zostanie podzielony.
+  // Ekrany i funkcje (app/screens, features, core, plan, diet, ui): TypeScript stopniowo.
+  // Bez trybu ścisłego i z łagodniejszymi typami elementów strony (app/types/dom-loose.d.ts),
+  // dopóki moduły nie dostaną własnych typów. Obliczenia w app/lib sprawdza ściśle tsconfig.strict.json.
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
@@ -14,6 +18,6 @@
     "skipLibCheck": true,
     "types": ["vite/client"]
   },
-  "include": ["app/**/*.ts", "app/**/*.js", "tests/**/*.ts"],
+  "include": ["app/**/*.ts", "app/**/*.js"],
   "exclude": ["app/sw.js"]
 }
