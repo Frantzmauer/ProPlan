@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tryb treningu ŻELAZO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: karta treningu z „START” → pełnoekranowy tryb treningu (czas, bieżąca seria albo przerwa, następne) → podsumowanie */
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#5f6a72;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --steel-soft:#16242e; --green:#4ec97e; --green-soft:#18251d; --red:#e2543a;
+  --r:14px;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark; /* aplikacja ŻELAZO jest tylko ciemna */
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+.wrap{max-width:600px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.disp{font-family:var(--font-disp);letter-spacing:.02em}
+.num{font-variant-numeric:tabular-nums}
+
+/* zwykły widok: karta treningu */
+.top{display:flex;align-items:center;justify-content:space-between;padding-block:14px 6px}
+.brand{font-family:var(--font-disp);font-weight:700;font-size:28px;letter-spacing:.04em}
+.brand em{font-style:normal;color:var(--amber)}
+.proto{font-size:12px;color:var(--ink-faint);margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.head{display:flex;align-items:center;gap:10px;padding:13px 14px}
+.badge{font-family:var(--font-disp);font-weight:700;font-size:13px;letter-spacing:.06em;padding:2px 9px;border-radius:7px;background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,122,26,.35)}
+.head .t{font-family:var(--font-disp);font-size:21px;font-weight:600;flex:1}
+.start{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 14px 14px;height:56px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:21px;letter-spacing:.06em;width:calc(100% - 28px)}
+.start svg{width:22px;height:22px;fill:#0e1114}
+.start:active{transform:scale(.98)}
+.meta{display:flex;gap:14px;padding:0 14px 12px;font-size:12.5px;color:var(--ink-dim)}
+.exl{list-style:none;border-top:1px solid var(--line)}
+.exl li{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.exl li:last-child{border-bottom:none}
+.exl li span:last-child{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim);white-space:nowrap}
+.last{margin-top:12px;font-size:13px;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.last b{color:var(--ink);font-weight:600}
+
+/* tryb treningu: pełny ekran */
+.focus{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.focus[hidden]{display:none}
+.fbar{display:flex;align-items:center;gap:10px;padding-block:10px;border-bottom:1px solid var(--line)}
+.fbar .tot{display:flex;flex-direction:column;line-height:1.1}
+.fbar .tot b{font-family:var(--font-disp);font-size:26px;font-weight:700}
+.fbar .tot small{font-size:11px;color:var(--ink-dim);letter-spacing:.06em;text-transform:uppercase}
+.prog{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.prog .bar{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.prog .bar span{display:block;height:100%;background:var(--green);transition:width .3s}
+.prog small{font-size:11.5px;color:var(--ink-dim)}
+.end-btn{height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;color:var(--ink-dim);font-size:13px}
+.fbody{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-block:14px}
+.exname{display:flex;align-items:flex-start;gap:10px}
+.exname .t{font-family:var(--font-disp);font-size:30px;font-weight:700;line-height:1.05;flex:1;text-transform:uppercase}
+.exname .nav{display:flex;gap:6px}
+.exname .nav button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:22px}
+.exname .nav button:disabled{opacity:.3}
+.setno{font-size:14px;color:var(--ink-dim)}
+.setno b{color:var(--amber);font-weight:600}
+.dots{display:flex;gap:6px}
+.dots i{width:28px;height:6px;border-radius:99px;background:var(--panel2)}
+.dots i.ok{background:var(--green)}
+.dots i.cur{background:var(--amber)}
+
+.big{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.vals{display:flex;align-items:center;justify-content:center;gap:12px;width:100%}
+.val{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.val .n{font-family:var(--font-disp);font-size:56px;font-weight:700;line-height:1}
+.val .u{font-size:12px;color:var(--ink-dim);letter-spacing:.08em;text-transform:uppercase}
+.val .pm{display:flex;gap:8px}
+.val .pm button{width:52px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-family:var(--font-disp);font-size:24px;font-weight:700}
+.vals .x{font-family:var(--font-disp);font-size:30px;color:var(--ink-faint);padding-bottom:40px}
+.work{font-size:13px;color:var(--ink-dim)}
+.done-btn{height:72px;width:100%;border-radius:18px;background:var(--green);color:#0e1114;font-family:var(--font-disp);font-size:26px;font-weight:700;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:10px}
+.done-btn:active{transform:scale(.98)}
+.done-btn svg{width:28px;height:28px;stroke:#0e1114;stroke-width:3.5;fill:none}
+.skip{align-self:center;font-size:13px;color:var(--ink-faint);padding:6px 10px}
+
+.rest{background:var(--steel-soft);border:1px solid rgba(95,168,211,.35);border-radius:18px;padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.rest .lab{font-size:12px;color:var(--steel);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ring{position:relative;width:200px;height:200px;max-width:60vw;max-height:60vw}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bg{stroke:var(--panel2)}
+.ring .fg{stroke:var(--steel);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .c b{font-family:var(--font-disp);font-size:58px;font-weight:700;line-height:1}
+.ring .c small{font-size:12px;color:var(--ink-dim)}
+.rest.over{background:#2a1512;border-color:rgba(226,84,58,.5)}
+.rest.over .fg{stroke:var(--red)}
+.rest.over .lab,.rest.over .ring .c b{color:var(--red)}
+.rbtns{display:flex;gap:8px;width:100%}
+.rbtns button{flex:1;height:50px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:14px}
+.rbtns .go{background:var(--amber);color:#0e1114;border:none;font-family:var(--font-disp);font-weight:700;font-size:19px;letter-spacing:.04em;flex:1.6}
+.nextup{font-size:13px;color:var(--ink-dim);text-align:center}
+.nextup b{color:var(--ink)}
+
+.later{display:flex;flex-direction:column;gap:6px}
+.later h4{font-size:11.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.later button{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:13.5px;text-align:left;width:100%}
+.later button.ok{color:var(--ink-faint)}
+.later button.ok span:first-child::before{content:"✓ ";color:var(--green)}
+.later button span:last-child{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim);white-space:nowrap}
+
+/* podsumowanie */
+.sum h2{font-family:var(--font-disp);font-size:32px;font-weight:700;text-transform:uppercase;line-height:1.05}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+.tile b{display:block;font-family:var(--font-disp);font-size:30px;font-weight:700;line-height:1.1}
+.tile small{font-size:11.5px;color:var(--ink-dim);letter-spacing:.04em}
+.tile.warn b{color:var(--amber)}
+.rows{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.rows div{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+.rows div:last-child{border-bottom:none}
+.rows span:last-child{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim);white-space:nowrap}
+.rows .slow{color:var(--amber)}
+.coachnote{background:var(--panel);border:1px solid rgba(95,168,211,.35);border-radius:14px;padding:12px 14px;font-size:13.5px;color:var(--ink-dim)}
+.coachnote b{color:var(--steel)}
+.save{height:58px;width:100%;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-size:21px;font-weight:700;letter-spacing:.05em}
+
+.demo{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-faint);margin-top:10px}
+.demo button{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:12px;color:var(--ink-dim)}
+.demo button.on{border-color:var(--amber);color:var(--amber)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="top"><div class="brand">ŻEL<em>AZO</em></div></div>
+  <p class="proto">Prototyp z przykładowym treningiem. Nic się nie zapisuje.</p>
+  <div class="card">
+    <div class="head"><span class="badge">LOWER</span><span class="t">LOWER · dół ciała</span></div>
+    <button class="start" id="startBtn"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>START TRENINGU</button>
+    <div class="meta"><span>5 ćwiczeń · 15 serii</span><span>ok. 55 min</span></div>
+    <ul class="exl" id="exList"></ul>
+  </div>
+  <div class="last" id="lastBox"><b>Ostatni trening dolny (27.10):</b> 58 min · przerwy średnio 2:24 przy planie 2:00.</div>
+  <div class="demo"><span>Tryb pokazowy:</span><button id="demoBtn" class="on" aria-pressed="true">Przerwy 10× szybciej</button></div>
+</div>
+
+<div class="focus" id="focus" hidden>
+  <div class="wrap fbar">
+    <div class="tot"><b class="num" id="tTotal">0:00</b><small>trening</small></div>
+    <div class="prog"><div class="bar"><span id="pBar" style="width:0"></span></div><small id="pTxt"></small></div>
+    <button class="end-btn" id="endBtn">Zakończ</button>
+  </div>
+  <div class="wrap fbody" id="fbody"></div>
+</div>
+
+<script>
+/* przykładowy trening; rest = zaplanowana przerwa po serii (s); w aplikacji: z planu albo od Trenera */
+const EX=[
+  {n:'Przysiad ze sztangą',s:4,kg:100,r:8,step:2.5,rest:150},
+  {n:'Martwy ciąg rumuński',s:3,kg:80,r:10,step:2.5,rest:120},
+  {n:'Wykroki z hantlami',s:3,kg:20,r:10,step:2,rest:90,unit:'/nogę'},
+  {n:'Wspięcia na palce',s:3,kg:60,r:15,step:5,rest:60},
+  {n:'Deska boczna',s:2,kg:null,r:30,step:5,rest:45,timed:true,unit:' s/stronę'}
+];
+const fmt=s=>{ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); };
+let SPEED=10;   // tryb pokazowy: przerwy płyną 10× szybciej
+const now=()=>Date.now();
+
+document.getElementById('exList').innerHTML=EX.map(e=>`<li><span>${e.n}</span><span>${e.s}×${e.r}${e.unit||''}${e.kg?' · '+String(e.kg).replace('.',',')+' kg':''}</span></li>`).join('');
+document.getElementById('demoBtn').onclick=e=>{ SPEED = SPEED===10?1:10; e.target.classList.toggle('on',SPEED===10); e.target.setAttribute('aria-pressed',SPEED===10); e.target.textContent=SPEED===10?'Przerwy 10× szybciej':'Przerwy w czasie rzeczywistym'; };
+
+/* stan sesji — w aplikacji zapisywany w dzienniku dnia, żeby Trener mógł go analizować */
+let T=null, tick=null, audio=null;
+function beep(f,d){ try{ audio=audio||new (window.AudioContext||window.webkitAudioContext)(); const o=audio.createOscillator(),g=audio.createGain(); o.frequency.value=f; o.connect(g); g.connect(audio.destination); g.gain.setValueAtTime(.25,audio.currentTime); g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d); o.start(); o.stop(audio.currentTime+d);}catch(e){} }
+function buzz(p){ try{ navigator.vibrate&&navigator.vibrate(p); }catch(e){} }
+
+function start(){
+  try{ audio=audio||new (window.AudioContext||window.webkitAudioContext)(); audio.resume&&audio.resume(); }catch(e){}
+  T={start:now(), ex:0, phase:'work', setStart:now(), restEnd:0, restPlan:0, restStart:0,
+     vals:EX.map(e=>Array.from({length:e.s},()=>({kg:e.kg, r:e.r}))), done:EX.map(e=>Array(e.s).fill(null)), log:[]};
+  document.getElementById('focus').hidden=false;
+  try{ navigator.wakeLock && navigator.wakeLock.request('screen').catch(()=>{}); }catch(e){}
+  tick=setInterval(step,200); render();
+}
+const curSet=i=>T.done[i].findIndex(x=>!x);
+const doneCount=()=>T.done.flat().filter(Boolean).length, total=()=>EX.reduce((a,e)=>a+e.s,0);
+// następne ćwiczenie z niezrobioną serią (od bieżącego dalej, potem od początku)
+function nextEx(from){ for(let k=0;k<EX.length;k++){ const i=(from+k)%EX.length; if(curSet(i)>=0) return i; } return -1; }
+
+function setDone(){
+  const i=T.ex, k=curSet(i), t=now(), v=T.vals[i][k];
+  T.done[i][k]={at:t, kg:v.kg, r:v.r, work:(t-T.setStart)/1000};
+  T.log.push({ex:i, set:k, work:(t-T.setStart)/1000, restBefore:T.lastRest||null});
+  buzz(30);
+  if(doneCount()===total()){ finish(); return; }
+  if(curSet(i)<0) T.ex=nextEx(i);
+  // przerwa po serii: plan z ćwiczenia, które właśnie zrobiłeś
+  T.phase='rest'; T.restPlan=EX[i].rest; T.restStart=t; T.restEnd=t+EX[i].rest*1000/SPEED; T.beeped=false;
+  render();
+}
+// faktyczna przerwa: czas do końca odliczania (w trybie pokazowym przyspieszony) + spóźnienie w prawdziwych sekundach
+function startSet(){ const t=now(); T.lastRest=(Math.min(t,T.restEnd)-T.restStart)/1000*SPEED + Math.max(0,t-T.restEnd)/1000; T.lastRestPlan=T.restPlan; T.phase='work'; T.setStart=t; render(); }
+function step(){
+  if(!T) return;
+  document.getElementById('tTotal').textContent=fmt((now()-T.start)/1000);
+  if(T.phase==='rest'){
+    const left=(T.restEnd-now())/1000*SPEED;
+    const el=document.getElementById('rLeft'); if(!el) return;
+    const box=document.getElementById('restBox'), over=left<0;
+    el.textContent=(over?'+':'')+fmt(Math.abs(left));
+    box.classList.toggle('over', over);
+    document.getElementById('rLab').textContent=over?'Przerwa za długa — zaczynaj!':'Przerwa';
+    const fg=document.getElementById('rFg'), C=2*Math.PI*90;
+    fg.style.strokeDashoffset = over ? 0 : C*(1-left/T.restPlan);
+    if(left<=3 && left>0 && Math.ceil(left)!==T.lastSec){ T.lastSec=Math.ceil(left); beep(660,.12); }
+    // koniec przerwy: sygnał, potem ekran sam przechodzi do serii (licząc pracę od tej chwili)
+    if(over && !T.beeped){ T.beeped=true; beep(880,.35); setTimeout(()=>beep(1175,.5),180); buzz([200,100,200]); setTimeout(()=>{ if(T&&T.phase==='rest') startSet(); }, 1500); }
+  } else if(T.phase==='work'){
+    const w=document.getElementById('wTime'); if(w) w.textContent=fmt((now()-T.setStart)/1000);
+  }
+}
+function render(){
+  const b=document.getElementById('fbody');
+  document.getElementById('pBar').style.width=(doneCount()/total()*100)+'%';
+  document.getElementById('pTxt').textContent=`${doneCount()} z ${total()} serii`;
+  if(T.phase==='summary'){ b.innerHTML=summaryHtml(); document.getElementById('saveBtn').onclick=close; return; }
+  const i=T.ex, e=EX[i], k=curSet(i)<0?e.s-1:curSet(i), v=T.vals[i][k];
+  let h=`<div class="exname"><span class="t">${e.n}</span><div class="nav"><button id="exPrev" aria-label="Poprzednie ćwiczenie" ${i===0?'disabled':''}>‹</button><button id="exNext" aria-label="Następne ćwiczenie" ${i===EX.length-1?'disabled':''}>›</button></div></div>
+    <div class="setno">Seria <b>${k+1}</b> z ${e.s} · przerwa po serii ${fmt(e.rest)}</div>
+    <div class="dots">${T.done[i].map((d,j)=>`<i class="${d?'ok':j===k?'cur':''}"></i>`).join('')}</div>`;
+  if(T.phase==='rest'){
+    const ne=EX[T.ex], nk=curSet(T.ex), C=2*Math.PI*90;
+    h+=`<div class="rest" id="restBox"><span class="lab" id="rLab">Przerwa</span>
+      <div class="ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" id="rFg" cx="100" cy="100" r="90" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg>
+        <div class="c"><b class="num" id="rLeft">${fmt(T.restPlan)}</b><small>z ${fmt(T.restPlan)}</small></div></div>
+      <div class="rbtns"><button id="plus15">+15 s</button><button class="go" id="goNow">▶ ZACZYNAM</button></div></div>
+      <div class="nextup">Następnie: <b>${ne.n}</b> · seria ${nk+1} · ${T.vals[T.ex][nk].kg?String(T.vals[T.ex][nk].kg).replace('.',',')+' kg × ':''}${T.vals[T.ex][nk].r}${ne.timed?' s':''}</div>`;
+  } else {
+    h+=`<div class="big"><div class="vals">
+      ${v.kg!==null?`<div class="val"><span class="n num">${String(v.kg).replace('.',',')}</span><span class="u">kg</span><div class="pm"><button data-d="kg:-1" aria-label="Mniej kg">−</button><button data-d="kg:1" aria-label="Więcej kg">+</button></div></div><span class="x">×</span>`:''}
+      <div class="val"><span class="n num">${v.r}</span><span class="u">${e.timed?'sekund':'powtórzeń'}${e.unit&&!e.timed?' '+e.unit:''}</span><div class="pm"><button data-d="r:-1" aria-label="Mniej">−</button><button data-d="r:1" aria-label="Więcej">+</button></div></div>
+    </div><span class="work">Seria trwa <b class="num" id="wTime">0:00</b></span></div>
+    <button class="done-btn" id="doneBtn"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>SERIA ZROBIONA</button>
+    <button class="skip" id="skipSet">Pomiń tę serię</button>`;
+  }
+  h+=`<div class="later"><h4>Ćwiczenia</h4>`+EX.map((x,j)=>{ const d=T.done[j].filter(Boolean).length; return `<button class="${d===x.s?'ok':''}" data-go="${j}"><span>${x.n}</span><span>${d}/${x.s}</span></button>`; }).join('')+`</div>`;
+  b.innerHTML=h;
+  const on=(id,f)=>{ const el=document.getElementById(id); if(el) el.onclick=f; };
+  on('doneBtn', setDone); on('goNow', startSet);
+  on('plus15', ()=>{ T.restEnd+=15000/SPEED; T.restPlan+=15; T.beeped=false; step(); });
+  on('skipSet', ()=>{ const k2=curSet(T.ex); T.done[T.ex][k2]={skipped:true, at:now()}; if(doneCount()===total()) return finish(); if(curSet(T.ex)<0) T.ex=nextEx(T.ex); T.setStart=now(); render(); });
+  on('exPrev', ()=>{ if(T.ex>0){ T.ex--; render(); } }); on('exNext', ()=>{ if(T.ex<EX.length-1){ T.ex++; render(); } });
+  b.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>{ T.ex=+x.dataset.go; render(); });
+  b.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{ const [f,d]=x.dataset.d.split(':'), cv=T.vals[T.ex][curSet(T.ex)]; if(!cv) return;
+    cv[f]=Math.max(0, Math.round((cv[f]+(+d)*(f==='kg'?e.step:(e.timed?5:1)))*10)/10);
+    // zmiana ciężaru przechodzi na kolejne serie tego ćwiczenia
+    if(f==='kg') T.vals[T.ex].forEach((s,j)=>{ if(j>curSet(T.ex) && !T.done[T.ex][j]) s.kg=cv.kg; });
+    render(); });
+}
+function finish(){ T.end=now(); T.phase='summary'; clearInterval(tick); step(); beep(988,.25); setTimeout(()=>beep(1319,.45),200); render(); }
+function summaryHtml(){
+  const dur=(T.end-T.start)/1000, rests=T.log.filter(l=>l.restBefore!=null), work=T.log.reduce((a,l)=>a+l.work,0);
+  const avgR=rests.length?rests.reduce((a,l)=>a+l.restBefore,0)/rests.length:0;
+  const done=T.done.flat().filter(d=>d&&!d.skipped).length;
+  const per=EX.map((e,i)=>{ const rs=T.log.filter(l=>l.ex===i&&l.restBefore!=null).map(l=>l.restBefore); const a=rs.length?rs.reduce((x,y)=>x+y,0)/rs.length:null;
+    return `<div><span>${e.n}</span><span class="${a&&a>e.rest*1.2?'slow':''}">${a?'przerwa '+fmt(a)+' / plan '+fmt(e.rest):'—'}</span></div>`; }).join('');
+  return `<div class="sum"><h2>Trening zakończony 💪</h2></div>
+    <div class="tiles">
+      <div class="tile"><b class="num">${fmt(dur)}</b><small>CAŁY TRENING</small></div>
+      <div class="tile"><b class="num">${done}/${total()}</b><small>SERIE ZROBIONE</small></div>
+      <div class="tile"><b class="num">${fmt(work)}</b><small>PRACA (SERIE)</small></div>
+      <div class="tile ${avgR>140?'warn':''}"><b class="num">${fmt(avgR)}</b><small>ŚREDNIA PRZERWA</small></div>
+    </div>
+    <div class="rows">${per}</div>
+    <div class="coachnote"><b>Trener zobaczy te dane.</b> Np. zapytaj: „Jak mi poszedł dzisiejszy trening?”. Zaproponuje zmiany, jeśli przerwy są stale za długie albo serie wypadają.</div>
+    <button class="save" id="saveBtn">ZAPISZ I ZAMKNIJ</button>`;
+}
+function close(){
+  const dur=(T.end-T.start)/1000;
+  document.getElementById('lastBox').innerHTML=`<b>Dzisiejszy trening zapisany:</b> ${fmt(dur)} · ${T.done.flat().filter(d=>d&&!d.skipped).length}/${total()} serii.`;
+  document.getElementById('focus').hidden=true; T=null;
+}
+document.getElementById('startBtn').onclick=start;
+document.getElementById('endBtn').onclick=()=>{ if(T && T.phase!=='summary') finish(); };
+</script>
+
+</body></html>

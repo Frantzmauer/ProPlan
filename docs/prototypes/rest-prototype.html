@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Przerwy w treningu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+.wrap{max-width:440px;margin:0 auto;padding-block:14px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h2,.disp{font-family:var(--font-disp);text-transform:uppercase;line-height:1.05;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;font-weight:600}
+.proto{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.proto button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.proto button.on{background:var(--amber);border-color:var(--amber);color:#0e1114}
+.pnote{font-size:13px;color:var(--ink-dim);border-left:3px solid var(--steel);padding:6px 10px;margin:10px 0 14px;background:rgba(95,168,211,.07);border-radius:0 8px 8px 0}
+.pnote b{color:var(--ink)}
+.screen[hidden]{display:none}
+.wo{display:flex;flex-direction:column;gap:14px}
+.wo-name{font-family:var(--font-disp);font-size:30px;font-weight:700;line-height:1.05;text-transform:uppercase}
+.setno{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--ink-dim)}
+.setno b{color:var(--amber)}
+.restchip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:13px;font-weight:600}
+.restchip i{font-style:normal;color:var(--steel)}
+.restchip small{color:var(--ink-faint);font-weight:500}
+.dots{display:flex;gap:6px}
+.dots i{width:28px;height:6px;border-radius:99px;background:var(--panel2)}
+.dots i.ok{background:var(--green)}
+.dots i.cur{background:var(--amber)}
+.big{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 14px;display:flex;justify-content:center;align-items:flex-end;gap:16px}
+.val{text-align:center}
+.val .n{font-family:var(--font-disp);font-weight:700;font-size:60px;line-height:1}
+.val .u{display:block;font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+.x{font-family:var(--font-disp);font-size:28px;color:var(--ink-faint);padding-bottom:20px}
+.done{width:100%;min-height:62px;border-radius:16px;background:var(--green);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:24px;letter-spacing:.04em;text-transform:uppercase}
+.rest{background:rgba(95,168,211,.1);border:1px solid rgba(95,168,211,.35);border-radius:18px;padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.rest .lab{font-size:12px;color:var(--steel);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ring{position:relative;width:200px;height:200px;max-width:60vw;max-height:60vw}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bg{stroke:var(--panel2)}
+.ring .fg{stroke:var(--steel);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .c b{font-family:var(--font-disp);font-size:58px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.ring .c small{font-size:12px;color:var(--ink-dim)}
+.rbtns{display:flex;gap:8px;width:100%}
+.rbtns button{flex:1;height:50px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:14px}
+.rbtns .go{background:var(--amber);color:#0e1114;border:none;font-family:var(--font-disp);font-weight:700;font-size:19px;letter-spacing:.04em;flex:1.6}
+.learn{width:100%;background:var(--panel);border:1px solid rgba(255,122,26,.45);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.learn b{color:var(--amber)}
+.learn .row{display:flex;gap:8px}
+.learn .row button{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-size:13.5px;font-weight:600}
+.learn .row .yes{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.next{font-size:13px;color:var(--ink-dim);text-align:center}
+.next b{color:var(--ink)}
+/* arkusz */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .pn{position:relative;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.sh-head{display:flex;gap:10px;align-items:flex-start}
+.sh-head h2{font-size:26px;flex:1;min-width:0}
+.xbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-size:20px;color:var(--ink-dim);flex:none}
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
+.stepper button{width:64px;height:56px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-size:18px;font-weight:600}
+.stepper b{font-family:var(--font-disp);font-size:52px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.presets button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.presets button.on{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.facts{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.facts div{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+.facts div:last-child{border-bottom:none}
+.facts span:last-child{font-family:var(--font-disp);font-weight:600;font-size:16px;white-space:nowrap}
+.hint{font-size:12.5px;color:var(--ink-faint)}
+.go2{width:100%;min-height:56px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:21px;letter-spacing:.04em;text-transform:uppercase}
+.reset{color:var(--steel);font-weight:600;font-size:14px;min-height:40px;align-self:center}
+/* Trener */
+.chat{display:flex;flex-direction:column;gap:10px}
+.bub{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:14px}
+.bub.me{background:var(--panel2);align-self:flex-end;max-width:85%}
+.prop{border-color:var(--amber)}
+.prop .t{font-size:12px;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.prop ul{margin:6px 0 0;padding-left:18px}
+.prop li b{font-family:var(--font-disp);font-size:16px}
+.prop .acts{display:flex;gap:6px;margin-top:10px}
+.prop .acts button{flex:1;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-size:13.5px;font-weight:600}
+.prop .acts .yes{flex:2;background:var(--amber);border:none;color:#0e1114}
+.applied{font-size:13px;color:var(--green);margin-top:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ex{border-bottom:1px solid var(--line);padding:12px 14px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.ex:last-child{border-bottom:none}
+.ex .nm{font-size:14.5px;font-weight:500;min-width:0}
+.ex .nm small{display:block;font-size:12px;color:var(--ink-faint)}
+.src{font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px;margin-left:4px}
+.src.me{background:var(--steel);color:#0e1114}
+.src.tr{background:var(--amber);color:#0e1114}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;font-size:13.5px;display:flex;gap:6px;align-items:center;width:max-content;max-width:calc(100% - 32px)}
+.toast button{color:var(--steel);font-weight:600;padding:6px 10px}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Prototyp · Przerwy dopasowane do Ciebie</div>
+  <div class="proto" id="scr">
+    <button data-scr="wo" class="on">Tryb treningu</button>
+    <button data-scr="coach">Trener</button>
+    <button data-scr="plan">Twoje przerwy</button>
+  </div>
+  <div class="pnote" id="note"></div>
+  <section class="screen" id="s-wo"><div class="wo" id="woBox"></div></section>
+  <section class="screen" id="s-coach" hidden><div class="chat" id="chatBox"></div></section>
+  <section class="screen" id="s-plan" hidden><div id="planBox"></div></section>
+</div>
+<div class="sheet" id="sheet" hidden><div class="bd" data-close></div><div class="pn" id="pn" role="dialog" aria-modal="true" aria-labelledby="shT"></div></div>
+<div id="layer"></div>
+
+<script>
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+// przerwa: z planu, chyba że zmieniłeś Ty albo Trener (ostatnia decyzja wygrywa)
+const EX=[
+  {n:'Przysiad ze sztangą na karku', plan:150, kg:70, r:8, s:4, real:[178,182,171]},
+  {n:'Wyciskanie sztangi — ławka płaska', plan:150, kg:62.5, r:8, s:4, real:[149,155,160]},
+  {n:'Wiosłowanie sztangą w opadzie', plan:105, kg:50, r:10, s:4, real:[112,118,104]},
+  {n:'Wznosy hantli bokiem (barki)', plan:75, kg:8, r:12, s:3, real:[52,49,55]},
+];
+const ov={};   // nazwa → {sec, by:'me'|'tr'}
+let st={ex:0, set:1, phase:'work', left:0, plan:0, plus:0, timer:null, learnShown:false, coach:'new'};
+let sh={sec:0};
+const restOf=e=>ov[e.n]?ov[e.n].sec:e.plan;
+const avg=a=>Math.round(a.reduce((x,y)=>x+y,0)/a.length);
+const round15=s=>Math.round(s/15)*15;
+function srcTag(e){ const o=ov[e.n]; return o?`<span class="src ${o.by}">${o.by==='me'?'TWOJA':'TRENER'}</span>`:''; }
+
+function renderWo(){
+  const e=EX[st.ex], r=restOf(e), box=document.getElementById('woBox');
+  const head=`<div class="wo-name">${e.n}</div>
+    <div class="setno"><span>Seria <b>${st.set}</b> z ${e.s}</span>
+      <button class="restchip" data-edit>⏱ przerwa ${fmt(r)} ${srcTag(e)}<i>zmień</i></button></div>
+    <div class="dots">${Array.from({length:e.s},(_,j)=>`<i class="${j<st.set-1?'ok':j===st.set-1?'cur':''}"></i>`).join('')}</div>`;
+  if(st.phase==='rest'){
+    const C=2*Math.PI*90, avgReal=avg(e.real), sug=round15(avgReal);
+    // podpowiedź: dwa razy +15 s w tej przerwie albo średnia z 3 ostatnich treningów wyraźnie inna niż plan
+    const drift=Math.abs(avgReal-r)>=25 && !ov[e.n];
+    const learn=(st.plus>=2 || drift) && !st.learnShown;
+    const target=st.plus>=2?round15(st.plan):sug;
+    box.innerHTML=head+`<div class="rest"><span class="lab">Przerwa</span>
+      <div class="ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" cx="100" cy="100" r="90" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-st.left/st.plan)}"/></svg>
+        <div class="c"><b>${fmt(st.left)}</b><small>z ${fmt(st.plan)}</small></div></div>
+      <div class="rbtns"><button data-plus>+15 s</button><button class="go" data-go>▶ ZACZYNAM</button></div>
+      ${learn&&target!==r?`<div class="learn"><div>${st.plus>=2?`Dokładasz czas. <b>Ustawić ${fmt(target)}</b> przy tym ćwiczeniu na stałe?`:`Przy tym ćwiczeniu odpoczywasz średnio <b>${fmt(avgReal)}</b> (3 ostatnie treningi), plan to ${fmt(r)}. <b>Ustawić ${fmt(target)}</b>?`}</div>
+        <div class="row"><button data-learn="no">Nie teraz</button><button class="yes" data-learn="${target}">Ustaw ${fmt(target)}</button></div></div>`:''}
+    </div>
+    <div class="next">Następnie: <b>${e.n}</b> · seria ${st.set} · ${String(e.kg).replace('.',',')} kg × ${e.r}</div>`;
+  } else {
+    box.innerHTML=head+`<div class="big"><div class="val"><span class="n">${String(e.kg).replace('.',',')}</span><span class="u">kg</span></div><span class="x">×</span><div class="val"><span class="n">${e.r}</span><span class="u">powtórzeń</span></div></div>
+      <button class="done" data-done>✓ Seria zrobiona</button>
+      <div class="proto" style="justify-content:center">${EX.map((x,j)=>`<button data-ex="${j}" class="${j===st.ex?'on':''}">${x.n.split(' ')[0]}${x.n.includes('bokiem')?' bokiem':''}</button>`).join('')}</div>`;
+  }
+}
+function startRest(){
+  const e=EX[st.ex]; st.phase='rest'; st.plan=restOf(e); st.left=st.plan; st.plus=0; st.learnShown=false;
+  clearInterval(st.timer); st.timer=setInterval(()=>{ st.left=Math.max(0,st.left-1); if(!st.left){ clearInterval(st.timer); st.phase='work'; st.set=Math.min(e.s,st.set+1); } render(); },1000);
+}
+function openEdit(){
+  const e=EX[st.ex]; sh={sec:restOf(e)}; renderSheet(); document.getElementById('sheet').hidden=false;
+}
+function renderSheet(){
+  const e=EX[st.ex], o=ov[e.n];
+  document.getElementById('pn').innerHTML=`<div class="grab"></div>
+    <div class="sh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Przerwa między seriami</div><h2 id="shT">${e.n}</h2></div><button class="xbtn" data-close aria-label="Zamknij">✕</button></div>
+    <div class="stepper"><button data-step="-15" aria-label="Krócej o 15 sekund">−15 s</button><b>${fmt(sh.sec)}</b><button data-step="15" aria-label="Dłużej o 15 sekund">+15 s</button></div>
+    <div class="presets">${[60,90,120,150,180,240].map(s=>`<button data-set="${s}" class="${sh.sec===s?'on':''}">${fmt(s)}</button>`).join('')}</div>
+    <div class="facts">
+      <div><span>Plan</span><span>${fmt(e.plan)}</span></div>
+      <div><span>Twoja średnia (3 ostatnie treningi)</span><span>${fmt(avg(e.real))}</span></div>
+      ${o?`<div><span>Teraz ustawione przez ${o.by==='me'?'Ciebie':'Trenera'}</span><span>${fmt(o.sec)}</span></div>`:''}
+    </div>
+    <div class="hint">Ciężkie wielostawowe (przysiad, martwy, wyciskanie): 2–3 min. Izolowane (barki, biceps): 1–1:30. Zapamiętam przy tym ćwiczeniu na kolejne treningi — Trener też to zobaczy.</div>
+    <button class="go2" data-save>Zapisz ${fmt(sh.sec)}</button>
+    ${o?'<button class="reset" data-plan>↺ Wróć do planu</button>':''}`;
+}
+function closeSheet(){ document.getElementById('sheet').hidden=true; }
+function toast(msg){ const L=document.getElementById('layer'); L.innerHTML=`<div class="toast"><span>${msg}</span></div>`; clearTimeout(toast.t); toast.t=setTimeout(()=>L.innerHTML='',3000); }
+
+function renderCoach(){
+  const p=st.coach;
+  document.getElementById('chatBox').innerHTML=`<div class="bub me">Jak mi idą przerwy?</div>
+    <div class="bub">Przy przysiadzie odpoczywasz ~3:00 zamiast 2:30 i w 4. serii i tak tracisz 1–2 powtórzenia — dłuższa przerwa ma tu sens. Przy wznosach bokiem wystarczy 1:00, robisz je szybciej niż plan i wyniki nie spadają.</div>
+    <div class="bub prop"><div class="t">Propozycja zmian</div>Przerwy:
+      <ul><li>Przysiad ze sztangą na karku: ${fmt(150)} → <b>3:00</b></li><li>Wznosy hantli bokiem: ${fmt(75)} → <b>1:00</b></li></ul>
+      ${p==='new'?'<div class="acts"><button class="yes" data-apply>Zastosuj od dziś</button><button data-dismiss>Odrzuć</button></div>'
+        :p==='ok'?'<div class="applied">✓ Zastosowano — tryb treningu odlicza już nowe przerwy.</div>':'<div class="applied" style="color:var(--ink-faint)">Odrzucone.</div>'}</div>`;
+}
+function renderPlan(){
+  document.getElementById('planBox').innerHTML=`<div class="pnote" style="margin-top:0"><b>Więcej → Twoje przerwy</b> (albo z karty dnia): wszystkie zmiany w jednym miejscu, z możliwością powrotu do planu.</div>
+    <div class="card">${EX.map((e,j)=>`<button class="ex" data-planex="${j}" style="width:100%;text-align:left"><span class="nm">${e.n}<small>plan ${fmt(e.plan)} · średnio ${fmt(avg(e.real))}</small></span><span style="font-family:var(--font-disp);font-weight:700;font-size:20px;white-space:nowrap">${fmt(restOf(e))}${srcTag(e)}</span></button>`).join('')}</div>`;
+}
+function note(){
+  const s=document.querySelector('#scr .on').dataset.scr;
+  document.getElementById('note').innerHTML= s==='wo'
+    ? '<b>Spróbuj:</b> stuknij „⏱ przerwa … zmień”. Potem <b>Seria zrobiona</b> i dwa razy <b>+15 s</b> — pojawi się propozycja zapamiętania. Na przysiadzie podpowiedź pokaże się od razu (średnio 3:00 przy planie 2:30).'
+    : s==='coach' ? '<b>Trener</b> widzi zmierzone przerwy i liczbę powtórzeń, więc może zaproponować zmianę jak przy krokach czy przesunięciach dni.'
+    : '';
+  document.getElementById('note').hidden=!document.getElementById('note').innerHTML;
+}
+function render(){ renderWo(); renderCoach(); renderPlan(); note(); }
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-scr],[data-edit],[data-close],[data-step],[data-set],[data-save],[data-plan],[data-done],[data-plus],[data-go],[data-learn],[data-ex],[data-apply],[data-dismiss],[data-planex]'); if(!t) return;
+  const d=t.dataset, e=EX[st.ex];
+  if(d.scr){ document.querySelectorAll('#scr button').forEach(b=>b.classList.toggle('on',b===t)); ['wo','coach','plan'].forEach(k=>document.getElementById('s-'+k).hidden=k!==d.scr); render(); }
+  else if('edit' in d) openEdit();
+  else if('close' in d) closeSheet();
+  else if(d.step){ sh.sec=Math.max(30,Math.min(300,sh.sec+ +d.step)); renderSheet(); }
+  else if(d.set){ sh.sec=+d.set; renderSheet(); }
+  else if('save' in d){ if(sh.sec===e.plan) delete ov[e.n]; else ov[e.n]={sec:sh.sec, by:'me'}; closeSheet(); if(st.phase==='rest'){ st.left=Math.max(0, st.left+(sh.sec-st.plan)); st.plan=sh.sec; } render(); toast('Przerwa '+fmt(sh.sec)+' zapamiętana przy tym ćwiczeniu'); }
+  else if('plan' in d){ delete ov[e.n]; closeSheet(); render(); toast('Wrócono do przerwy z planu'); }
+  else if('done' in d){ startRest(); render(); }
+  else if('plus' in d){ st.left+=15; st.plan+=15; st.plus++; render(); }
+  else if('go' in d){ clearInterval(st.timer); st.phase='work'; st.set=Math.min(e.s,st.set+1); render(); }
+  else if(d.learn){ st.learnShown=true; if(d.learn!=='no'){ const ns=+d.learn; ov[e.n]={sec:ns, by:'me'}; st.left=Math.max(0, st.left+(ns-st.plan)); st.plan=ns; toast('Ustawiono '+fmt(+d.learn)+' przy tym ćwiczeniu'); } render(); }
+  else if(d.ex!=null){ clearInterval(st.timer); st={...st, ex:+d.ex, set:1, phase:'work'}; render(); }
+  else if('apply' in d){ ov[EX[0].n]={sec:180, by:'tr'}; ov[EX[3].n]={sec:60, by:'tr'}; st.coach='ok'; render(); }
+  else if('dismiss' in d){ st.coach='no'; render(); }
+  else if(d.planex!=null){ st.ex=+d.planex; openEdit(); }
+});
+render();
+</script>
+
+</body></html>

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Przesuwanie treningów ŻELAZO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: nagłówek → pasek tygodnia (7 dni) → karta dnia z „Przesuń” → przełącznik dni i Trener nad paskiem zakładek */
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#5f6a72;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --steel-soft:#16242e; --green:#4ec97e; --green-soft:#18251d;
+  --r:14px;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark; /* aplikacja ŻELAZO jest tylko ciemna */
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+.wrap{max-width:600px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:flex;align-items:center;justify-content:space-between;padding-block:14px 6px}
+.brand{font-family:var(--font-disp);font-weight:700;font-size:28px;letter-spacing:.04em}
+.brand em{font-style:normal;color:var(--amber)}
+.proto{font-size:12px;color:var(--ink-faint)}
+main{padding-block:10px 170px;display:flex;flex-direction:column;gap:14px}
+
+/* pasek tygodnia */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 6px;border-radius:12px;border:1px solid var(--line);background:var(--panel);position:relative;min-width:0}
+.wd .n{font-size:10.5px;color:var(--ink-dim);letter-spacing:.04em}
+.wd .ic{font-size:19px;line-height:1.1}
+.wd .dt{font-family:var(--font-disp);font-size:13px;font-weight:600;color:var(--ink-dim)}
+.wd.today{border-color:var(--amber)}
+.wd.today .dt{color:var(--amber)}
+.wd.sel{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--ink-dim)}
+.wd.past{opacity:.55}
+.wd .mv{position:absolute;top:3px;right:4px;font-size:10px;color:var(--steel)}
+.wd .ok{position:absolute;top:3px;left:5px;font-size:10px;color:var(--green)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-faint)}
+.legend b{color:var(--steel);font-weight:500}
+
+.daylbl{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.daylbl .d{font-family:var(--font-disp);font-size:22px;font-weight:600}
+.daylbl .s{font-size:12.5px;color:var(--ink-dim)}
+.pill{font-family:var(--font-disp);font-size:12px;font-weight:700;letter-spacing:.06em;padding:1px 8px;border-radius:999px;background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,122,26,.4);margin-left:6px;vertical-align:3px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.moved{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--steel-soft);border-bottom:1px solid rgba(95,168,211,.3);font-size:13px;color:var(--steel)}
+.moved span{flex:1}
+.moved button{color:var(--steel);border:1px solid rgba(95,168,211,.4);border-radius:8px;padding:4px 10px;font-size:12.5px}
+.head{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line)}
+.badge{font-family:var(--font-disp);font-weight:700;font-size:13px;letter-spacing:.06em;padding:2px 9px;border-radius:7px;background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,122,26,.35)}
+.badge.cardio{background:var(--steel-soft);color:var(--steel);border-color:rgba(95,168,211,.35)}
+.badge.rest{background:var(--panel2);color:var(--ink-dim);border-color:var(--line)}
+.head .t{font-family:var(--font-disp);font-size:20px;font-weight:600;flex:1;min-width:0}
+.exl{list-style:none}
+.exl li{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.exl li:last-child{border-bottom:none}
+.exl li span:last-child{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim)}
+.note{padding:14px;color:var(--ink-dim);font-size:14px}
+.acts{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+.btn-move{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-size:14px;background:var(--panel2)}
+.btn-move svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.btn-move:active{transform:scale(.97)}
+.done-tag{font-size:13px;color:var(--green);padding:12px 14px;border-top:1px solid var(--line)}
+
+/* przełącznik dni + Trener w jednym rzędzie (jak w becie) */
+.bottom{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none}
+.bottom .wrap{display:flex;justify-content:space-between;align-items:center}
+.dayswitch,.fab{pointer-events:auto}
+.dayswitch{display:flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.dayswitch button{height:44px;border-radius:999px;font-family:var(--font-disp);font-weight:600}
+.dayswitch .ar{width:48px;font-size:24px}
+.dayswitch .mid{min-width:84px;padding:0 8px;font-size:16px;color:var(--amber);white-space:nowrap}
+.dayswitch .mid.away{color:var(--steel)}
+.fab{height:54px;padding:0 18px;border-radius:999px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:19;background:rgba(14,17,20,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav .wrap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:0}
+nav span{text-align:center;font-size:11.5px;color:var(--ink-faint);padding:20px 0 18px}
+nav span.on{color:var(--amber)}
+
+/* arkusz wyboru dnia i czat */
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sc{width:100%;max-width:600px;max-height:88vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px}
+.sc h3{font-family:var(--font-disp);font-size:22px;font-weight:600;text-transform:uppercase}
+.sc .sub{font-size:13px;color:var(--ink-dim)}
+.opt{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);text-align:left;width:100%;min-height:56px}
+.opt:active{transform:scale(.98)}
+.opt .when{width:62px;flex:none}
+.opt .when b{display:block;font-family:var(--font-disp);font-size:17px;font-weight:600}
+.opt .when small{font-size:11.5px;color:var(--ink-dim)}
+.opt .what{flex:1;min-width:0;font-size:13.5px}
+.opt .what small{display:block;color:var(--ink-faint);font-size:11.5px}
+.opt .act{font-family:var(--font-disp);font-weight:700;font-size:13px;letter-spacing:.05em;padding:4px 9px;border-radius:8px;white-space:nowrap}
+.act.move{background:var(--green-soft);color:var(--green);border:1px solid rgba(78,201,126,.4)}
+.act.swap{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,122,26,.4)}
+.warn{display:block;font-size:11.5px;color:var(--amber)}
+.warn::before{content:"⚠ "}
+.close{align-self:stretch;height:44px;border:1px solid var(--line);border-radius:12px;color:var(--ink-dim)}
+
+.chat{display:flex;flex-direction:column;gap:8px}
+.b{max-width:88%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.45}
+.b.u{align-self:flex-end;background:var(--amber);color:#0e1114}
+.b.a{align-self:flex-start;background:var(--panel2);border:1px solid var(--line)}
+.b.p{border-color:var(--amber)}
+.b.p .h{font-size:11.5px;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.b.p ul{list-style:none;margin:6px 0;display:flex;flex-direction:column;gap:3px}
+.b.p li b{font-weight:600}
+.b.p li s{color:var(--ink-faint)}
+.pb{display:flex;gap:6px;margin-top:8px}
+.pb button{height:40px;border-radius:10px;padding:0 12px;font-size:13.5px}
+.pb .yes{background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:15px;flex:2}
+.pb .no{border:1px solid var(--line);color:var(--ink-dim);flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:13px;color:var(--ink-dim);text-align:left}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(136px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 8px 8px 14px;font-size:13px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.toast[hidden]{display:none}
+.toast button{color:var(--steel);font-weight:600;padding:4px 8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="top"><div class="brand">ŻEL<em>AZO</em></div></div>
+  <p class="proto">Prototyp z przykładowym planem. Dziś: piątek 30.10. Nic się nie zapisuje.</p>
+</div>
+
+<main class="wrap" id="main"></main>
+
+<div class="bottom"><div class="wrap">
+  <div class="dayswitch">
+    <button class="ar" id="prev" aria-label="Poprzedni dzień">‹</button>
+    <button class="mid" id="mid">DZIŚ</button>
+    <button class="ar" id="next" aria-label="Następny dzień">›</button>
+  </div>
+  <button class="fab" id="fab">💬 Trener</button>
+</div></div>
+<nav><div class="wrap"><span class="on">Trening</span><span>Dieta</span><span>Postęp</span><span>Zakupy</span><span>Więcej</span></div></nav>
+
+<div class="sheet" id="moveSheet" hidden><div class="sc" role="dialog" aria-modal="true" aria-labelledby="mvTitle" id="moveBody"></div></div>
+<div class="sheet" id="chatSheet" hidden><div class="sc" role="dialog" aria-modal="true" aria-labelledby="chTitle" id="chatBody"></div></div>
+<div class="toast" id="toast" hidden><span id="toastTxt"></span><button id="toastUndo">Cofnij</button></div>
+
+<script>
+/* ---- plan: tydzień 4 (parzysty) i 5 (nieparzysty) Fazy 1 ---- */
+const W={
+  A:{type:'lift',ic:'🏋️',badge:'FBW',title:'FBW A · całe ciało',ex:[['Przysiad ze sztangą','4×8–10'],['Wyciskanie hantli','3×10'],['Wiosłowanie hantlem','3×10'],['Deska (plank)','3×max czas']]},
+  B:{type:'lift',ic:'🏋️',badge:'FBW',title:'FBW B · całe ciało',ex:[['Martwy ciąg rumuński','4×8–10'],['Wyciskanie żołnierskie','3×8–10'],['Ściąganie drążka','3×10–12'],['Farmer walk','3×40 s']]},
+  RUN:{type:'cardio',ic:'🏃',badge:'CARDIO',title:'Bieg 30 min, spokojnie'},
+  LONG:{type:'cardio',ic:'🏃',badge:'CARDIO',title:'Długi bieg 50 min'},
+  REST:{type:'rest',ic:'😴',badge:'WOLNE',title:'Odpoczynek'},
+  ACT:{type:'rest',ic:'🚶',badge:'LEKKO',title:'Aktywny odpoczynek: spacer, mobilność'}
+};
+const TODAY=new Date(2026,9,30), DOW=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'], DOWL=['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const add=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const dm=d=>d.getDate()+'.'+String(d.getMonth()+1).padStart(2,'0');
+const TODAY_ISO=iso(TODAY);
+// plan z kalendarza (bez przesunięć): tydz. 4 parzysty Pn B / Śr A / Pt B, tydz. 5 nieparzysty Pn A / Śr B / Pt A
+function basePlan(s){ const d=parse(s), wk=d<new Date(2026,10,2)?4:5, odd=wk%2===1;
+  return ({0:W.ACT,1:odd?W.A:W.B,2:W.RUN,3:odd?W.B:W.A,4:W.REST,5:odd?W.A:W.B,6:W.LONG})[d.getDay()]; }
+
+/* ---- przesunięcia: MOVES[dzień] = dzień z planu, którego trening tu jest (permutacja — przesunięcie i zamiana to to samo) ---- */
+let MOVES={}, history=[];
+const src=s=>MOVES[s]||s;
+const plan=s=>basePlan(src(s));
+const DONE={'2026-10-26':1,'2026-10-27':1,'2026-10-28':1};   // przykładowo: zrobione w tym tygodniu
+function applyMoves(map, label){
+  history.push(JSON.stringify(MOVES));
+  const next=Object.assign({}, MOVES);
+  Object.entries(map).forEach(([day, from])=>{ next[day]=src(from); });
+  Object.keys(next).forEach(k=>{ if(next[k]===k) delete next[k]; });
+  MOVES=next; render(); toast(label);
+}
+// „Przywróć”: wraca cała grupa dni, które wymieniły się treningami (para albo np. 3 dni od Trenera)
+function restoreGroup(day){
+  history.push(JSON.stringify(MOVES));
+  const next=Object.assign({}, MOVES); let k=day, n=0;
+  while(next[k] && n++<10){ const f=next[k]; delete next[k]; k=f; }
+  MOVES=next; render(); toast('Przywrócono plan z kalendarza');
+}
+function undo(){ if(!history.length) return; MOVES=JSON.parse(history.pop()); render(); hideToast(); }
+
+let cur=new Date(TODAY);
+function render(){
+  const s=iso(cur), p=plan(s), mon=add(cur, -((cur.getDay()+6)%7));
+  let h=`<section aria-label="Tydzień"><div class="week">`;
+  for(let i=0;i<7;i++){ const d=add(mon,i), k=iso(d), pp=plan(k);
+    h+=`<button class="wd ${k===TODAY_ISO?'today':''} ${k===s?'sel':''} ${k<TODAY_ISO?'past':''}" data-day="${k}" aria-label="${DOWL[d.getDay()]} ${dm(d)}: ${pp.title}">
+      ${MOVES[k]?'<span class="mv">↪</span>':''}${DONE[k]?'<span class="ok">✓</span>':''}
+      <span class="n">${DOW[d.getDay()]}</span><span class="ic">${pp.ic}</span><span class="dt">${d.getDate()}</span></button>`; }
+  h+=`</div><div class="legend" style="margin-top:6px"><span>🏋️ siłownia</span><span>🏃 cardio</span><span>😴/🚶 lżej</span><span><b>↪</b> przesunięty</span></div></section>`;
+  h+=`<div class="daylbl"><span class="d">${DOWL[cur.getDay()]}${s===TODAY_ISO?'<span class="pill">DZIŚ</span>':''}</span><span class="s">${dm(cur)} · tydzień ${cur<new Date(2026,10,2)?4:5}/24</span></div>`;
+  h+=`<div class="card">`;
+  if(MOVES[s]){ const f=parse(MOVES[s]); h+=`<div class="moved"><span>↪ ${p.type==='rest'?'Odpoczynek':'Trening'} przeniesiony z dnia ${DOW[f.getDay()]} ${dm(f)}</span><button data-reset="${s}">Przywróć</button></div>`; }
+  h+=`<div class="head"><span class="badge ${p.type==='cardio'?'cardio':p.type==='rest'?'rest':''}">${p.badge}</span><span class="t">${p.title}</span></div>`;
+  if(p.ex) h+=`<ul class="exl">`+p.ex.map(e=>`<li><span>${e[0]}</span><span>${e[1]}</span></li>`).join('')+`</ul>`;
+  else if(p.type==='rest') h+=`<p class="note">Dziś regenerujesz się. Śpij 7–8 h i pij wodę.</p>`;
+  else h+=`<p class="note">Spokojne tempo, możesz rozmawiać.</p>`;
+  if(DONE[s]) h+=`<div class="done-tag">✓ Zrobione</div>`;
+  else if(p.type!=='rest' && s>=TODAY_ISO) h+=`<div class="acts"><button class="btn-move" data-move="${s}"><svg viewBox="0 0 24 24"><path d="M4 12h14M13 6l6 6-6 6"/></svg>Przesuń</button></div>`;
+  h+=`</div>`;
+  document.getElementById('main').innerHTML=h;
+  const mid=document.getElementById('mid'); mid.textContent=s===TODAY_ISO?'DZIŚ':'↩ DZIŚ'; mid.classList.toggle('away', s!==TODAY_ISO);
+  document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{ cur=parse(b.dataset.day); render(); });
+  document.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>openMove(b.dataset.move));
+  document.querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>restoreGroup(b.dataset.reset));
+}
+
+/* ---- arkusz „Przesuń” ---- */
+function openMove(s){
+  const p=plan(s), d0=parse(s);
+  let h=`<h3 id="mvTitle">Przesuń trening</h3><p class="sub"><b>${p.title}</b> z dnia ${DOWL[d0.getDay()].toLowerCase()} ${dm(d0)}. Wybierz dzień:</p>`;
+  for(let i=0;i<=7;i++){ const d=add(TODAY,i), k=iso(d); if(k===s) continue;
+    const q=plan(k), swap=q.type!=='rest';
+    // podpowiedź: dwa treningi siłowe dzień po dniu
+    const nb=[iso(add(d,-1)),iso(add(d,1))].filter(x=>x!==s).some(x=>plan(x).type==='lift');
+    const warn= p.type==='lift' && nb ? '<span class="warn">Siłownia dzień obok — mniej regeneracji</span>' : '';
+    h+=`<button class="opt" data-to="${k}"><span class="when"><b>${DOW[d.getDay()]} ${dm(d)}</b><small>${k===TODAY_ISO?'dziś':i===1?'jutro':'za '+i+' dni'}</small></span>
+      <span class="what">${q.ic} ${q.title}${swap?`<small>${q.title.split(' ·')[0]} przejdzie na ${DOW[d0.getDay()]} ${dm(d0)}</small>`:''}${warn}</span>
+      <span class="act ${swap?'swap':'move'}">${swap?'ZAMIEŃ':'PRZESUŃ'}</span></button>`; }
+  h+=`<button class="close" id="mvClose">Anuluj</button>`;
+  const body=document.getElementById('moveBody'); body.innerHTML=h;
+  document.getElementById('moveSheet').hidden=false;
+  body.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.to, q=plan(t), from=parse(s), to=parse(t);
+    document.getElementById('moveSheet').hidden=true;
+    applyMoves({[t]:s,[s]:t}, (q.type==='rest'?'Przesunięto':'Zamieniono')+`: ${DOW[from.getDay()]} ${dm(from)} → ${DOW[to.getDay()]} ${dm(to)}`);
+    cur=to; render();
+  });
+  document.getElementById('mvClose').onclick=()=>{ document.getElementById('moveSheet').hidden=true; };
+}
+
+/* ---- Trener: propozycja przesunięcia (w prototypie odpowiedź jest przygotowana) ---- */
+const ASK='Dziś nie dam rady ćwiczyć. Przesuń trening na jutro.';
+let chat=[], proposalState=null;
+function openChat(){ document.getElementById('chatSheet').hidden=false; renderChat(); }
+function renderChat(){
+  const t=TODAY, sb=add(t,1), nd=add(t,2);
+  let h=`<div style="display:flex;align-items:center;gap:8px"><h3 id="chTitle" style="flex:1">Zapytaj Trenera</h3><button class="close" style="height:36px;padding:0 12px;align-self:auto" id="chClose">Zamknij</button></div>
+    <p class="sub">W prototypie Trener ma przygotowaną odpowiedź.</p><div class="chat">`;
+  chat.forEach(m=>{ h+= m==='u' ? `<div class="b u">${ASK}</div>` : '';
+    if(m==='a'){
+      const P=[[t,'FBW B','🚶 Lekko: spacer, mobilność (było: FBW B)'],[sb,'FBW B','🏋️ FBW B (było: długi bieg)'],[nd,'bieg','🏃 Długi bieg 50 min (było: spacer, mobilność)']];
+      h+=`<div class="b a">Jutro masz długi bieg, więc zwykłe przesunięcie dałoby siłownię i bieg jednego dnia. Lepiej tak: dziś wolne, w sobotę FBW B, a długi bieg w niedzielę. Spacer i mobilność możesz zrobić dziś, jeśli dasz radę.</div>
+      <div class="b a p"><div class="h">Propozycja zmian</div>Przesunięcie treningów
+        <ul>${P.map(x=>`<li>• <b>${DOW[x[0].getDay()]} ${dm(x[0])}</b>: ${x[2]}</li>`).join('')}</ul>
+        ${proposalState==='applied'?'<div style="color:var(--green)">✓ Zastosowano — zobacz pasek tygodnia</div>':proposalState==='no'?'<div style="color:var(--ink-faint)">Odrzucono</div>':'<div class="pb"><button class="yes" id="pYes">Zastosuj</button><button class="no" id="pNo">Odrzuć</button></div>'}</div>`;
+    } });
+  h+=`</div>`;
+  if(!chat.length) h+=`<div class="chips"><button id="ask">🎤 „${ASK}”</button></div>`;
+  const body=document.getElementById('chatBody'); body.innerHTML=h;
+  document.getElementById('chClose').onclick=()=>{ document.getElementById('chatSheet').hidden=true; };
+  const ask=document.getElementById('ask'); if(ask) ask.onclick=()=>{ chat=['u']; renderChat(); setTimeout(()=>{ chat=['u','a']; renderChat(); }, 700); };
+  const y=document.getElementById('pYes'); if(y) y.onclick=()=>{
+    const a=TODAY_ISO, b=iso(add(TODAY,1)), c=iso(add(TODAY,2));
+    proposalState='applied'; applyMoves({[a]:c,[b]:a,[c]:b}, 'Trener przesunął 3 dni'); renderChat();
+  };
+  const n=document.getElementById('pNo'); if(n) n.onclick=()=>{ proposalState='no'; renderChat(); };
+}
+
+let toastTimer=null;
+function toast(t){ document.getElementById('toastTxt').textContent=t; document.getElementById('toast').hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(hideToast, 5000); }
+function hideToast(){ document.getElementById('toast').hidden=true; }
+document.getElementById('toastUndo').onclick=()=>{ undo(); if(proposalState==='applied') proposalState=null; };
+document.getElementById('prev').onclick=()=>{ cur=add(cur,-1); render(); };
+document.getElementById('next').onclick=()=>{ cur=add(cur,1); render(); };
+document.getElementById('mid').onclick=()=>{ cur=new Date(TODAY); render(); };
+document.getElementById('fab').onclick=openChat;
+document.querySelectorAll('.sheet').forEach(s=>s.addEventListener('click',e=>{ if(e.target===s) s.hidden=true; }));
+render();
+</script>
+
+</body></html>

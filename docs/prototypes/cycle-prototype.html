@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cykl i samopoczucie</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --plum:#c58bd6;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+.wrap{max-width:440px;margin:0 auto;padding-block:14px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h2,h3{font-family:var(--font-disp);text-transform:uppercase;line-height:1.05;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;font-weight:600}
+.proto{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.proto button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.proto button.on{background:var(--amber);border-color:var(--amber);color:#0e1114}
+.proto.small button.on{background:var(--panel2);border-color:var(--plum);color:var(--plum)}
+.pnote{font-size:13px;color:var(--ink-dim);border-left:3px solid var(--steel);padding:6px 10px;margin:10px 0 14px;background:rgba(95,168,211,.07);border-radius:0 8px 8px 0}
+.pnote b{color:var(--ink)}
+.screen[hidden]{display:none}
+.stack{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.lab{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.small{font-size:13px;color:var(--ink-dim)}
+/* ustawienia */
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.toggle b{font-size:15px}
+.sw{width:52px;height:30px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ink-faint);transition:.2s}
+.sw.on{background:var(--plum);border-color:var(--plum)}
+.sw.on::after{left:25px;background:#0e1114}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;flex-direction:column;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+.opt small{color:var(--ink-dim);font-size:12.5px}
+.opt.on{border-color:var(--plum);background:rgba(197,139,214,.1)}
+/* dzień */
+.daybar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.daybar h3{font-size:22px}
+.cyc{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--plum);background:rgba(197,139,214,.1);border:1px solid rgba(197,139,214,.35);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.period-btn{width:100%;min-height:48px;border-radius:12px;border:1px dashed rgba(197,139,214,.6);color:var(--plum);font-weight:600;font-size:14.5px;background:transparent}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.flow button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-size:13.5px;font-weight:600;color:var(--ink-dim)}
+.flow button.on{border-color:var(--plum);color:var(--ink);background:rgba(197,139,214,.12)}
+.start{width:100%;min-height:58px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:24px;letter-spacing:.04em}
+.ex{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.ex span:last-child{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim);white-space:nowrap}
+.ex s{color:var(--ink-faint)} .ex b{color:var(--steel);font-weight:600}
+.chipline{font-size:13px;color:var(--ink-dim)} .chipline b{color:var(--ink)} .chipline .lt{color:var(--steel);font-weight:600}
+/* arkusz */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .pn{position:relative;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:13px}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.q{display:flex;flex-direction:column;gap:6px}
+.q .l{font-size:14px;font-weight:600}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.seg button{min-height:54px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--ink-dim)}
+.seg button i{font-style:normal;font-size:19px;line-height:1.1}
+.seg button.on{border-color:var(--amber);background:var(--amber-soft);color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--ink-dim)}
+.chips button.on{border-color:var(--plum);background:rgba(197,139,214,.12);color:var(--ink)}
+.ctx{font-size:13px;color:var(--plum);background:rgba(197,139,214,.08);border:1px solid rgba(197,139,214,.3);border-radius:12px;padding:8px 12px}
+.verdict{border-radius:14px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);background:var(--panel)}
+.verdict b{font-family:var(--font-disp);font-size:20px;text-transform:uppercase}
+.verdict.ok{border-color:rgba(78,201,126,.5)} .verdict.ok b{color:var(--green)}
+.verdict.mid{border-color:rgba(255,122,26,.5)} .verdict.mid b{color:var(--amber)}
+.verdict.low{border-color:rgba(197,139,214,.6)} .verdict.low b{color:var(--plum)}
+.verdict small{color:var(--ink-dim);font-size:13px}
+.go{width:100%;min-height:54px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:20px;letter-spacing:.04em;text-transform:uppercase}
+.go:disabled{opacity:.35}
+.alt{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-size:14.5px;font-weight:600}
+.skip{color:var(--steel);font-weight:600;font-size:14px;min-height:40px;align-self:center}
+/* waga */
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-size:10px;fill:var(--ink-faint);font-family:var(--font-body)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-dim)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* Trener */
+.bub{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:14px}
+.bub.me{background:var(--panel2);margin-left:15%}
+.bub.flag{border-color:rgba(226,84,58,.5)}
+.bub.flag .t{color:var(--red);font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Prototyp · Cykl i samopoczucie</div>
+  <div class="proto" id="scr">
+    <button data-scr="set" class="on">1 · Włączenie</button>
+    <button data-scr="day">2 · Dzień</button>
+    <button data-scr="weight">3 · Waga</button>
+    <button data-scr="coach">4 · Trener</button>
+  </div>
+  <div class="pnote" id="note"></div>
+  <section class="screen" id="s-set"><div class="stack" id="setBox"></div></section>
+  <section class="screen" id="s-day" hidden>
+    <div class="proto small" id="cday"><button data-cd="2" class="on">Dzień 2 · okres</button><button data-cd="10">Dzień 10</button><button data-cd="25">Dzień 25 · przed okresem</button></div>
+    <div class="stack" id="dayBox" style="margin-top:8px"></div>
+  </section>
+  <section class="screen" id="s-weight" hidden><div class="stack" id="weightBox"></div></section>
+  <section class="screen" id="s-coach" hidden><div class="stack" id="coachBox"></div></section>
+</div>
+<div class="sheet" id="sheet" hidden><div class="bd" data-close></div><div class="pn" id="pn" role="dialog" aria-modal="true" aria-labelledby="ciT"></div></div>
+
+<script>
+const SIT=[
+  ['natural','Naturalny cykl','dzień i faza cyklu, prognoza okresu'],
+  ['hormonal','Antykoncepcja hormonalna','bez faz — tylko krwawienie i objawy'],
+  ['irregular','Nieregularny cykl / PCOS','bez prognoz — zapisane okresy i objawy'],
+  ['meno','Okołomenopauza / menopauza','objawy: uderzenia gorąca, sen, nastrój'],
+  ['preg','Ciąża / po porodzie','osobny tryb — trening za zgodą lekarza (później)'],
+];
+let st={on:true, sit:'natural', sync:false, coach:true, cd:2, flow:'medium', started:false, plan:null};
+let ci={sleep:null, sore:null, energy:null, sym:new Set()};
+const SYM=['Skurcze','Ból głowy','Wzdęcia','Obniżony nastrój','Ból piersi','Obfite krwawienie','Trawienie'];
+const EX=[{n:'Przysiad goblet (hantel)',kg:22,s:3,r:10},{n:'Wyciskanie hantli — ławka skośna',kg:12,s:3,r:10},{n:'Wiosłowanie na wyciągu siedząc',kg:35,s:3,r:12},{n:'Plank',kg:0,s:3,r:'40 s'}];
+const phase=d=>d<=5?{k:'period',t:'okres',d:'Okres'}:d<=13?{k:'foll',t:'faza folikularna',d:'Faza folikularna'}:d<=16?{k:'ov',t:'owulacja',d:'Owulacja'}:{k:'lut',t:'faza lutealna',d:'Faza lutealna'};
+
+function renderSet(){
+  document.getElementById('setBox').innerHTML=`
+    <div class="panel stack">
+      <div class="toggle"><div><b>Śledzenie cyklu</b><div class="small">Dopasuje trening, dietę i komentarze do wagi do Twojego cyklu i samopoczucia.</div></div><button class="sw ${st.on?'on':''}" data-t="on" aria-label="Śledzenie cyklu" aria-pressed="${st.on}"></button></div>
+    </div>
+    ${st.on?`<div class="panel stack"><div class="lab">Twoja sytuacja</div><div class="opts">${SIT.map(([k,t,d])=>`<button class="opt ${st.sit===k?'on':''}" data-sit="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}<button class="opt ${st.sit==='none'?'on':''}" data-sit="none"><b>Wolę nie śledzić</b><small>zwykły check-in, nic się nie zmienia</small></button></div></div>
+    <div class="panel stack"><div class="lab">Prywatność</div>
+      <div class="toggle"><div><b>Tylko na tym telefonie</b><div class="small">${st.sync?'Synchronizacja włączona — dane trafiają na serwer aplikacji. Administrator (właściciel aplikacji) technicznie ma do nich dostęp.':'Dane o cyklu nie są wysyłane na serwer ani na inne urządzenia.'}</div></div><button class="sw ${!st.sync?'on':''}" data-t="sync" aria-label="Tylko na tym telefonie" aria-pressed="${!st.sync}"></button></div>
+      <div class="toggle"><div><b>Trener może z tego korzystać</b><div class="small">Wysyła dzień cyklu i objawy razem z pytaniem — tylko gdy rozmawiasz z Trenerem.</div></div><button class="sw ${st.coach?'on':''}" data-t="coach" aria-label="Trener może korzystać z danych o cyklu" aria-pressed="${st.coach}"></button></div>
+      <button class="alt" style="color:var(--red)">Usuń historię cyklu</button>
+    </div>`:''}
+    <div class="small">Opcja jest proponowana osobom z profilem kobiety, ale nigdy nie włącza się sama i można ją wyłączyć w każdej chwili.</div>`;
+}
+function verdict(){
+  if(['sleep','sore','energy'].some(k=>ci[k]==null)) return null;
+  const s=ci.sleep+ci.sore+ci.energy, sym=ci.sym, ph=phase(st.cd).k;
+  const heavy=sym.has('Skurcze')||sym.has('Obfite krwawienie');
+  if(ph==='period' && heavy && s<=3) return {c:'low', t:'Okres z objawami', d:'Do wyboru: lżejszy trening (−10%, dłuższe przerwy, bez mocnego obciążania brzucha) albo lekki ruch — 20–30 min spaceru i mobilności często łagodzi skurcze.', plans:[['light','▶ Trenuj lżej'],['move','Lekki ruch zamiast treningu'],['normal','Trenuj normalnie']]};
+  if(s<=3 || (ph==='lut' && sym.size>=2)) return {c:'mid', t:ph==='lut'?'Gorsze dni przed okresem':'Gorszy dzień', d:'Proponuję lżej: ciężar −10% i przerwy dłuższe o 30 s. To normalne, że ten tydzień bywa trudniejszy.', plans:[['light','▶ Trenuj lżej'],['normal','Trenuj normalnie']]};
+  return {c:'ok', t:'Dobra forma', d:ph==='foll'?'Trenujesz według planu. U wielu kobiet to dobry moment na mocniejszy trening — jeśli czujesz moc, spróbuj rekordu.':'Trenujesz według planu.', plans:[['normal','▶ Start treningu']]};
+}
+function renderSheet(){
+  const v=verdict(), ph=phase(st.cd), track=st.on&&st.sit!=='none';
+  document.getElementById('pn').innerHTML=`<div class="grab"></div>
+    <div><div class="eyebrow">Zanim zaczniesz</div><h2 id="ciT" style="font-size:28px">Jak się dziś czujesz?</h2></div>
+    ${track&&st.sit==='natural'?`<div class="ctx">Dzień ${st.cd} cyklu · ${ph.t}</div>`:''}
+    ${[['sleep','Jak spałaś?',[['😴','Słabo'],['🙂','OK'],['😌','Dobrze']]],['sore','Zakwasy, ból mięśni?',[['🔥','Mocne'],['〰️','Lekkie'],['✅','Brak']]],['energy','Energia teraz?',[['🪫','Niska'],['⚡','OK'],['🚀','Wysoka']]]].map(([k,l,o])=>`<div class="q"><span class="l">${l}</span><div class="seg">${o.map(([i,t],j)=>`<button data-a="${k}:${j}" class="${ci[k]===j?'on':''}"><i>${i}</i>${t}</button>`).join('')}</div></div>`).join('')}
+    ${track?`<div class="q"><span class="l">Coś jeszcze? <span class="small">(opcjonalnie)</span></span><div class="chips">${SYM.map(x=>`<button data-sym="${x}" class="${ci.sym.has(x)?'on':''}">${x}</button>`).join('')}</div></div>`:''}
+    ${v?`<div class="verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${ci.sym.has('Obfite krwawienie')?'<small>Przy obfitym krwawieniu dieta podpowie dziś produkty z żelazem (wołowina, soczewica, szpinak + cytrusy).</small>':''}</div>`:''}
+    ${v?v.plans.map(([p,t],j)=>`<button class="${j?'alt':'go'}" data-plan="${p}">${t}</button>`).join(''):'<button class="go" disabled>Odpowiedz na 3 pytania</button>'}
+    <button class="skip" data-plan="skip">Pomiń — od razu start</button>`;
+}
+function renderDay(){
+  const ph=phase(st.cd), track=st.on&&st.sit!=='none', L=st.plan==='light';
+  const exHtml=EX.map(e=>`<div class="ex"><span>${e.n}</span><span>${e.kg?(L?`<s>${e.kg}</s> <b>${Math.round(e.kg*.9)} kg</b>`:`${e.kg} kg`):''} · ${e.s}×${e.r}</span></div>`).join('');
+  document.getElementById('dayBox').innerHTML=`
+    <div class="daybar"><h3>${['','','Poniedziałek','','','','','','','','Wtorek'][st.cd]||'Czwartek'}</h3>${track&&st.sit==='natural'?`<span class="cyc">● dzień ${st.cd} · ${ph.t}</span>`:''}</div>
+    ${track && st.cd!==2?`<button class="period-btn" data-period>＋ Okres się zaczął</button>`:''}
+    ${track && st.cd===2?`<div class="panel stack"><div class="lab">Okres · dzień 2</div><div class="flow">${[['light','Lekki'],['medium','Średni'],['heavy','Obfity']].map(([k,t])=>`<button data-flow="${k}" class="${st.flow===k?'on':''}">${t}</button>`).join('')}</div><div class="small">Zakończony? <button style="color:var(--steel);font-weight:600">Okres się skończył</button></div></div>`:''}
+    <div class="panel stack">
+      <div class="eyebrow">Trening dnia · Full body</div>
+      ${st.started?`<div class="chipline">Samopoczucie: <b>${['😴','🙂','😌'][ci.sleep]??''}${['🔥','〰️','✅'][ci.sore]??''}${['🪫','⚡','🚀'][ci.energy]??''}</b>${ci.sym.size?' · '+[...ci.sym].join(', ').toLowerCase():''} · <span class="lt">${{light:'lżejszy dzień (−10%, przerwy +30 s)',move:'lekki ruch zamiast treningu',normal:'wg planu',skip:'bez check-inu'}[st.plan]}</span></div>`:''}
+      ${st.plan==='move'?`<div class="panel" style="background:var(--panel2)"><b>Lekki ruch · 25 min</b><div class="small">Spacer 15 min · krążenia bioder i kocie grzbiety 5 min · rozciąganie dolnej części pleców 5 min. Trening siłowy wraca jutro albo przesuwa się o dzień.</div></div>`:`<button class="start" data-open>▶ ${st.started?'WZNÓW TRENING':'START TRENINGU'}</button>${exHtml}`}
+    </div>`;
+}
+function renderWeight(){
+  const days=35, W=340,H=170,L=34,R=8,T=12,B=22;
+  const vals=Array.from({length:days},(_,i)=>{ const d=(i%28)+1, base=68.6-i*0.02, water=d>=21?(d-20)*0.16:d<=3?0.9-(d-1)*0.3:0; return +(base+water+Math.sin(i*1.7)*0.12).toFixed(1); });
+  const lo=Math.min(...vals)-.3, hi=Math.max(...vals)+.3, X=i=>L+i*(W-L-R)/(days-1), Y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+  let g='';
+  [[0,4,'rgba(197,139,214,.25)'],[28,32,'rgba(197,139,214,.25)'],[20,27,'rgba(197,139,214,.1)']].forEach(([a,b,c])=>{ g+=`<rect x="${X(a)-3}" y="${T}" width="${X(b)-X(a)+6}" height="${H-T-B}" fill="${c}"/>`; });
+  for(let v=Math.ceil(lo);v<=hi;v++) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end">${v}</text>`;
+  g+=`<polyline points="${vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="var(--ink-faint)" stroke-width="1.2"/>`;
+  const tr=vals.map((v,i)=>68.6-i*0.02);
+  g+=`<polyline points="${tr.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="var(--amber)" stroke-width="2.4"/>`;
+  g+=`<text x="${X(23)}" y="${T+11}" style="fill:var(--plum)">przed okresem</text><text x="${X(28)}" y="${H-B-4}" style="fill:var(--plum)">okres</text>`;
+  document.getElementById('weightBox').innerHTML=`<div class="panel stack"><div class="eyebrow">Waga i trend</div>
+    <div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wykres wagi z zaznaczonym cyklem">${g}</svg></div>
+    <div class="legend"><span><i style="background:rgba(197,139,214,.5)"></i>okres</span><span><i style="background:rgba(197,139,214,.2)"></i>tydzień przed okresem</span><span><i style="background:var(--amber)"></i>trend</span></div>
+    <div class="panel" style="background:var(--panel2)"><b>+1,3 kg w ostatnim tygodniu?</b><div class="small">To tydzień przed okresem — zwykle woda, nie tłuszcz. Trend (pomarańczowa linia) dalej spada o ok. 0,15 kg tygodniowo. Cel kalorii się nie zmienia.</div></div></div>`;
+}
+function renderCoach(){
+  document.getElementById('coachBox').innerHTML=`<div class="bub me">Czemu w tym tygodniu tak ciężko mi się trenuje?</div>
+    <div class="bub">Jesteś w 25. dniu cyklu — u Ciebie ostatnie dni przed okresem to zwykle gorszy sen i wzdęcia (tak zaznaczałaś w 2 ostatnich cyklach), a w wyciskaniu tracisz wtedy 1 powtórzenie. To normalne i przejściowe. Na ten tydzień: przerwy +30 s, ciężar bez zmian albo −10% w gorsze dni. Za ok. tydzień, w dniach 6–12, robiłaś swoje rekordy — wtedy wracamy do progresji.</div>
+    <div class="small" style="margin-top:4px">Inny przykład — sygnał ostrzegawczy:</div>
+    <div class="bub flag"><div class="t">Warto skonsultować z lekarzem</div>Od Twojego ostatniego okresu minęło 96 dni, a jesteś na deficycie kalorycznym. Brak miesiączki przy niedoborze energii to sygnał, że organizm oszczędza — nie obniżam dalej kalorii, proponuję wrócić do zapotrzebowania i skonsultować to z ginekologiem lub lekarzem rodzinnym.</div>
+    <div class="small">Trener dostaje dzień cyklu i objawy tylko, jeśli zgodziłaś się na to w ustawieniach. Nie stawia diagnoz.</div>`;
+}
+function note(){
+  const s=document.querySelector('#scr .on').dataset.scr;
+  document.getElementById('note').innerHTML={
+    set:'<b>Włączenie:</b> wybór sytuacji i prywatność. Domyślnie dane o cyklu zostają <b>tylko na telefonie</b>.',
+    day:'<b>Spróbuj:</b> przełączaj dzień cyklu u góry, stuknij <b>START TRENINGU</b> i zaznacz objawy. Na okresie ze skurczami pojawi się „lekki ruch”, przed okresem — dłuższe przerwy.',
+    weight:'<b>Waga:</b> dni okresu i tydzień przed nim są zaznaczone, a komentarz tłumaczy skok wagi wodą.',
+    coach:'<b>Trener:</b> osobiste wzorce z Twoich cykli i sygnał ostrzegawczy, gdy brakuje okresu przy deficycie.'}[s];
+}
+function render(){ renderSet(); renderDay(); renderWeight(); renderCoach(); note(); }
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-scr],[data-t],[data-sit],[data-cd],[data-period],[data-flow],[data-open],[data-close],[data-a],[data-sym],[data-plan]'); if(!t) return;
+  const d=t.dataset;
+  if(d.scr){ document.querySelectorAll('#scr button').forEach(b=>b.classList.toggle('on',b===t)); ['set','day','weight','coach'].forEach(k=>document.getElementById('s-'+k).hidden=k!==d.scr); render(); }
+  else if(d.t){ if(d.t==='sync') st.sync=!st.sync; else st[d.t]=!st[d.t]; render(); }
+  else if(d.sit){ st.sit=d.sit; render(); }
+  else if(d.cd){ document.querySelectorAll('#cday button').forEach(b=>b.classList.toggle('on',b===t)); st.cd=+d.cd; st.started=false; st.plan=null; ci={sleep:null,sore:null,energy:null,sym:new Set()}; render(); }
+  else if('period' in d){ document.querySelector('#cday [data-cd="2"]').click(); }
+  else if(d.flow){ st.flow=d.flow; render(); }
+  else if('open' in d){ if(st.started) return; renderSheet(); document.getElementById('sheet').hidden=false; }
+  else if('close' in d) document.getElementById('sheet').hidden=true;
+  else if(d.a){ const [k,v]=d.a.split(':'); ci[k]=+v; renderSheet(); }
+  else if(d.sym){ ci.sym.has(d.sym)?ci.sym.delete(d.sym):ci.sym.add(d.sym); renderSheet(); }
+  else if(d.plan){ st.plan=d.plan; st.started=true; document.getElementById('sheet').hidden=true; render(); }
+});
+render();
+</script>
+
+</body></html>

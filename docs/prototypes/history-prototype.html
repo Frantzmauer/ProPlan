@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Historia i rekordy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a;
+  --gold:#ffc94a;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+.wrap{max-width:440px;margin:0 auto;padding-block:14px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,.disp{font-family:var(--font-disp);letter-spacing:.01em;line-height:1.05;text-transform:uppercase;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;font-weight:600}
+.proto{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.proto button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.proto button.on{background:var(--amber);border-color:var(--amber);color:#0e1114}
+.pnote{font-size:13px;color:var(--ink-dim);border-left:3px solid var(--steel);padding:6px 10px;margin:10px 0 16px;background:rgba(95,168,211,.07);border-radius:0 8px 8px 0}
+.pnote b{color:var(--ink)}
+.screen[hidden]{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* --- Trening: lista ćwiczeń --- */
+.daytitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.daytitle h2{font-size:28px}
+.daytitle span{font-size:13px;color:var(--ink-dim)}
+.ex{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 14px}
+.ex .nm{flex:1;min-width:0}
+.ex .nm b{display:block;font-weight:600;font-size:15px;line-height:1.3}
+.ex .nm small{color:var(--ink-dim);font-size:13px}
+.hbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:66px;min-height:48px;padding:6px 8px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);font-size:11px;font-weight:600;line-height:1.1;flex:none}
+.hbtn svg{width:20px;height:20px;stroke:var(--amber);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hbtn.new{border-color:var(--gold);color:var(--gold)}
+.trophy{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-disp);font-weight:700;letter-spacing:.04em;font-size:13px;color:#0e1114;background:var(--gold);border-radius:6px;padding:1px 7px;text-transform:uppercase;vertical-align:2px}
+
+/* --- tryb treningu --- */
+.wo{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.wo-head{display:flex;align-items:flex-start;gap:10px}
+.wo-head .t{flex:1;min-width:0}
+.wo-head .t small{color:var(--ink-dim);font-size:13px}
+.wo-head h3{font-size:24px;margin-top:2px}
+.iconbtn{width:44px;height:44px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;flex:none}
+.iconbtn svg{width:22px;height:22px;stroke:var(--amber);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dots{display:flex;gap:6px}
+.dots i{flex:1;height:30px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-style:normal;font-family:var(--font-disp);font-weight:700;font-size:14px;color:var(--ink-faint)}
+.dots i.done{background:var(--green);border-color:var(--green);color:#0e1114}
+.dots i.pr{background:var(--gold);border-color:var(--gold);color:#0e1114}
+.dots i.cur{border-color:var(--amber);color:var(--amber)}
+.vals{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.val{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.val .n{font-family:var(--font-disp);font-weight:700;font-size:46px;line-height:1}
+.val .u{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+.pm{display:flex;gap:8px;margin-top:8px}
+.pm button{flex:1;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:22px;font-weight:600}
+.ref{font-size:13.5px;color:var(--ink-dim);display:flex;flex-direction:column;gap:3px}
+.ref b{color:var(--ink);font-weight:600}
+.ref .gold{color:var(--gold)}
+.willpr{align-self:flex-start;font-size:13.5px;font-weight:600;color:var(--gold);background:rgba(255,201,74,.1);border:1px solid rgba(255,201,74,.35);border-radius:999px;padding:5px 12px}
+.big{width:100%;min-height:58px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:24px;letter-spacing:.04em;text-transform:uppercase}
+.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);font-size:18px;min-height:48px}
+.rest{text-align:center;padding:10px 0}
+.rest .clock{font-family:var(--font-disp);font-weight:700;font-size:72px;line-height:1;color:var(--amber)}
+.rest small{color:var(--ink-dim);font-size:14px}
+.wo-rest{background:rgba(95,168,211,.1);border:1px solid rgba(95,168,211,.35);border-radius:18px;padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.wo-rest .lab{font-size:12px;color:var(--steel);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.wo-ring{position:relative;width:200px;height:200px;max-width:60vw;max-height:60vw}
+.wo-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.wo-ring circle{fill:none;stroke-width:10}
+.wo-ring .bg{stroke:var(--panel2)}
+.wo-ring .fg{stroke:var(--steel);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.wo-ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.wo-ring .c b{font-family:var(--font-disp);font-size:58px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.wo-ring .c small{font-size:12px;color:var(--ink-dim)}
+.wo-rbtns{display:flex;gap:10px;width:100%}
+.wo-rbtns button{flex:1;min-height:52px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-family:var(--font-disp);font-weight:700;font-size:20px;letter-spacing:.03em}
+.wo-rbtns .go{flex:2;background:var(--steel);border-color:var(--steel);color:#0e1114}
+.wo-next{font-size:14px;color:var(--ink-dim);text-align:center}
+.wo-next b{color:var(--ink)}
+.link{color:var(--steel);font-size:14px;font-weight:600;padding:8px 0;align-self:center}
+
+/* --- celebracja PR --- */
+.cele{position:fixed;inset:0;z-index:60;background:rgba(8,10,12,.82);display:grid;place-items:center;padding:20px max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px))}
+.cele .box{width:100%;max-width:380px;background:var(--panel);border:2px solid var(--gold);border-radius:20px;padding:24px 20px 18px;text-align:center;display:flex;flex-direction:column;gap:12px;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.cele .cup{font-size:56px;line-height:1}
+.cele h2{font-size:40px;color:var(--gold)}
+.cele .lines{display:flex;flex-direction:column;gap:8px;text-align:left}
+.cele .ln{background:var(--panel2);border-radius:10px;padding:9px 12px;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.cele .ln span{font-size:13px;color:var(--ink-dim)}
+.cele .ln b{font-family:var(--font-disp);font-size:22px;font-weight:700}
+.cele .ln em{font-style:normal;font-size:12.5px;color:var(--green);display:block;text-align:right}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--panel2);border:1px solid var(--gold);color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+
+/* --- podsumowanie --- */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--panel2);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-family:var(--font-disp);font-size:26px;font-weight:700;line-height:1.1}
+.stat span{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
+.stat em{display:block;font-style:normal;font-size:12px;color:var(--green)}
+.prrow{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.prrow:first-of-type{border-top:none}
+.prrow .c{width:38px;height:38px;border-radius:10px;background:rgba(255,201,74,.12);display:grid;place-items:center;font-size:20px;flex:none}
+.prrow .x{flex:1;min-width:0}
+.prrow .x b{display:block;font-size:14.5px;font-weight:600}
+.prrow .x small{font-size:13px;color:var(--ink-dim)}
+
+/* --- postęp: rekordy --- */
+.reccard{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:4px 12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-align:left;width:100%}
+.reccard .nm{font-size:14px;font-weight:600;color:var(--ink-dim);grid-column:1/-1;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.reccard .v{font-family:var(--font-disp);font-size:28px;font-weight:700;line-height:1}
+.reccard .s{font-size:12.5px;color:var(--ink-faint)}
+.reccard svg{width:92px;height:36px;grid-row:2/4;grid-column:2}
+
+/* --- arkusz historii --- */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .pn{position:relative;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sh-head{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.sh-head h2{font-size:26px;flex:1;min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chips button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:38px}
+.chips button.on{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 6px 4px}
+.chart svg{display:block;width:100%;height:auto;touch-action:manipulation}
+.chart text{font-family:var(--font-body);font-size:10px;fill:var(--ink-faint)}
+.chart .ph{font-family:var(--font-disp);font-size:11px;letter-spacing:.1em;fill:var(--amber)}
+.selinfo{background:var(--panel2);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px;display:flex;flex-direction:column;gap:3px}
+.selinfo .d{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+.tile:first-child{grid-column:1/-1}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+.tile span{display:block;font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em;line-height:1.25}
+.tile b{display:block;font-family:var(--font-disp);font-size:24px;font-weight:700;line-height:1.15;margin-top:4px}
+.tile small{font-size:11.5px;color:var(--ink-faint)}
+.sec{font-family:var(--font-disp);text-transform:uppercase;letter-spacing:.06em;font-size:17px;font-weight:600;margin:16px 0 6px;color:var(--ink-dim)}
+table.reps{width:100%;border-collapse:collapse;font-size:14px}
+table.reps td{padding:8px 4px;border-top:1px solid var(--line)}
+table.reps td:first-child{font-family:var(--font-disp);font-weight:700;font-size:18px}
+table.reps td:last-child{text-align:right;color:var(--ink-faint);font-size:12.5px}
+.sess{display:flex;gap:12px;padding:10px 2px;border-top:1px solid var(--line);align-items:baseline}
+.sess .d{width:48px;flex:none;font-family:var(--font-disp);font-weight:600;font-size:17px;color:var(--ink-dim)}
+.sess .s{flex:1;min-width:0;font-size:14px}
+.sess .s small{display:block;color:var(--ink-faint);font-size:12.5px}
+.sess .b{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.prchip{font-size:11px;font-weight:700;color:#0e1114;background:var(--gold);border-radius:5px;padding:1px 6px;white-space:nowrap}
+.how{margin-top:16px;font-size:13px;color:var(--ink-dim)}
+.how summary{cursor:pointer;color:var(--steel);font-weight:600;padding:6px 0}
+.how ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow" style="margin-bottom:6px">Prototyp · Historia ćwiczeń i rekordy</div>
+  <div class="proto" id="proto">
+    <button data-s="train" class="on">Trening</button>
+    <button data-s="wo">Tryb treningu</button>
+    <button data-s="sum">Podsumowanie</button>
+    <button data-s="prog">Postęp</button>
+  </div>
+
+  <!-- ===== Trening ===== -->
+  <section class="screen" id="s-train">
+    <div class="pnote"><b>Nowe:</b> przy każdym ćwiczeniu jest przycisk z wykresem i aktualnym rekordem. Stuknij go, żeby otworzyć historię.</div>
+    <div class="daytitle"><h2>Góra A</h2><span>sob 31.10 · 5 ćwiczeń</span></div>
+    <div class="stack" id="exList"></div>
+  </section>
+
+  <!-- ===== Tryb treningu ===== -->
+  <section class="screen" id="s-wo" hidden>
+    <div class="pnote"><b>Spróbuj:</b> zostaw 62,5 kg × 8 i stuknij <b>SERIA ZROBIONA</b>. Pobijesz rekord. Zmień ciężar −/+, żeby zobaczyć, kiedy pojawia się „To będzie rekord”.</div>
+    <div id="woBox"></div>
+  </section>
+
+  <!-- ===== Podsumowanie ===== -->
+  <section class="screen" id="s-sum" hidden>
+    <div class="pnote"><b>Nowe:</b> po zakończeniu treningu widzisz porównanie z poprzednim razem i listę dzisiejszych rekordów.</div>
+    <div id="sumBox"></div>
+  </section>
+
+  <!-- ===== Postęp ===== -->
+  <section class="screen" id="s-prog" hidden>
+    <div class="pnote"><b>Nowe w zakładce Postęp:</b> sekcja Rekordy. Ćwiczenia z najświeższym rekordem są na górze, stuknięcie otwiera historię.</div>
+    <div class="daytitle"><h2>Rekordy</h2><span id="recCount"></span></div>
+    <div class="stack" id="recList"></div>
+  </section>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bd" data-close></div>
+  <div class="pn" role="dialog" aria-modal="true" aria-labelledby="shTitle" id="shPanel"></div>
+</div>
+<div id="layer"></div>
+
+<script>
+/* ---------- dane przykładowe ---------- */
+const TODAY='2026-10-31';
+const DATES=['2026-08-04','2026-08-07','2026-08-11','2026-08-14','2026-08-18','2026-08-21','2026-08-25','2026-08-28','2026-09-04','2026-09-08','2026-09-11','2026-09-15','2026-09-18','2026-09-22','2026-09-25','2026-09-29','2026-10-02','2026-10-06','2026-10-09','2026-10-13','2026-10-16','2026-10-20','2026-10-23','2026-10-27'];
+const PHASE3='2026-09-29';
+const BENCH=[[47.5,[8,8,8,8]],[50,[8,8,8,7]],[50,[8,8,8,8]],[52.5,[8,8,7,6]],[52.5,[8,8,8,7]],[52.5,[8,8,8,8]],[55,[8,7,7,6]],[55,[8,8,7,7]],[55,[8,8,8,8]],[57.5,[8,7,6,6]],[57.5,[8,8,7,6]],[57.5,[8,8,8,7]],[57.5,[8,8,8,8]],[60,[7,6,6,5]],[57.5,[8,8,8,8]],[52.5,[8,8,8,8]],[55,[8,8,8,8]],[57.5,[8,8,8,7]],[57.5,[8,8,8,8]],[60,[8,8,7,6]],[60,[8,8,7,7]],[60,[8,8,8,6]],[60,[8,8,8,7]],[60,[8,8,8,8]]];
+
+function genKg(start,step,t,n){
+  const pats=[[t,t-1,t-2,t-2],[t,t-1,t-1,t-2],[t,t,t-1,t-1],[t,t,t,t]];
+  let w=start, st=0;
+  return DATES.map(iso=>{
+    if(iso===PHASE3){ w=Math.round(w*0.9/step)*step; st=3; }
+    const s={iso, sets:pats[st].slice(0,n).map(r=>({kg:w,r}))};
+    if(st===3){ w+=step; st=0; } else st++;
+    return s;
+  });
+}
+const EX=[
+  {id:'bench', n:'Wyciskanie sztangi na ławce płaskiej', kind:'kg', s:4, r:8, step:2.5,
+   hist:BENCH.map(([kg,rs],i)=>({iso:DATES[i], sets:rs.map(r=>({kg,r}))}))},
+  {id:'row', n:'Wiosłowanie sztangą w opadzie', kind:'kg', s:4, r:10, step:2.5, hist:genKg(42.5,2.5,10,4)},
+  {id:'ohp', n:'Wyciskanie żołnierskie', kind:'kg', s:3, r:8, step:2.5, hist:genKg(30,2.5,8,3)},
+  {id:'pull', n:'Podciąganie nachwytem', kind:'reps', s:3, r:'max',
+   hist:DATES.map((iso,i)=>{const b=5+Math.floor(i/5); return {iso, sets:[b+1,b,b-1].map(r=>({kg:0,r}))};})},
+  {id:'plank', n:'Plank', kind:'time', s:3, r:60,
+   hist:DATES.map((iso,i)=>{const t=30+5*Math.floor(i/4); return {iso, sets:[t,t,t-5].map(r=>({kg:0,r}))};})},
+];
+const exById=id=>EX.find(e=>e.id===id);
+
+/* ---------- liczenie rekordów ---------- */
+const fmt=x=>String(Math.round(x*10)/10).replace('.',',');
+const num=x=>Math.round(x).toLocaleString('pl-PL');
+const dd=iso=>iso.slice(8,10)+'.'+iso.slice(5,7);
+const DOW=['nd','pon','wt','śr','czw','pt','sob'];
+const dlong=iso=>DOW[new Date(iso+'T12:00').getDay()]+' '+dd(iso);
+const e1rm=(kg,r)=>r>=1&&r<=12&&kg>0?kg*(1+r/30):0;
+const unit=ex=>ex.kind==='kg'?'kg':ex.kind==='time'?'s':'powt.';
+
+function metrics(ex,s){
+  if(ex.kind==='kg') return {
+    top:Math.max(...s.sets.map(x=>x.kg)),
+    e1:Math.max(...s.sets.map(x=>e1rm(x.kg,x.r))),
+    vol:s.sets.reduce((a,x)=>a+x.kg*x.r,0)};
+  return {top:Math.max(...s.sets.map(x=>x.r)), vol:s.sets.reduce((a,x)=>a+x.r,0)};
+}
+// pierwszy trening ćwiczenia to punkt startowy — od drugiego liczą się rekordy
+function analyze(ex,sessions){
+  const best={top:0,e1:0,vol:0}, seen=[];
+  return sessions.map((s,i)=>{
+    const m=metrics(ex,s), prs=[];
+    if(i>0){
+      if(m.top>best.top) prs.push('top');
+      if(ex.kind==='kg' && m.e1>best.e1+0.01) prs.push('e1');
+      if(m.vol>best.vol && s.sets.length>=ex.s) prs.push('vol');
+      if(ex.kind==='kg' && !prs.includes('top') && s.sets.some(x=>x.r>Math.max(0,...seen.filter(y=>y.kg>=x.kg).map(y=>y.r)))) prs.push('reps');
+    }
+    best.top=Math.max(best.top,m.top); best.e1=Math.max(best.e1,m.e1||0); best.vol=Math.max(best.vol,m.vol);
+    seen.push(...s.sets);
+    return {...s,m,prs};
+  });
+}
+const PRNAME={top:{kg:'Ciężar',reps:'Powtórzenia',time:'Czas'}, e1:'1RM szac.', vol:'Objętość', reps:'Powtórzenia'};
+const prName=(ex,t)=>t==='top'?PRNAME.top[ex.kind]:PRNAME[t];
+
+/* ---------- stan prototypu ---------- */
+let today=[];      // serie wyciskania odhaczone dziś w prototypie
+let wo={set:0, kg:62.5, r:8, rest:0, timer:null, celebrated:false};
+function sessions(ex){
+  const h=ex.hist.slice();
+  if(ex.id==='bench' && today.length) h.push({iso:TODAY, sets:today.slice(), today:true});
+  return analyze(ex,h);
+}
+function bestOf(ex,ss){
+  ss=ss||sessions(ex);
+  const pick=f=>ss.reduce((b,s)=>(!b||f(s)>f(b))?s:b,null);
+  const top=pick(s=>s.m.top+ (ex.kind==='kg'?Math.max(...s.sets.filter(x=>x.kg===s.m.top).map(x=>x.r))/100:0));
+  const e1=ex.kind==='kg'?pick(s=>s.m.e1):null;
+  const vol=pick(s=>s.m.vol);
+  return {top,e1,vol};
+}
+function topSetText(ex,s){
+  if(ex.kind!=='kg') return fmt(s.m.top)+' '+unit(ex);
+  const r=Math.max(...s.sets.filter(x=>x.kg===s.m.top).map(x=>x.r));
+  return fmt(s.m.top)+' kg × '+r;
+}
+function setsText(ex,s){
+  if(ex.kind!=='kg') return s.sets.map(x=>x.r).join(', ')+' '+unit(ex);
+  const kgs=[...new Set(s.sets.map(x=>x.kg))];
+  if(kgs.length===1) return fmt(kgs[0])+' kg × '+s.sets.map(x=>x.r).join(', ');
+  return s.sets.map(x=>fmt(x.kg)+'×'+x.r).join(', ');
+}
+
+/* ---------- ikony ---------- */
+const IC_CHART='<svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M5 15l4-4 3 3 6-7"/><path d="M15 7h3v3"/></svg>';
+
+/* ---------- ekran: Trening ---------- */
+function renderTrain(){
+  document.getElementById('exList').innerHTML=EX.map(ex=>{
+    const ss=sessions(ex), b=bestOf(ex,ss), last=ss[ss.length-1];
+    const isNew=last.today && last.prs.length;
+    const plan=ex.kind==='kg'?`${ex.s} × ${ex.r} · ${ex.id==='bench'?'62,5':fmt(last.m.top)} kg`:ex.kind==='time'?`${ex.s} × ${ex.r} s`:`${ex.s} × max`;
+    const prShort=ex.kind==='kg'?fmt(b.top.m.top)+' kg':fmt(b.top.m.top)+(ex.kind==='time'?' s':' powt.');
+    return `<div class="ex"><div class="nm"><b>${ex.n} ${isNew?'<span class="trophy">🏆 Rekord</span>':''}</b><small>${plan}</small></div>
+      <button class="hbtn${isNew?' new':''}" data-hist="${ex.id}" aria-label="Historia: ${ex.n}">${IC_CHART}<span>PR ${prShort}</span></button></div>`;
+  }).join('');
+}
+
+/* ---------- ekran: Tryb treningu ---------- */
+const bench=exById('bench');
+function priorBest(){
+  const all=bench.hist.flatMap(s=>s.sets).concat(today);
+  return {top:Math.max(...all.map(x=>x.kg)), e1:Math.max(...all.map(x=>e1rm(x.kg,x.r))), all};
+}
+function checkSet(kg,r){
+  const p=priorBest(), out=[];
+  if(kg>p.top) out.push({t:'top',now:fmt(kg)+' kg',was:fmt(p.top)+' kg'});
+  const e=e1rm(kg,r);
+  if(e>p.e1+0.01) out.push({t:'e1',now:fmt(Math.round(e*2)/2)+' kg',was:fmt(Math.round(p.e1*2)/2)+' kg'});
+  if(kg<=p.top){
+    const prev=Math.max(0,...p.all.filter(y=>y.kg>=kg).map(y=>y.r));
+    if(r>prev) out.push({t:'reps',now:r+' powt. przy '+fmt(kg)+' kg',was:prev+' powt.'});
+  }
+  return out;
+}
+function renderWo(){
+  const box=document.getElementById('woBox');
+  const ss=sessions(bench), lastPrev=bench.hist[bench.hist.length-1];
+  const b=bestOf(bench, analyze(bench,bench.hist));
+  const dots=Array.from({length:bench.s},(_,i)=>{
+    const d=today[i];
+    return `<i class="${d?(d.pr?'pr':'done'):(i===wo.set?'cur':'')}">${d?(d.pr?'🏆':'✓'):i+1}</i>`;
+  }).join('');
+  const head=`<div class="wo-head"><div class="t"><small>Ćwiczenie 1 z 5</small><h3>${bench.n}</h3></div>
+    <button class="iconbtn" data-hist="bench" aria-label="Historia ćwiczenia">${IC_CHART}</button></div><div class="dots">${dots}</div>`;
+  if(wo.set>=bench.s){
+    box.innerHTML=`<div class="wo">${head}<div class="rest"><div class="disp" style="font-size:30px">Ćwiczenie zrobione</div><small>Następnie: Wiosłowanie sztangą w opadzie</small></div>
+      <button class="big" data-go="sum">Zobacz podsumowanie</button><button class="link" data-reset>↺ Zacznij prototyp od nowa</button></div>`;
+    return;
+  }
+  if(wo.rest>0){
+    const md=x=>Math.floor(x/60)+':'+String(x%60).padStart(2,'0'), C=2*Math.PI*90;
+    box.innerHTML=`<div class="wo">${head}<div class="wo-rest"><span class="lab">Przerwa</span>
+      <div class="wo-ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" cx="100" cy="100" r="90" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-wo.rest/wo.restPlan)}"/></svg>
+        <div class="c"><b>${md(wo.rest)}</b><small>z ${md(wo.restPlan)}</small></div></div>
+      <div class="wo-rbtns"><button data-plus>+15 s</button><button class="go" data-skiprest>▶ ZACZYNAM</button></div></div>
+      <div class="wo-next">Następnie: <b>${bench.n}</b> · seria ${wo.set+1} · ${fmt(wo.kg)} kg × ${wo.r}</div></div>`;
+    return;
+  }
+  const will=checkSet(wo.kg,wo.r);
+  box.innerHTML=`<div class="wo">${head}
+    <div class="disp" style="font-size:20px;color:var(--ink-dim)">Seria ${wo.set+1} z ${bench.s}</div>
+    <div class="vals">
+      <div class="val"><div class="n">${fmt(wo.kg)}</div><div class="u">kg</div><div class="pm"><button data-d="kg:-1" aria-label="Mniej kg">−</button><button data-d="kg:1" aria-label="Więcej kg">+</button></div></div>
+      <div class="val"><div class="n">${wo.r}</div><div class="u">powtórzenia</div><div class="pm"><button data-d="r:-1" aria-label="Mniej powtórzeń">−</button><button data-d="r:1" aria-label="Więcej powtórzeń">+</button></div></div>
+    </div>
+    <div class="ref">
+      <div>Ostatnio (${dd(lastPrev.iso)}): <b>${setsText(bench,{sets:lastPrev.sets})}</b></div>
+      <div class="gold">🏆 Rekord: <b class="gold">${topSetText(bench,b.top)}</b> · 1RM ≈ ${fmt(Math.round(b.e1.m.e1*2)/2)} kg</div>
+    </div>
+    ${will.length?`<div class="willpr">🏆 To będzie rekord: ${will.map(w=>prName(bench,w.t)).join(' + ')}</div>`:''}
+    <button class="big" data-done>Seria zrobiona</button>
+  </div>`;
+}
+function setDone(){
+  const prs=checkSet(wo.kg,wo.r);
+  today.push({kg:wo.kg,r:wo.r,pr:prs.length>0});
+  wo.set++;
+  if(wo.set>=bench.s){
+    const ss=sessions(bench), last=ss[ss.length-1];
+    if(last.prs.includes('vol')) setTimeout(()=>toast('🏆 Rekord objętości: '+num(last.m.vol)+' kg w ćwiczeniu'), prs.length?2600:0);
+  } else startRest();
+  if(prs.length){
+    try{ navigator.vibrate && navigator.vibrate([60,40,140]); }catch(e){}
+    if(!wo.celebrated){ wo.celebrated=true; celebrate(prs); }
+    else toast('🏆 Kolejny rekord: '+prs.map(p=>prName(bench,p.t)+' '+p.now).join(', '));
+  }
+  renderAll();
+}
+function startRest(){
+  wo.rest=wo.restPlan=120; clearInterval(wo.timer);
+  wo.timer=setInterval(()=>{ wo.rest--; if(wo.rest<=0){ wo.rest=0; clearInterval(wo.timer); } renderWo(); },1000);
+}
+function celebrate(prs){
+  const L=document.getElementById('layer');
+  L.innerHTML=`<div class="cele" data-celeclose><div class="box" role="alertdialog" aria-labelledby="celeT">
+    <div class="cup">🏆</div><h2 id="celeT">Nowy rekord!</h2>
+    <div style="font-size:14px;color:var(--ink-dim)">${bench.n} · ${fmt(wo.kg)}&nbsp;kg&nbsp;×&nbsp;${wo.r}</div>
+    <div class="lines">${prs.map(p=>`<div class="ln"><span>${prName(bench,p.t)}</span><div><b>${p.now}</b><em>poprzednio ${p.was}</em></div></div>`).join('')}</div>
+    <button class="big" data-celeclose>Dalej · przerwa</button></div></div>`;
+}
+let toastT;
+function toast(msg){
+  const L=document.getElementById('layer');
+  L.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; L.appendChild(t);
+  clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3500);
+}
+
+/* ---------- ekran: Podsumowanie ---------- */
+function renderSum(){
+  const example=!today.length;
+  const sets=example?[{kg:62.5,r:8},{kg:62.5,r:8},{kg:62.5,r:7},{kg:62.5,r:7}]:today;
+  const ss=analyze(bench,bench.hist.concat([{iso:TODAY,sets}]));
+  const cur=ss[ss.length-1], prev=ss[ss.length-2];
+  const other=[['row',1840],['ohp',1080]];
+  const vol=cur.m.vol+other.reduce((a,o)=>a+o[1],0), prevVol=prev.m.vol+1800+1050;
+  const dv=Math.round((vol/prevVol-1)*100);
+  const items=cur.prs.map(t=>{
+    const was=t==='top'?fmt(prev.m.top)+' kg':t==='e1'?'≈ '+fmt(Math.round(Math.max(...ss.slice(0,-1).map(s=>s.m.e1))*2)/2)+' kg':t==='vol'?num(Math.max(...ss.slice(0,-1).map(s=>s.m.vol)))+' kg':'';
+    const now=t==='top'?topSetText(bench,cur):t==='e1'?'≈ '+fmt(Math.round(cur.m.e1*2)/2)+' kg':t==='vol'?num(cur.m.vol)+' kg':setsText(bench,cur);
+    return `<div class="prrow"><div class="c">🏆</div><div class="x"><b>${prName(bench,t)} · ${now}</b><small>Wyciskanie na ławce · poprzednio ${was||'mniej powtórzeń'}</small></div></div>`;
+  }).join('');
+  document.getElementById('sumBox').innerHTML=`<div class="stack">
+    <div class="card stack">
+      <div><div class="eyebrow">Trening zakończony</div><h2 style="font-size:32px;margin-top:2px">Góra A · sob 31.10</h2></div>
+      <div class="stats">
+        <div class="stat"><b>48:12</b><span>czas</span></div>
+        <div class="stat"><b>${sets.length+10}/16</b><span>serie</span></div>
+        <div class="stat"><b>${num(vol)}</b><span>kg objętości</span><em>${dv>=0?'+':''}${dv}% vs ${dd(prev.iso)}</em></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:4px">Rekordy dziś ${cur.prs.length?'· '+cur.prs.length:''}</div>
+      ${items||'<div style="color:var(--ink-dim);font-size:14px;padding:6px 0">Dziś bez rekordu. Ostatnio: '+setsText(bench,prev)+'.</div>'}
+      ${example?'<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Przykład dla 62,5 kg × 8, 8, 7, 7. Odhacz serie w „Tryb treningu”, a zobaczysz tu swoje.</div>':''}
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:6px">W porównaniu z ${dd(prev.iso)}</div>
+      <div class="prrow"><div class="x"><b>Wyciskanie na ławce</b><small>${setsText(bench,prev)} → ${setsText(bench,cur)}</small></div></div>
+      <div class="prrow"><div class="x"><b>Wiosłowanie sztangą</b><small>bez zmian · 60 kg × 10, 10, 9, 9</small></div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- ekran: Postęp → Rekordy ---------- */
+function spark(ex,ss){
+  const ys=ss.map(s=>ex.kind==='kg'?s.m.e1:s.m.top), lo=Math.min(...ys), hi=Math.max(...ys), n=ys.length;
+  const pts=ys.map((y,i)=>[(i/(n-1))*88+2, 32-((y-lo)/((hi-lo)||1))*28]);
+  const last=pts[pts.length-1];
+  return `<svg viewBox="0 0 92 36" aria-hidden="true"><polyline points="${pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="var(--amber)"/></svg>`;
+}
+function renderProg(){
+  const rows=EX.map(ex=>{
+    const ss=sessions(ex), b=bestOf(ex,ss);
+    const lastPr=[...ss].reverse().find(s=>s.prs.length);
+    return {ex,ss,b,lastPr};
+  }).sort((a,b)=>(b.lastPr?b.lastPr.iso:'').localeCompare(a.lastPr?a.lastPr.iso:''));
+  const week=rows.filter(r=>r.lastPr && r.lastPr.iso>='2026-10-25').length;
+  document.getElementById('recCount').textContent=week+' z nowym rekordem w tym tygodniu';
+  document.getElementById('recList').innerHTML=rows.map(({ex,ss,b,lastPr})=>{
+    const fresh=lastPr && lastPr.iso>='2026-10-25';
+    const sub=ex.kind==='kg'?`1RM ≈ ${fmt(Math.round(b.e1.m.e1*2)/2)} kg · ${dd(b.top.iso)}`:`${ex.kind==='time'?'najdłużej':'najlepsza seria'} · ${dd(b.top.iso)}`;
+    return `<button class="reccard" data-hist="${ex.id}"><div class="nm"><span>${ex.n}</span>${fresh?'<span class="trophy">Nowy</span>':''}</div>
+      <div class="v">${topSetText(ex,b.top)}</div>${spark(ex,ss)}<div class="s">${sub}</div></button>`;
+  }).join('');
+}
+
+/* ---------- arkusz historii ---------- */
+let sh={id:null, metric:'top', sel:null, all:false};
+function metricsFor(ex){
+  return ex.kind==='kg'?[['top','Ciężar'],['e1','1RM szac.'],['vol','Objętość']]
+    :ex.kind==='time'?[['top','Najdłużej'],['vol','Suma w treningu']]:[['top','Najlepsza seria'],['vol','Suma w treningu']];
+}
+function openHist(id){ sh={id, metric:'top', sel:null, all:false}; renderSheet(); document.getElementById('sheet').hidden=false; document.getElementById('shPanel').scrollTop=0; }
+function closeHist(){ document.getElementById('sheet').hidden=true; }
+function chartSvg(ex,ss){
+  const W=340,H=196,L=38,R=12,T=18,B=26, k=sh.metric;
+  const pts=ss.map((s,i)=>({t:+new Date(s.iso+'T12:00'), y:k==='e1'?Math.round(s.m.e1*2)/2:s.m[k], pr:s.prs.includes(k), i, today:s.today}));
+  let lo=Math.min(...pts.map(p=>p.y)), hi=Math.max(...pts.map(p=>p.y));
+  const pad=(hi-lo)*0.12||1, raw=(hi-lo+2*pad)/4, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,2.5,5,10].find(m=>m*mag>=raw)*mag;
+  const y0=Math.floor((lo-pad)/step)*step, y1=Math.ceil((hi+pad)/step)*step;
+  const t0=pts[0].t-2*864e5, t1=pts[pts.length-1].t+2*864e5;
+  const X=t=>L+(t-t0)/(t1-t0)*(W-L-R), Y=y=>T+(1-(y-y0)/(y1-y0))*(H-T-B);
+  let g='';
+  for(let v=y0; v<=y1+1e-9; v+=step) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+3.5}" text-anchor="end">${k==='vol'&&v>=1000?fmt(v/1000)+'k':fmt(v)}</text>`;
+  const MON=['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
+  for(let m=new Date(t0); m<=t1; m=new Date(m.getFullYear(),m.getMonth()+1,1)){
+    const f=new Date(m.getFullYear(),m.getMonth(),1).getTime(); if(f<t0) continue;
+    g+=`<line x1="${X(f)}" x2="${X(f)}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 3"/><text x="${X(f)+4}" y="${H-8}">${MON[m.getMonth()]}</text>`;
+  }
+  const px=X(+new Date(PHASE3+'T00:00'));
+  g=`<rect x="${px}" y="${T}" width="${W-R-px}" height="${H-T-B}" fill="var(--amber-soft)" opacity=".45"/><text class="ph" x="${px+5}" y="${T+12}">FAZA 3</text>`+g;
+  const path=pts.map((p,i)=>(i?'L':'M')+X(p.t).toFixed(1)+','+Y(p.y).toFixed(1)).join(' ');
+  g+=`<path d="${path}" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/>`;
+  const sel=sh.sel==null?pts.length-1:sh.sel, sp=pts[sel];
+  g+=`<line x1="${X(sp.t)}" x2="${X(sp.t)}" y1="${T}" y2="${H-B}" stroke="var(--ink-dim)" stroke-dasharray="3 3"/>`;
+  pts.forEach(p=>{
+    const cx=X(p.t), cy=Y(p.y);
+    g+= p.pr ? `<circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--gold)" stroke="var(--bg)" stroke-width="1.5"/>`
+             : `<circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/>`;
+    if(p.i===sel) g+=`<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    if(p.today) g+=`<text x="${cx}" y="${cy-12}" text-anchor="end" style="fill:var(--gold);font-weight:600">dziś</text>`;
+  });
+  // większe pola dotyku niż same kropki
+  pts.forEach(p=>{ g+=`<rect data-pt="${p.i}" x="${X(p.t)-7}" y="${T}" width="14" height="${H-T-B}" fill="transparent" style="cursor:pointer"/>`; });
+  return {svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wykres: ${ex.n}">${g}</svg>`, sel};
+}
+function renderSheet(){
+  const ex=exById(sh.id), ss=sessions(ex), b=bestOf(ex,ss), u=unit(ex);
+  const {svg,sel}=chartSvg(ex,ss), s=ss[sel];
+  const val=k=>k==='e1'?'≈ '+fmt(Math.round(s.m.e1*2)/2)+' kg':k==='vol'?num(s.m.vol)+' '+(ex.kind==='kg'?'kg':u):topSetText(ex,s);
+  const tiles=ex.kind==='kg'
+    ?[['Najcięższa seria',topSetText(ex,b.top),b.top.iso],['1RM szacowany','≈ '+fmt(Math.round(b.e1.m.e1*2)/2)+' kg',b.e1.iso],['Objętość treningu',num(b.vol.m.vol)+' kg',b.vol.iso]]
+    :[[ex.kind==='time'?'Najdłużej':'Najlepsza seria',topSetText(ex,b.top),b.top.iso],['Suma w treningu',num(b.vol.m.vol)+' '+u,b.vol.iso],['Treningi',String(ss.length),null]];
+  // najwięcej powtórzeń przy danym ciężarze (jak w Strong)
+  let repTable='';
+  if(ex.kind==='kg'){
+    const by={}; ss.forEach(x=>x.sets.forEach(y=>{ if(!by[y.kg]||y.r>by[y.kg].r) by[y.kg]={r:y.r,iso:x.iso}; }));
+    const kgs=Object.keys(by).map(Number).sort((a,c)=>c-a).slice(0,5);
+    repTable=`<div class="sec">Najwięcej powtórzeń przy ciężarze</div><table class="reps">${kgs.map(kg=>`<tr><td>${fmt(kg)} kg</td><td>${by[kg].r} powt.</td><td>${dd(by[kg].iso)}</td></tr>`).join('')}</table>`;
+  }
+  const list=[...ss].reverse(), shown=sh.all?list:list.slice(0,6);
+  document.getElementById('shPanel').innerHTML=`<div class="grab"></div>
+    <div class="sh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Historia · ${ss.length} treningów</div><h2 id="shTitle">${ex.n}</h2></div>
+      <button class="iconbtn" data-close aria-label="Zamknij" style="font-size:22px;color:var(--ink-dim)">✕</button></div>
+    <div class="chips">${metricsFor(ex).map(([k,l])=>`<button data-metric="${k}" class="${sh.metric===k?'on':''}">${l}</button>`).join('')}</div>
+    <div class="chart">${svg}</div>
+    <div class="selinfo"><div class="d">${s.today?'Dziś · ':''}${dlong(s.iso)}</div><div><b>${setsText(ex,s)}</b></div>
+      <div style="color:var(--ink-dim);font-size:13px">${metricsFor(ex).filter(([k])=>k!==sh.metric).map(([k,l])=>l+': '+val(k)).join(' · ')}</div>
+      ${s.prs.length?`<div class="b" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">${s.prs.map(t=>`<span class="prchip">🏆 ${prName(ex,t)}</span>`).join('')}</div>`:''}</div>
+    <div class="tiles">${tiles.map(([l,v,iso])=>`<div class="tile"><span>${l}</span><b>${v}</b><small>${iso?dd(iso):'od 04.08'}</small></div>`).join('')}</div>
+    ${repTable}
+    <div class="sec">Treningi</div>
+    ${shown.map(x=>`<div class="sess"><div class="d">${dd(x.iso)}</div><div class="s">${setsText(ex,x)}${x.iso===PHASE3?'<small>początek fazy 3 · −10%</small>':''}</div><div class="b">${x.prs.map(t=>`<span class="prchip">🏆 ${prName(ex,t)}</span>`).join('')}</div></div>`).join('')}
+    ${list.length>6?`<button class="link" data-all style="display:block;margin:4px auto 0">${sh.all?'Pokaż mniej':'Pokaż wszystkie ('+list.length+')'}</button>`:''}
+    <details class="how"><summary>Jak liczymy rekordy?</summary><ul>
+      <li>Liczą się tylko odhaczone serie. Pominięte ćwiczenia i serie nie wchodzą do historii.</li>
+      <li>Pierwszy trening ćwiczenia to punkt startowy, a nie rekord.</li>
+      <li>1RM to szacunek wzorem Epleya z serii do 12 powtórzeń. Nie musisz go nigdy dźwigać.</li>
+      <li>Rekord objętości liczy się tylko wtedy, gdy zrobisz wszystkie serie z planu.</li>
+      <li>Po wymianie ćwiczenia przez Trenera historia idzie pod nową nazwą, tak jak podpowiedzi „Ostatnio”.</li>
+    </ul></details>`;
+}
+
+/* ---------- nawigacja i zdarzenia ---------- */
+function show(s){
+  document.querySelectorAll('#proto button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!=='s-'+s);
+  renderAll(); window.scrollTo(0,0);
+}
+function renderAll(){ renderTrain(); renderWo(); renderSum(); renderProg(); if(!document.getElementById('sheet').hidden) renderSheet(); }
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-s],[data-hist],[data-close],[data-metric],[data-pt],[data-all],[data-d],[data-done],[data-skiprest],[data-plus],[data-celeclose],[data-go],[data-reset]');
+  if(!t) return;
+  const d=t.dataset;
+  if(d.s) show(d.s);
+  else if(d.hist) openHist(d.hist);
+  else if('close' in d) closeHist();
+  else if(d.metric){ sh.metric=d.metric; renderSheet(); }
+  else if(d.pt!=null){ sh.sel=+d.pt; renderSheet(); }
+  else if('all' in d){ sh.all=!sh.all; renderSheet(); }
+  else if(d.d){ const [f,v]=d.d.split(':'); if(f==='kg') wo.kg=Math.max(20,wo.kg+2.5*v); else wo.r=Math.max(1,wo.r+ +v); renderWo(); }
+  else if('done' in d) setDone();
+  else if('skiprest' in d){ wo.rest=0; clearInterval(wo.timer); renderWo(); }
+  else if('plus' in d){ wo.rest+=15; wo.restPlan+=15; renderWo(); }
+  else if('celeclose' in d){ if(e.target===t||t.tagName==='BUTTON') document.getElementById('layer').innerHTML=''; }
+  else if(d.go){ closeHist(); show(d.go); }
+  else if('reset' in d){ today=[]; clearInterval(wo.timer); wo={set:0,kg:62.5,r:8,rest:0,timer:null,celebrated:false}; renderAll(); }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeHist(); document.getElementById('layer').innerHTML=''; } });
+renderAll();
+</script>
+
+</body></html>

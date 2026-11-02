@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Check-in przed treningiem</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+.wrap{max-width:440px;margin:0 auto;padding-block:14px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h2,.disp{font-family:var(--font-disp);text-transform:uppercase;line-height:1.05;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;font-weight:600}
+.proto{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.proto button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.proto button.on{background:var(--amber);border-color:var(--amber);color:#0e1114}
+.pnote{font-size:13px;color:var(--ink-dim);border-left:3px solid var(--steel);padding:6px 10px;margin:10px 0 14px;background:rgba(95,168,211,.07);border-radius:0 8px 8px 0}
+.pnote b{color:var(--ink)}
+.screen[hidden]{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.card .top{padding:14px 16px;display:flex;gap:10px;align-items:center}
+.card .top .tag{font-family:var(--font-disp);font-weight:700;font-size:14px;color:var(--amber);border:1px solid rgba(255,122,26,.45);background:var(--amber-soft);border-radius:8px;padding:3px 8px}
+.card .top h3{font-family:var(--font-disp);font-size:24px;margin:0;text-transform:uppercase}
+.ci-chip{margin:0 16px 10px;font-size:13px;color:var(--ink-dim);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ci-chip b{color:var(--ink)}
+.start{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 16px 14px;min-height:58px;width:calc(100% - 32px);border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:24px;letter-spacing:.04em}
+.ex{border-top:1px solid var(--line);padding:11px 16px;display:flex;justify-content:space-between;gap:10px;font-size:14.5px}
+.ex span:last-child{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim);white-space:nowrap}
+.ex s{color:var(--ink-faint)}
+.ex b{color:var(--steel);font-weight:600}
+/* arkusz check-in */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .pn{position:relative;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.q{display:flex;flex-direction:column;gap:6px}
+.q .l{font-size:14px;font-weight:600}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.seg button{min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:13px;font-weight:600;color:var(--ink-dim)}
+.seg button i{font-style:normal;font-size:20px;line-height:1.1}
+.seg button.on{border-color:var(--amber);background:var(--amber-soft);color:var(--ink)}
+.seg button.on.lo{border-color:var(--red);background:rgba(226,84,58,.12)}
+.seg button.on.hi{border-color:var(--green);background:rgba(78,201,126,.12)}
+.verdict{border-radius:14px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);background:var(--panel)}
+.verdict b{font-family:var(--font-disp);font-size:20px;text-transform:uppercase;letter-spacing:.02em}
+.verdict.ok{border-color:rgba(78,201,126,.5)} .verdict.ok b{color:var(--green)}
+.verdict.mid{border-color:rgba(255,122,26,.5)} .verdict.mid b{color:var(--amber)}
+.verdict.low{border-color:rgba(226,84,58,.5)} .verdict.low b{color:var(--red)}
+.verdict small{color:var(--ink-dim);font-size:13px}
+.acts{display:flex;flex-direction:column;gap:8px}
+.go{width:100%;min-height:56px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:21px;letter-spacing:.04em;text-transform:uppercase}
+.go:disabled{opacity:.35}
+.alt{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-size:14.5px;font-weight:600}
+.skip{color:var(--steel);font-weight:600;font-size:14px;min-height:40px;align-self:center}
+/* tryb treningu */
+.wo{display:flex;flex-direction:column;gap:14px}
+.light{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(95,168,211,.1);border:1px solid rgba(95,168,211,.4);border-radius:12px;padding:8px 12px;font-size:13.5px}
+.light b{color:var(--steel)}
+.light button{color:var(--steel);font-weight:600;font-size:13px;min-height:36px;white-space:nowrap}
+.wo-name{font-family:var(--font-disp);font-size:30px;font-weight:700;line-height:1.05;text-transform:uppercase}
+.setno{font-size:14px;color:var(--ink-dim)} .setno b{color:var(--amber)}
+.big{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 14px;display:flex;justify-content:center;align-items:flex-end;gap:16px}
+.val{text-align:center}
+.val .n{font-family:var(--font-disp);font-weight:700;font-size:60px;line-height:1}
+.val .u{display:block;font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+.val small{display:block;font-size:12px;color:var(--ink-faint)}
+.x{font-family:var(--font-disp);font-size:28px;color:var(--ink-faint);padding-bottom:20px}
+.done{width:100%;min-height:62px;border-radius:16px;background:var(--green);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:24px;letter-spacing:.04em;text-transform:uppercase}
+/* Trener */
+.bub{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+.bub.me{background:var(--panel2);margin-left:15%}
+.hist{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px}
+.hist div{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+.hist div:last-child{border-bottom:none}
+.hist span:last-child{color:var(--ink-dim);white-space:nowrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Prototyp · Check-in przed treningiem</div>
+  <div class="proto" id="scr">
+    <button data-scr="card" class="on">Karta dnia</button>
+    <button data-scr="wo">Tryb treningu</button>
+    <button data-scr="coach">Trener</button>
+  </div>
+  <div class="pnote" id="note"></div>
+  <section class="screen" id="s-card"><div id="cardBox"></div></section>
+  <section class="screen" id="s-wo" hidden><div class="wo" id="woBox"></div></section>
+  <section class="screen" id="s-coach" hidden><div id="coachBox"></div></section>
+</div>
+<div class="sheet" id="sheet" hidden><div class="bd" data-close></div><div class="pn" id="pn" role="dialog" aria-modal="true" aria-labelledby="ciT"></div></div>
+
+<script>
+const EX=[{n:'Przysiad ze sztangą na karku',s:4,r:8,kg:70},{n:'Wyciskanie sztangi — ławka płaska',s:4,r:8,kg:62.5},{n:'Wiosłowanie sztangą w opadzie',s:4,r:10,kg:50},{n:'Wznosy hantli bokiem (barki)',s:3,r:12,kg:8}];
+const Q=[
+  {k:'sleep', l:'Jak spałeś?', o:[['😴','Słabo'],['🙂','OK'],['😌','Dobrze']]},
+  {k:'sore',  l:'Zakwasy, ból mięśni?', o:[['🔥','Mocne'],['〰️','Lekkie'],['✅','Brak']]},
+  {k:'energy',l:'Energia teraz?', o:[['🪫','Niska'],['⚡','OK'],['🚀','Wysoka']]},
+];
+let ans={sleep:null, sore:null, energy:null}, plan='normal', started=false;
+const fmt=x=>String(Math.round(x*2)/2).replace('.',',');
+const lighter=kg=>kg<20?Math.max(1,Math.round(kg*0.9)):Math.round(kg*0.9/2.5)*2.5;   // hantle co 1 kg, sztanga co 2,5 kg
+function score(){ return Object.values(ans).reduce((a,v)=>a+(v||0),0); }
+function verdict(){
+  if(Object.values(ans).some(v=>v===null)) return null;
+  const s=score();
+  if(s>=4) return {c:'ok', t:'Dobra forma', d:'Trenujesz według planu.'};
+  if(s>=2) return {c:'mid', t:'Gorszy dzień', d:'Proponuję lżej: ciężar −10%, serie bez zmian. Technika i ruch są ważniejsze niż rekordy.'};
+  return {c:'low', t:'Mocne zmęczenie', d:'Proponuję lżej: ciężar −10% i jedna seria mniej w każdym ćwiczeniu — albo przesuń trening na jutro.'};
+}
+function renderSheet(){
+  const v=verdict(), hard=ans.sore===0;
+  document.getElementById('pn').innerHTML=`<div class="grab"></div>
+    <div><div class="eyebrow">Zanim zaczniesz · 3 stuknięcia</div><h2 id="ciT" style="font-size:28px">Jak się dziś czujesz?</h2></div>
+    ${Q.map(q=>`<div class="q"><span class="l">${q.l}</span><div class="seg">${q.o.map(([i,l],j)=>`<button data-a="${q.k}:${j}" class="${ans[q.k]===j?'on '+(j===0?'lo':j===2?'hi':''):''}"><i>${i}</i>${l}</button>`).join('')}</div></div>`).join('')}
+    ${v?`<div class="verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${hard?'<small>Mocne zakwasy: dłuższa rozgrzewka (5–8 min) i pierwsza seria lżej.</small>':''}</div>`:''}
+    <div class="acts">
+      ${!v?`<button class="go" disabled>Odpowiedz na 3 pytania</button>`
+        : v.c==='ok'?`<button class="go" data-start="normal">▶ Start treningu</button>`
+        : `<button class="go" data-start="light${v.c==='low'?'2':''}">▶ Trenuj lżej</button><button class="alt" data-start="normal">Trenuj normalnie</button>${v.c==='low'?'<button class="alt" data-move>Przesuń trening na jutro</button>':''}`}
+    </div>
+    <button class="skip" data-start="skip">Pomiń — od razu start</button>`;
+}
+function exView(e){
+  if(plan==='light'||plan==='light2'){ const s=plan==='light2'?Math.max(2,e.s-1):e.s; return {kg:lighter(e.kg), s, was:`${e.s}×${e.r} · ${fmt(e.kg)} kg`}; }
+  return {kg:e.kg, s:e.s};
+}
+function renderCard(){
+  const L=plan==='light'||plan==='light2';
+  document.getElementById('cardBox').innerHTML=`<div class="card"><div class="top"><span class="tag">GÓRA A</span><h3>Upper · siła</h3></div>
+    ${started?`<div class="ci-chip">Samopoczucie: <b>${['😴','🙂','😌'][ans.sleep]??'—'} ${['🔥','〰️','✅'][ans.sore]??''} ${['🪫','⚡','🚀'][ans.energy]??''}</b> · ${L?'<b style="color:var(--steel)">lżejszy dzień</b>':plan==='skip'?'bez check-inu':'wg planu'}</div>`:''}
+    <button class="start" data-open>▶ ${started?'WZNÓW TRENING':'START TRENINGU'}</button>
+    ${EX.map(e=>{ const v=exView(e); return `<div class="ex"><span>${e.n}</span><span>${L?`<s>${fmt(e.kg)}</s> <b>${fmt(v.kg)} kg</b> · ${v.s}×${e.r}`:`${fmt(e.kg)} kg · ${e.s}×${e.r}`}</span></div>`; }).join('')}</div>`;
+}
+function renderWo(){
+  const e=EX[0], v=exView(e), L=plan==='light'||plan==='light2';
+  document.getElementById('woBox').innerHTML=`${L?`<div class="light"><span><b>Lżejszy dzień</b> · ciężar −10%${plan==='light2'?', seria mniej':''}</span><button data-normal>Wróć do planu</button></div>`:''}
+    <div class="wo-name">${e.n}</div><div class="setno">Seria <b>1</b> z ${v.s}</div>
+    <div class="big"><div class="val"><span class="n">${fmt(v.kg)}</span><span class="u">kg</span>${L?`<small>plan ${fmt(e.kg)} kg</small>`:''}</div><span class="x">×</span><div class="val"><span class="n">${e.r}</span><span class="u">powtórzeń</span></div></div>
+    <button class="done">✓ Seria zrobiona</button>`;
+}
+function renderCoach(){
+  const rows=[['31.10','😴 🔥 🪫','lżej (−10%, seria mniej)','var(--red)'],['28.10','🙂 〰️ ⚡','wg planu','var(--green)'],['24.10','😴 〰️ ⚡','lżej (−10%)','var(--amber)'],['21.10','😌 ✅ 🚀','wg planu','var(--green)']];
+  document.getElementById('coachBox').innerHTML=`<div class="bub me">Czemu ostatnio słabiej mi idzie?</div>
+    <div class="bub">W 2 z 4 ostatnich treningów zaczynałeś po słabym śnie i wtedy w wyciskaniu tracisz 1–2 powtórzenia w ostatniej serii. W dni z dobrym snem idziesz w górę. Zanim ruszymy ciężary — postaraj się o 7 h snu przed dniem siłowni. Jeśli to niemożliwe, przesuwaj trening na dzień po dobrej nocy.</div>
+    <div class="eyebrow" style="margin-top:6px">Co widzi Trener · samopoczucie</div>
+    <div class="hist">${rows.map(r=>`<div><span><i class="dot" style="background:${r[3]}"></i>${r[0]} · ${r[1]}</span><span>${r[2]}</span></div>`).join('')}</div>`;
+}
+function note(){
+  const s=document.querySelector('#scr .on').dataset.scr;
+  document.getElementById('note').innerHTML = s==='card'
+    ? '<b>Spróbuj:</b> stuknij <b>START TRENINGU</b>. Wybierz np. „Słabo / Mocne / Niska”, żeby zobaczyć lżejszy dzień, albo same dobre odpowiedzi — wtedy start według planu. Check-in pojawia się tylko przy pierwszym starcie dnia.'
+    : s==='wo' ? '<b>Tryb treningu</b> po wybraniu „Trenuj lżej”: pasek na górze, ciężar −10% z podpisem planu. „Wróć do planu” przywraca normalne wartości.'
+    : '<b>Trener</b> dostaje odpowiedzi z check-inu razem z wynikami treningów.';
+}
+function render(){ renderCard(); renderWo(); renderCoach(); note(); }
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-scr],[data-open],[data-close],[data-a],[data-start],[data-move],[data-normal]'); if(!t) return;
+  const d=t.dataset;
+  if(d.scr){ document.querySelectorAll('#scr button').forEach(b=>b.classList.toggle('on',b===t)); ['card','wo','coach'].forEach(k=>document.getElementById('s-'+k).hidden=k!==d.scr); render(); }
+  else if('open' in d){ if(started){ show('wo'); return; } renderSheet(); document.getElementById('sheet').hidden=false; }
+  else if('close' in d) document.getElementById('sheet').hidden=true;
+  else if(d.a){ const [k,v]=d.a.split(':'); ans[k]=+v; renderSheet(); }
+  else if(d.start){ plan=d.start; started=true; document.getElementById('sheet').hidden=true; show('wo'); }
+  else if('move' in d){ document.getElementById('sheet').hidden=true; alertish('Trening przeniesiony na jutro (tak jak „Przesuń”). Dziś odpoczynek.'); }
+  else if('normal' in d){ plan='normal'; render(); }
+});
+function show(s){ document.querySelector(`#scr [data-scr="${s}"]`).click(); }
+function alertish(m){ const n=document.getElementById('note'); n.innerHTML='<b>'+m+'</b>'; }
+render();
+</script>
+
+</body></html>

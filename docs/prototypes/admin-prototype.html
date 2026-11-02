@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<title>Panel admina ŻELAZO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Układ: jedna kolumna jak w aplikacji ŻELAZO (telefon), zakładki u góry, arkusz od dołu dla konta, pasek zapisu przyklejony na dole.
+   Kolory i kroje z aplikacji — panel to jej część (Więcej → Konta i plany), tylko ciemny motyw, jak sama aplikacja. */
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --dim:#9aa3ab; --faint:#7d8790;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --gold:#ffc94a; --plum:#c58bd6;
+  --disp:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);font-size:14.5px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 120px}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#view{display:flex;flex-direction:column;gap:12px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--disp);font-size:32px;line-height:1;margin:2px 0 0;text-transform:uppercase;letter-spacing:.01em}
+h2{font-family:var(--disp);font-size:22px;margin:0;text-transform:uppercase;text-wrap:balance}
+.dim{color:var(--dim)} .small{font-size:12.5px}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tabs button{flex:1;background:none;border:0;border-radius:9px;padding:9px 6px;font-weight:600;color:var(--dim)}
+.tabs button.on{background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.kill{display:none;border:1px solid var(--red);background:rgba(226,84,58,.12);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.kill b{color:var(--red)}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+.sum b{display:block;font-family:var(--disp);font-size:24px;font-variant-numeric:tabular-nums}
+.sum span{font-size:12px;color:var(--dim)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;color:var(--dim)}
+.chips button.on{border-color:var(--amber);color:var(--ink);background:var(--amber-soft)}
+.in{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.list{display:flex;flex-direction:column;gap:8px}
+.acc{display:grid;grid-template-columns:1fr auto;gap:4px 10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%}
+.acc .nm{font-weight:600;display:flex;gap:8px;align-items:center;min-width:0}
+.acc .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc .meta{font-size:12.5px;color:var(--dim);grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}
+.acc .bar{grid-column:1/-1}
+.pill{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 7px;white-space:nowrap}
+.p-premium{background:var(--amber-soft);color:var(--amber)} .p-free{background:#22303a;color:var(--steel)} .p-tester{background:#2d2236;color:var(--plum)} .p-admin{background:#2e2a17;color:var(--gold)}
+.warn{color:var(--gold)} .bad{color:var(--red)}
+.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--amber)} .bar span.hi{background:var(--gold)} .bar span.full{background:var(--red)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.card-h{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.card-h input{font-family:var(--disp);font-size:22px;text-transform:uppercase;background:none;border:0;border-bottom:1px dashed var(--line);padding:2px 0;width:100%;min-width:0}
+.sec{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.row label{min-width:0}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.step button{background:var(--panel2);border:0;width:34px;height:34px;font-size:18px}
+.step input{width:64px;text-align:center;background:var(--bg);border:0;height:34px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button{-webkit-appearance:none}
+.step input.chg{color:var(--amber);font-weight:700}
+.sw{position:relative;width:44px;height:26px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--panel2);border:1px solid var(--line);pointer-events:none;transition:background .15s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--dim);transition:transform .15s,background .15s}
+.sw input:checked+i{background:var(--amber-soft);border-color:var(--amber)} .sw input:checked+i::after{transform:translateX(18px);background:var(--amber)}
+.sw input:focus-visible+i{outline:2px solid var(--amber);outline-offset:2px}
+.cost{background:var(--panel2);border-radius:10px;padding:9px 11px;font-size:13px;color:var(--dim)}
+.cost b{color:var(--ink);font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--dim);background:var(--panel2);border-radius:10px;padding:9px 11px}
+.note.w{color:var(--gold);background:rgba(255,201,74,.08);border:1px solid rgba(255,201,74,.3)}
+.btn{background:var(--amber);color:#14100c;border:0;border-radius:11px;padding:12px 14px;font-family:var(--disp);font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+.btn.red{background:none;color:var(--red);border:1px solid var(--red)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13.5px;font-weight:600;color:var(--dim)}
+.seg button.on{border-color:var(--amber);color:var(--ink);background:var(--amber-soft)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.chk:first-of-type{border-top:0}
+.chk input{width:18px;height:18px;margin-top:2px;accent-color:var(--amber);flex:none}
+.confirm{border:1px solid var(--red);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.confirm .r{display:flex;gap:8px}.confirm .btn{flex:1;font-size:15px;padding:9px}
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;background:var(--panel);border-top:1px solid var(--line);padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.savebar .in2{max-width:520px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.savebar span{flex:1;font-size:13.5px}
+.savebar .btn{padding:10px 14px;font-size:15px}
+.sheet{position:fixed;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center}
+.sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .pn{position:relative;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.x{background:var(--panel2);border:1px solid var(--line);border-radius:10px;width:38px;height:38px;flex:none}
+.m .t{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}.m .t b{font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13.5px;width:max-content;max-width:calc(100% - 32px);display:none;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.proto{font-size:12px;color:var(--faint);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div>
+    <div class="eyebrow">USERS · Więcej → Konta i plany</div>
+    <h1>Panel admina</h1>
+  </div>
+  <div class="kill" id="kill" role="status"></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="acc" class="on" id="t-acc">Konta</button>
+    <button role="tab" data-tab="plans" id="t-plans">Plany</button>
+    <button role="tab" data-tab="set" id="t-set">Ustawienia</button>
+  </div>
+  <div id="view"></div>
+  <div class="proto">Prototyp na przykładowych kontach. Zapis niczego nie wysyła — w aplikacji trafi na serwer (plany, ustawienia i plan konta są już tam gotowe).</div>
+</div>
+
+<div class="savebar" id="savebar"><div class="in2"><span id="saveTxt"></span><button class="btn ghost" id="discard" type="button">Odrzuć</button><button class="btn" id="save" type="button">Zapisz</button></div></div>
+<div class="sheet" id="sheet"><div class="bd" data-close></div><div class="pn" id="sheetPn" role="dialog" aria-modal="true" aria-labelledby="shT"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const FEAT=[['coach','Trener (czat)'],['voice','Rozmowa głosowa'],['form','Ocena techniki z nagrania'],['estimate','Szacowanie kalorii'],['scanner','Skaner kodów'],['early','Early Access']];
+const LIM=[['coach','Pytania do Trenera','mies.'],['form','Oceny techniki','mies.'],['est','Szacowania kalorii','mies.'],['estDay','Szacowania kalorii','dziennie']];
+const CH=[['stable','Stabilna','/ — wszyscy'],['beta','Beta','/beta/ — testerzy'],['early','Early Access','/early/ — Premium'],['users','USERS','/users/ — wersja robocza']];
+// koszt jednej odpowiedzi AI (z rachunku za październik): Trener ~0,07 $, ocena techniki ~0,09 $, szacowanie ~0,0015 $; 1 $ ≈ 4 zł
+const COST={coach:.07, form:.09, est:.0015}, PLN=4;
+const clone=o=>JSON.parse(JSON.stringify(o));
+const SAVED={
+  plans:{
+    free:{name:'Darmowy', limits:{coach:5,form:1,est:30,estDay:20}, features:{coach:true,voice:false,form:true,estimate:true,scanner:true,early:false}},
+    premium:{name:'Premium', limits:{coach:30,form:10,est:300,estDay:20}, features:{coach:true,voice:true,form:true,estimate:true,scanner:true,early:true}},
+    tester:{name:'Tester', limits:{coach:60,form:20,est:600,estDay:40}, features:{coach:true,voice:true,form:true,estimate:true,scanner:true,early:true}}
+  },
+  cfg:{enforce:['users','early'], defaultPlan:'premium', adminPlan:'premium', off:[]}
+};
+let S=clone(SAVED), tab='acc', filter='all', q='', confirmKill=null, confirmStable=false;
+const ACC=[
+  {a:'marek', admin:true, plan:'', seen:'teraz', use:{coach:12,form:3,est:41}, usd:1.12},
+  {a:'anna', plan:'', seen:'dziś 08:14', use:{coach:27,form:4,est:96}, usd:2.21},
+  {a:'kuba', plan:'free', seen:'wczoraj', use:{coach:5,form:0,est:12}, usd:.37},
+  {a:'ola', plan:'tester', seen:'dziś 11:02', use:{coach:18,form:7,est:58}, usd:1.98},
+  {a:'tomek', plan:'', seen:'3 dni temu', use:{coach:2,form:0,est:4}, usd:.15},
+  {a:'ewa', plan:'free', seen:'dziś 07:40', use:{coach:3,form:1,est:29}, usd:.33},
+  {a:'piotr', plan:'', seen:'6 dni temu', use:{coach:0,form:0,est:0}, usd:0}
+];
+const eff=u=>u.admin?S.cfg.adminPlan:(u.plan||S.cfg.defaultPlan);
+const pill=(p,admin)=>`<span class="pill p-${admin?'admin':p in S.plans?p:'premium'}">${admin?'Admin · ':''}${esc(S.plans[p]?S.plans[p].name:p)}</span>`;
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+const usd=v=>'$'+v.toFixed(2);
+const zl=v=>(Math.round(v*10)/10).toString().replace('.',',')+' zł';
+const ratio=(n,m)=>m?n/m:1;
+function barCls(r){ return r>=1?'full':r>=.8?'hi':''; }
+function nearLimit(u){ const L=S.plans[eff(u)].limits; return ['coach','form','est'].some(k=>ratio(u.use[k],L[k])>=.8); }
+
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>{ b.classList.toggle('on',b.dataset.tab===tab); b.setAttribute('aria-selected',b.dataset.tab===tab); });
+  const kill=document.getElementById('kill');
+  kill.style.display=S.cfg.off.length?'block':'none';
+  kill.innerHTML=`<b>Wyłączone dla wszystkich:</b> ${S.cfg.off.map(k=>FEAT.find(f=>f[0]===k)[1]).join(', ')}. Wyłącznik awaryjny działa w każdej wersji i każdym planie.`;
+  document.getElementById('view').innerHTML=tab==='acc'?viewAcc():tab==='plans'?viewPlans():viewSet();
+  bind(); dirty();
+}
+
+function viewAcc(){
+  const by={}; ACC.forEach(u=>{ const p=eff(u); by[p]=(by[p]||0)+1; });
+  const total=ACC.reduce((a,u)=>a+u.usd,0);
+  let list=ACC.filter(u=>(!q||u.a.includes(q.toLowerCase())) && (filter==='all'||(filter==='near'?nearLimit(u):eff(u)===filter)));
+  return `<div class="sum"><div><b>${ACC.length}</b><span>kont</span></div><div><b>${usd(total)}</b><span>AI w listopadzie</span></div><div><b>${ACC.filter(nearLimit).length}</b><span>blisko limitu</span></div></div>
+  <div class="small dim">${Object.keys(S.plans).map(p=>`${esc(S.plans[p].name)}: ${by[p]||0}`).join(' · ')} · bez przypisanego planu → ${esc(S.plans[S.cfg.defaultPlan].name)}</div>
+  <input class="in" id="q" type="search" placeholder="Szukaj konta…" value="${esc(q)}" autocomplete="off">
+  <div class="chips">${[['all','Wszystkie'],...Object.keys(S.plans).map(p=>[p,S.plans[p].name]),['near','Blisko limitu']].map(([k,l])=>`<button type="button" data-f="${k}" class="${filter===k?'on':''}">${esc(l)}</button>`).join('')}</div>
+  <div class="list">${list.length?list.map(u=>{ const p=eff(u), L=S.plans[p].limits, r=ratio(u.use.coach,L.coach);
+    return `<button class="acc" type="button" data-acc="${u.a}"><span class="nm"><span>${u.a}</span>${pill(p,u.admin)}${!u.plan&&!u.admin?'<span class="small dim">domyślny</span>':''}</span><span class="small dim">${usd(u.usd)}</span>
+      <span class="bar"><span class="${barCls(r)}" style="width:${Math.min(100,r*100)}%"></span></span>
+      <span class="meta"><span class="${r>=1?'bad':r>=.8?'warn':''}">Trener ${u.use.coach}/${L.coach}</span><span>Oceny ${u.use.form}/${L.form}</span><span>Szacowania ${u.use.est}/${L.est}</span><span>· ${u.seen}</span></span></button>`; }).join(''):'<div class="note">Brak kont dla tego filtra.</div>'}</div>`;
+}
+
+function openAcc(a){
+  const u=ACC.find(x=>x.a===a), p=eff(u), L=S.plans[p].limits;
+  const m=(l,n,max)=>`<div class="m"><div class="t"><span>${l}</span><b>${n} / ${max}</b></div><div class="bar"><span class="${barCls(ratio(n,max))}" style="width:${Math.min(100,ratio(n,max)*100)}%"></span></div></div>`;
+  const pn=document.getElementById('sheetPn');
+  pn.innerHTML=`<div class="row"><div style="min-width:0"><div class="eyebrow">Konto · ostatnio ${u.seen}</div><h2 id="shT">${u.a}</h2></div><button class="x" data-close aria-label="Zamknij" type="button">✕</button></div>
+    ${u.admin?`<div class="note">To Twoje konto administratora — jego plan ustawiasz w zakładce Ustawienia.</div>`:`
+    <div class="sec">Plan</div>
+    <div class="seg" id="accPlan">${['',...Object.keys(S.plans)].map(k=>`<button type="button" data-p="${k}" class="${(u.plan||'')===k?'on':''}">${k?esc(S.plans[k].name):'Domyślny ('+esc(S.plans[S.cfg.defaultPlan].name)+')'}</button>`).join('')}</div>
+    <div class="small dim">Zmiana działa od następnego zapytania tej osoby. Zużycie w tym miesiącu zostaje — liczy się do nowych limitów.</div>`}
+    <div class="sec">Listopad</div>
+    ${m('Pytania do Trenera',u.use.coach,L.coach)}${m('Oceny techniki',u.use.form,L.form)}${m('Szacowania kalorii',u.use.est,L.est)}
+    <div class="cost">Koszt AI w tym miesiącu: <b>${usd(u.usd)}</b> (≈ ${zl(u.usd*PLN)})</div>
+    ${u.admin?'':`<div class="row" style="gap:8px"><button class="btn ghost" type="button" style="flex:1" data-demo="Nowy link dla ${u.a} skopiowany (prototyp).">Nowy link</button><button class="btn red" type="button" style="flex:1" data-demo="Konto ${u.a} zablokowane (prototyp).">Zablokuj</button></div>`}`;
+  document.getElementById('sheet').style.display='flex';
+  pn.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet);
+  pn.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>toast(b.dataset.demo));
+  pn.querySelectorAll('#accPlan button').forEach(b=>b.onclick=()=>{ u.plan=b.dataset.p; toast(`Plan konta ${u.a}: ${b.dataset.p?S.plans[b.dataset.p].name:'domyślny'}. Działa od następnego zapytania.`); render(); openAcc(a); });
+}
+function closeSheet(){ document.getElementById('sheet').style.display='none'; }
+document.querySelector('#sheet .bd').onclick=closeSheet;
+
+function worst(p){ const L=S.plans[p].limits; return (L.coach*COST.coach + L.form*COST.form + L.est*COST.est)*PLN; }
+function viewPlans(){
+  return Object.keys(S.plans).map(p=>{ const P=S.plans[p], O=SAVED.plans[p], n=ACC.filter(u=>eff(u)===p).length;
+    const over=ACC.filter(u=>eff(u)===p && ['coach','form','est'].some(k=>u.use[k]>P.limits[k]));
+    return `<div class="card">
+      <div class="card-h"><input aria-label="Nazwa planu ${p}" data-name="${p}" value="${esc(P.name)}"><span class="small dim" style="white-space:nowrap">${n} ${n===1?'konto':n>=2&&n<=4?'konta':'kont'}</span></div>
+      <div class="sec">Limity</div>
+      ${LIM.map(([k,l,per])=>`<div class="row"><label for="l-${p}-${k}">${l} <span class="dim small">/ ${per}</span></label><div class="step"><button type="button" data-d="-1" data-l="${p}.${k}" aria-label="Mniej">−</button><input id="l-${p}-${k}" inputmode="numeric" data-lim="${p}.${k}" value="${P.limits[k]}" class="${O&&O.limits[k]!==P.limits[k]?'chg':''}"><button type="button" data-d="1" data-l="${p}.${k}" aria-label="Więcej">+</button></div></div>`).join('')}
+      <div class="cost">Najgorszy przypadek (wszystkie limity wykorzystane): <b>≈ ${zl(worst(p))}</b> kosztu AI na konto miesięcznie.</div>
+      ${over.length?`<div class="note w">${over.map(u=>u.a).join(', ')} ${over.length===1?'ma':'mają'} już w tym miesiącu więcej, niż pozwala nowy limit — do 1 grudnia nie wykorzystają tej funkcji.</div>`:''}
+      <div class="sec">Funkcje</div>
+      ${FEAT.map(([k,l])=>`<div class="row"><label for="f-${p}-${k}">${l}${S.cfg.off.includes(k)?' <span class="small bad">· wyłączone dla wszystkich</span>':''}</label><span class="sw"><input type="checkbox" id="f-${p}-${k}" data-feat="${p}.${k}" ${P.features[k]?'checked':''}><i></i></span></div>`).join('')}
+    </div>`; }).join('')+
+    `<button class="btn ghost" type="button" id="addPlan">＋ Nowy plan (kopia Premium)</button>
+     <div class="note">Limity i funkcje planu działają w wersjach zaznaczonych w Ustawieniach (dziś: ${S.cfg.enforce.map(c=>CH.find(x=>x[0]===c)[1]).join(', ')}).</div>`;
+}
+
+function viewSet(){
+  const segP=(id,val)=>`<div class="seg" id="${id}">${Object.keys(S.plans).map(k=>`<button type="button" data-p="${k}" class="${val===k?'on':''}">${esc(S.plans[k].name)}</button>`).join('')}</div>`;
+  return `<div class="card"><div class="sec">Plan dla kont bez przypisanego planu</div>${segP('defPlan',S.cfg.defaultPlan)}
+      <div class="small dim">Dotyczy nowych osób z zaproszenia i wszystkich kont oznaczonych „domyślny”. Dziś Premium, żeby obecni użytkownicy niczego nie stracili.</div></div>
+    <div class="card"><div class="sec">Twój plan (administrator)</div>${segP('admPlan',S.cfg.adminPlan)}
+      <div class="small dim">Przełącz na Darmowy, żeby zobaczyć aplikację oczami osoby bez subskrypcji.</div></div>
+    <div class="card"><div class="sec">Limity planów obowiązują w wersjach</div>
+      ${CH.map(([k,l,d])=>`<label class="chk"><input type="checkbox" data-ch="${k}" ${S.cfg.enforce.includes(k)?'checked':''}><span><b>${l}</b><br><span class="small dim">${d}</span></span></label>`).join('')}
+      ${confirmStable?`<div class="confirm"><span><b>Włączyć plany w wersji stabilnej?</b> Od następnego zapytania każde konto dostaje limity swojego planu — to start subskrypcji dla wszystkich.</span><div class="r"><button class="btn red" type="button" id="stYes">Włącz</button><button class="btn ghost" type="button" id="stNo">Anuluj</button></div></div>`:''}
+      <div class="small dim">W wersjach bez zaznaczenia działają stare limity dzienne i tylko wyłącznik awaryjny.</div></div>
+    <div class="card"><div class="sec">Wyłącznik awaryjny</div>
+      <div class="small dim">Wyłącza funkcję od razu we wszystkich wersjach i planach — gdy coś się psuje albo koszty rosną.</div>
+      ${FEAT.filter(f=>f[0]!=='early').map(([k,l])=>`<div class="row"><label for="k-${k}">${l}</label><span class="sw"><input type="checkbox" id="k-${k}" data-kill="${k}" ${S.cfg.off.includes(k)?'':'checked'}><i></i></span></div>
+        ${confirmKill===k?`<div class="confirm"><span><b>Wyłączyć: ${l.toLowerCase()}?</b> Wszyscy zobaczą, że funkcja jest teraz niedostępna.</span><div class="r"><button class="btn red" type="button" data-killyes="${k}">Wyłącz</button><button class="btn ghost" type="button" data-killno>Anuluj</button></div></div>`:''}`).join('')}
+    </div>`;
+}
+
+function changes(){
+  let n=0; const a=SAVED, b=S;
+  Object.keys(b.plans).forEach(p=>{ const O=a.plans[p], P=b.plans[p]; if(!O){ n++; return; }
+    if(O.name!==P.name) n++; LIM.forEach(([k])=>{ if(O.limits[k]!==P.limits[k]) n++; }); FEAT.forEach(([k])=>{ if(O.features[k]!==P.features[k]) n++; }); });
+  ['defaultPlan','adminPlan'].forEach(k=>{ if(a.cfg[k]!==b.cfg[k]) n++; });
+  if(a.cfg.enforce.slice().sort().join()!==b.cfg.enforce.slice().sort().join()) n++;
+  if(a.cfg.off.slice().sort().join()!==b.cfg.off.slice().sort().join()) n++;
+  return n;
+}
+function dirty(){ const n=changes(); document.getElementById('savebar').style.display=n?'block':'none'; document.getElementById('saveTxt').textContent=n+' '+(n===1?'zmiana':n>=2&&n<=4?'zmiany':'zmian')+' w planach i ustawieniach'; }
+document.getElementById('discard').onclick=()=>{ S.plans=clone(SAVED.plans); S.cfg=clone(SAVED.cfg); confirmKill=null; confirmStable=false; render(); toast('Zmiany odrzucone.'); };
+document.getElementById('save').onclick=()=>{ SAVED.plans=clone(S.plans); SAVED.cfg=clone(S.cfg); render(); toast('Zapisano. Działa od następnego zapytania (prototyp — nic nie wysłano).'); };
+
+function setLim(path,v){ const [p,k]=path.split('.'); v=Math.max(0,Math.min(100000,Math.round(+v||0))); S.plans[p].limits[k]=v; }
+function bind(){
+  const v=document.getElementById('view');
+  const qi=v.querySelector('#q'); if(qi) qi.oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; render(); const n=document.getElementById('q'); n.focus(); n.setSelectionRange(pos,pos); };
+  v.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ filter=b.dataset.f; render(); });
+  v.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>openAcc(b.dataset.acc));
+  v.querySelectorAll('[data-name]').forEach(i=>i.onchange=()=>{ S.plans[i.dataset.name].name=i.value.trim().slice(0,30)||i.dataset.name; render(); });
+  v.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{ const [p,k]=b.dataset.l.split('.'), cur=S.plans[p].limits[k], step=cur>=100?10:cur>=20?5:1; setLim(b.dataset.l, cur+(+b.dataset.d)*step); render(); });
+  v.querySelectorAll('[data-lim]').forEach(i=>i.onchange=()=>{ setLim(i.dataset.lim,i.value); render(); });
+  v.querySelectorAll('[data-feat]').forEach(i=>i.onchange=()=>{ const [p,k]=i.dataset.feat.split('.'); S.plans[p].features[k]=i.checked; render(); });
+  const add=v.querySelector('#addPlan'); if(add) add.onclick=()=>{ let i=1; while(S.plans['plan'+i]) i++; S.plans['plan'+i]=Object.assign(clone(S.plans.premium),{name:'Nowy plan '+i}); render(); };
+  v.querySelectorAll('#defPlan [data-p]').forEach(b=>b.onclick=()=>{ S.cfg.defaultPlan=b.dataset.p; render(); });
+  v.querySelectorAll('#admPlan [data-p]').forEach(b=>b.onclick=()=>{ S.cfg.adminPlan=b.dataset.p; render(); });
+  v.querySelectorAll('[data-ch]').forEach(i=>i.onchange=()=>{ const k=i.dataset.ch;
+    if(k==='stable' && i.checked){ i.checked=false; confirmStable=true; render(); return; }
+    S.cfg.enforce=i.checked?[...S.cfg.enforce,k]:S.cfg.enforce.filter(x=>x!==k); render(); });
+  const sy=v.querySelector('#stYes'); if(sy){ sy.onclick=()=>{ S.cfg.enforce.push('stable'); confirmStable=false; render(); }; v.querySelector('#stNo').onclick=()=>{ confirmStable=false; render(); }; }
+  v.querySelectorAll('[data-kill]').forEach(i=>i.onchange=()=>{ const k=i.dataset.kill;
+    if(!i.checked){ i.checked=true; confirmKill=k; render(); return; }
+    S.cfg.off=S.cfg.off.filter(x=>x!==k); render(); });
+  v.querySelectorAll('[data-killyes]').forEach(b=>b.onclick=()=>{ S.cfg.off.push(b.dataset.killyes); confirmKill=null; render(); });
+  v.querySelectorAll('[data-killno]').forEach(b=>b.onclick=()=>{ confirmKill=null; render(); });
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; confirmKill=null; confirmStable=false; render(); });
+let tt=null;
+function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.style.display='block'; clearTimeout(tt); tt=setTimeout(()=>{ el.style.display='none'; },3200); }
+render();
+</script>
+
+</body></html>

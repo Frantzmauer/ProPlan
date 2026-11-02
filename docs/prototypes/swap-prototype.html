@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zamiana ćwiczenia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --gold:#ffc94a;
+  --font-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+.wrap{max-width:440px;margin:0 auto;padding-block:14px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h2,h3,.disp{font-family:var(--font-disp);text-transform:uppercase;line-height:1.05;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;font-weight:600}
+.proto{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.proto button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.proto button.on{background:var(--amber);border-color:var(--amber);color:#0e1114}
+.pnote{font-size:13px;color:var(--ink-dim);border-left:3px solid var(--steel);padding:6px 10px;margin:10px 0 14px;background:rgba(95,168,211,.07);border-radius:0 8px 8px 0}
+.pnote b{color:var(--ink)}
+.screen[hidden]{display:none}
+
+/* tryb treningu (jak w aplikacji) */
+.wo{display:flex;flex-direction:column;gap:14px}
+.wo-name{display:flex;gap:10px;align-items:flex-start}
+.wo-name .t{flex:1;min-width:0;font-family:var(--font-disp);font-size:30px;font-weight:700;line-height:1.05;text-transform:uppercase}
+.wo-from{font-size:13px;color:var(--ink-dim);margin-top:4px}
+.wo-from b{color:var(--amber);font-weight:600}
+.wo-from button{color:var(--steel);font-weight:600;font-size:13px;min-height:32px;padding:0 4px}
+.nv{display:flex;gap:6px}
+.nv button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:22px}
+.setno{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;color:var(--ink-dim)}
+.setno b{color:var(--amber)}
+.tools{display:flex;gap:6px}
+.tbtn{min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--steel);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.tbtn.swap{color:var(--amber);border-color:rgba(255,122,26,.45);background:var(--amber-soft)}
+.dots{display:flex;gap:6px}
+.dots i{width:28px;height:6px;border-radius:99px;background:var(--panel2)}
+.dots i.ok{background:var(--green)}
+.dots i.cur{background:var(--amber)}
+.dots i.sw{background:var(--steel)}
+.big{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.vals{display:flex;align-items:flex-end;gap:16px}
+.val{text-align:center}
+.val .n{font-family:var(--font-disp);font-weight:700;font-size:60px;line-height:1}
+.val .u{display:block;font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+.x{font-family:var(--font-disp);font-size:28px;color:var(--ink-faint);padding-bottom:20px}
+.ref{font-size:13.5px;color:var(--ink-dim)}
+.ref b{color:var(--ink);font-weight:600}
+.done{width:100%;min-height:62px;border-radius:16px;background:var(--green);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:24px;letter-spacing:.04em;text-transform:uppercase}
+.list h4{font-size:11.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin:0 0 6px}
+.list div{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:13.5px;margin-bottom:6px}
+.list div.cur{border-color:var(--amber)}
+.list small{color:var(--amber)}
+
+/* karta dnia */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ex{border-bottom:1px solid var(--line);padding:13px 16px}
+.ex:last-child{border-bottom:none}
+.ex-top{display:flex;gap:10px;align-items:center}
+.ex-top .num{font-family:var(--font-disp);font-weight:700;color:var(--ink-faint);width:20px}
+.ex-top .nm{flex:1;font-size:15px;font-weight:500;min-width:0}
+.ex-top .nm small{display:block;font-size:12px;color:var(--amber)}
+.ex-top .sc{font-family:var(--font-disp);font-weight:600;color:var(--ink-dim);font-size:13px}
+.mini{min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);font-size:12.5px;font-weight:600;color:var(--steel)}
+.mini.swap{color:var(--amber);width:40px;padding:0;font-size:17px}
+
+/* arkusz zamiany */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .pn{position:relative;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .25s ease-out;display:flex;flex-direction:column;gap:12px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.sh-head{display:flex;gap:10px;align-items:flex-start}
+.sh-head h2{font-size:26px;flex:1;min-width:0}
+.xbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-size:20px;color:var(--ink-dim);flex:none}
+.lab{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:600;color:var(--ink-dim);min-height:40px}
+.chips button.on{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.warn{font-size:13px;background:rgba(226,84,58,.1);border:1px solid rgba(226,84,58,.4);color:var(--ink);border-radius:12px;padding:9px 12px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;width:100%}
+.opt.on{border-color:var(--amber);background:var(--amber-soft)}
+.opt .n{font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:8px}
+.opt .n span:last-child{font-family:var(--font-disp);font-size:18px;color:var(--amber);white-space:nowrap}
+.opt small{font-size:12.5px;color:var(--ink-dim)}
+.opt .tag{font-size:11px;font-weight:700;color:#0e1114;background:var(--steel);border-radius:5px;padding:1px 6px;margin-right:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button{min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:6px 10px;text-align:left}
+.seg button b{display:block;font-size:14px}
+.seg button small{font-size:11.5px;color:var(--ink-dim)}
+.seg button.on{border-color:var(--amber);background:var(--amber-soft)}
+.split{font-size:13px;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.split b{color:var(--ink)}
+.go{width:100%;min-height:56px;border-radius:14px;background:var(--amber);color:#0e1114;font-family:var(--font-disp);font-weight:700;font-size:21px;letter-spacing:.04em;text-transform:uppercase}
+.go:disabled{opacity:.4}
+.ask{color:var(--steel);font-weight:600;font-size:14px;min-height:40px;align-self:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;font-size:13.5px;display:flex;gap:6px;align-items:center;width:max-content;max-width:calc(100% - 32px)}
+.toast button{color:var(--steel);font-weight:600;padding:6px 10px}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Prototyp · Zamiana ćwiczenia</div>
+  <div class="proto" id="scr">
+    <button data-scr="wo" class="on">Tryb treningu</button>
+    <button data-scr="card">Karta dnia</button>
+  </div>
+  <div class="proto" id="scen">
+    <button data-scen="0" class="on">Przed 1. serią</button>
+    <button data-scen="2">Po 2 seriach</button>
+  </div>
+  <div class="pnote" id="note"></div>
+  <section class="screen" id="s-wo"><div class="wo" id="woBox"></div></section>
+  <section class="screen" id="s-card" hidden><div class="card" id="cardBox"></div></section>
+</div>
+
+<div class="sheet" id="sheet" hidden><div class="bd" data-close></div><div class="pn" id="pn" role="dialog" aria-modal="true" aria-labelledby="shT"></div></div>
+<div id="layer"></div>
+
+<script>
+/* Zamienniki: ta sama grupa mięśni, inny sprzęt. k = przelicznik ciężaru względem wzorca grupy
+   (sztanga = 1; hantle podane na jedną rękę). Ciężar z własnej historii zamiennika ma pierwszeństwo. */
+const ALT={
+  'Wyciskanie sztangi — ławka płaska':{grp:'klatka, triceps, przód barków',k:1,eq:'sztanga', alts:[
+    {n:'Wyciskanie hantli — ławka płaska',k:.4,eq:'hantle',perHand:true},
+    {n:'Wyciskanie na maszynie (chest press)',k:.9,eq:'maszyna'},
+    {n:'Pompki',k:0,eq:'bez sprzętu',reps:'max'},
+    {n:'Wyciskanie hantli — ławka skośna',k:.35,eq:'hantle',perHand:true,hist:{iso:'2026-10-28',kg:22,r:[10,10,9]}}]},
+  'Wiosłowanie sztangą w opadzie':{grp:'plecy, tył barków, biceps',k:1,eq:'sztanga',alts:[
+    {n:'Wiosłowanie hantlem jednorącz',k:.45,eq:'hantel',perHand:true,hist:{iso:'2026-10-27',kg:26,r:[10,10,10]}},
+    {n:'Wiosłowanie na wyciągu siedząc',k:.9,eq:'wyciąg'},
+    {n:'Wiosłowanie na maszynie',k:.9,eq:'maszyna'}]},
+};
+const W={title:'Góra A', ex:[
+  {n:'Wyciskanie sztangi — ławka płaska',s:4,r:8,kg:62.5,last:'27.10: 60 kg × 8, 8, 8, 8'},
+  {n:'Wiosłowanie sztangą w opadzie',s:4,r:10,kg:50,last:'27.10: 50 kg × 10, 10, 9, 9'},
+  {n:'Wyciskanie żołnierskie (stojąc)',s:3,r:8,kg:40,last:'27.10: 40 kg × 8, 8, 7'},
+  {n:'Podciąganie na drążku (lub wyciąg)',s:3,r:'max',kg:0,last:'27.10: 9, 8, 7 powt.'},
+]};
+const fmt=x=>String(Math.round(x*2)/2).replace('.',',');
+let scen=0, scr='wo', swapped=null;   // swapped: {i, alt, kg, scope, fromSet, reason}
+let sh={reason:'busy', pick:0, scope:'today'};
+
+function roundKg(x,perHand){ const st=perHand?(x<10?1:2):2.5; return Math.max(perHand?1:2.5, Math.round(x/st)*st); }
+function suggest(base, a, reason){
+  let kg, src;
+  if(a.hist){ kg=a.hist.kg; src=`ostatnio ${a.hist.iso.slice(8,10)}.${a.hist.iso.slice(5,7)}: ${fmt(a.hist.kg)} kg × ${a.hist.r.join(', ')}`; }
+  else if(a.k){ kg=roundKg(base.kg*a.k/ALT[base.n].k, a.perHand); src=`przeliczone z ${fmt(base.kg)} kg — dopasuj po 1. serii`; }
+  else { kg=0; src='ciężar ciała'; }
+  if(reason==='pain' && kg){ kg=roundKg(kg*0.8, a.perHand); src+=' · −20% bo boli'; }
+  return {kg, src};
+}
+function curEx(i){ const e=W.ex[i]; if(swapped && swapped.i===i) return {...e, n:swapped.alt.n, kg:swapped.kg, r:swapped.alt.reps||e.r, from:e.n}; return e; }
+
+function renderWo(){
+  const i=0, e=W.ex[i], c=curEx(i), k=scen, cur=c;
+  const dots=Array.from({length:e.s},(_,j)=>`<i class="${j<k?'ok':j===k?'cur':''}${swapped&&swapped.i===i&&j>=swapped.fromSet?' sw':''}"></i>`).join('');
+  document.getElementById('woBox').innerHTML=`
+    <div class="wo-name"><div style="flex:1;min-width:0"><div class="t">${cur.n}</div>
+      ${cur.from?`<div class="wo-from">zamiast <b>${cur.from}</b> · ${swapped.scope==='today'?'tylko dziś':'na stałe od dziś'}<button data-undo>↺ cofnij</button></div>`:''}</div>
+      <div class="nv"><button aria-label="Poprzednie">‹</button><button aria-label="Następne">›</button></div></div>
+    <div class="setno"><span>Seria <b>${k+1}</b> z ${e.s}</span><span class="tools"><button class="tbtn swap" data-open="0">⇄ Zamień</button><button class="tbtn">Pokaż technikę</button></span></div>
+    <div class="dots">${dots}</div>
+    <div class="big"><div class="vals">${cur.kg?`<div class="val"><span class="n">${fmt(cur.kg)}</span><span class="u">kg${swapped&&swapped.i===i&&swapped.alt.perHand?' / rękę':''}</span></div><span class="x">×</span>`:''}<div class="val"><span class="n">${cur.r==='max'?'MAX':cur.r}</span><span class="u">powtórzeń</span></div></div></div>
+    <div class="ref">${cur.from?(swapped.src?`Ciężar: <b>${swapped.src}</b>`:''):`Ostatnio (${e.last.split(':')[0]}): <b>${e.last.split(': ')[1]}</b>`}</div>
+    <button class="done">✓ Seria zrobiona</button>
+    <div class="list"><h4>Ćwiczenia</h4>${W.ex.map((x,j)=>{ const y=curEx(j); return `<div class="${j===0?'cur':''}"><span>${y.n}${y.from?`<br><small>zamiast ${y.from}</small>`:''}</span><span>${j===0?k:0}/${x.s}</span></div>`; }).join('')}</div>`;
+}
+function renderCard(){
+  document.getElementById('cardBox').innerHTML=W.ex.map((x,j)=>{ const y=curEx(j);
+    return `<div class="ex"><div class="ex-top"><span class="num">${j+1}</span><span class="nm">${y.n}${y.from?`<small>zamiast ${y.from} · ${swapped.scope==='today'?'tylko dziś':'na stałe'}</small>`:''}</span>
+      ${ALT[x.n]?`<button class="mini swap" data-open="${j}" aria-label="Zamień ćwiczenie">⇄</button>`:''}<button class="mini">Pokaż</button><span class="sc">${x.s}×${x.r}</span></div></div>`; }).join('');
+}
+function renderSheet(i){
+  const e=W.ex[i], A=ALT[e.n], done=i===0?scen:0;
+  const opts=A.alts.map(a=>({a, ...suggest(e,a,sh.reason)}));
+  // najpierw to, co już robiłeś (znany ciężar); przy „brak sprzętu” maszyny na koniec
+  opts.sort((x,y)=>(sh.reason==='gear'?(x.a.eq==='maszyna')-(y.a.eq==='maszyna'):0) || (!!y.a.hist)-(!!x.a.hist));
+  const p=opts[sh.pick]||opts[0];
+  document.getElementById('pn').innerHTML=`<div class="grab"></div>
+    <div class="sh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Zamień ćwiczenie</div><h2 id="shT">${e.n}</h2><div style="font-size:13px;color:var(--ink-dim);margin-top:4px">Te same mięśnie: ${A.grp}</div></div><button class="xbtn" data-close aria-label="Zamknij">✕</button></div>
+    <div class="lab">Dlaczego?</div>
+    <div class="chips">${[['busy','Zajęte stanowisko'],['pain','Coś boli'],['gear','Brak sprzętu']].map(([k,l])=>`<button data-reason="${k}" class="${sh.reason===k?'on':''}">${l}</button>`).join('')}</div>
+    ${sh.reason==='pain'?'<div class="warn">Ostry albo kłujący ból — przerwij to ćwiczenie. Zamiennik dostaje ciężar o 20% niższy, a Trener dowie się o tym po treningu.</div>':''}
+    <div class="lab">Na co?</div>
+    <div class="opts">${opts.map((o,j)=>`<button class="opt ${j===sh.pick?'on':''}" data-pick="${j}">
+      <span class="n"><span>${o.a.n}</span><span>${o.kg?fmt(o.kg)+' kg'+(o.a.perHand?' / rękę':''):(o.a.reps==='max'?'MAX':'')}</span></span>
+      <small>${o.a.hist?'<span class="tag">ROBIŁEŚ</span>':''}${o.a.eq} · ${o.src}</small></button>`).join('')}</div>
+    <div class="lab">Na jak długo?</div>
+    <div class="seg">
+      <button data-scope="today" class="${sh.scope==='today'?'on':''}"><b>Tylko dziś</b><small>następnym razem znów ${e.n.split(' (')[0].split(' — ')[0].toLowerCase()}</small></button>
+      <button data-scope="perm" class="${sh.scope==='perm'?'on':''}"><b>Na stałe</b><small>w planie od dziś, jak zmiana od Trenera</small></button>
+    </div>
+    ${done?`<div class="split">Zrobione <b>${done} serie</b> zostają jako ${e.n}. Pozostałe <b>${e.s-done}</b> zrobisz jako ${p.a.n}. Rekordy i historia liczą się osobno dla każdego.</div>`:''}
+    <button class="go" data-apply="${i}">Zamień${done?' pozostałe serie':''}</button>
+    <button class="ask">Żadne nie pasuje? Zapytaj Trenera →</button>`;
+  sh._opts=opts;
+}
+function openSheet(i){ sh={reason:'busy', pick:0, scope:'today', i}; renderSheet(i); document.getElementById('sheet').hidden=false; }
+function closeSheet(){ document.getElementById('sheet').hidden=true; }
+function toast(msg){
+  const L=document.getElementById('layer'); L.innerHTML=`<div class="toast"><span>${msg}</span><button data-undo>Cofnij</button></div>`;
+  clearTimeout(toast.t); toast.t=setTimeout(()=>{ L.innerHTML=''; },6000);
+}
+function note(){
+  document.getElementById('note').innerHTML = scr==='wo'
+    ? '<b>Spróbuj:</b> stuknij <b>⇄ Zamień</b>, wybierz powód i zamiennik. Przełącz „Po 2 seriach”, żeby zobaczyć zamianę w trakcie ćwiczenia.'
+    : '<b>Karta dnia:</b> przycisk ⇄ przy ćwiczeniu — to samo, zanim zaczniesz trening. Zamienniki są tu tylko dla dwóch pierwszych ćwiczeń (dane przykładowe).';
+}
+function render(){ renderWo(); renderCard(); note(); }
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-scr],[data-scen],[data-open],[data-close],[data-reason],[data-pick],[data-scope],[data-apply],[data-undo]'); if(!t) return;
+  const d=t.dataset;
+  if(d.scr){ scr=d.scr; document.querySelectorAll('#scr button').forEach(b=>b.classList.toggle('on',b===t)); document.getElementById('s-wo').hidden=scr!=='wo'; document.getElementById('s-card').hidden=scr!=='card'; render(); }
+  else if(d.scen!=null){ scen=+d.scen; document.querySelectorAll('#scen button').forEach(b=>b.classList.toggle('on',b===t)); render(); }
+  else if(d.open!=null) openSheet(+d.open);
+  else if('close' in d) closeSheet();
+  else if(d.reason){ sh.reason=d.reason; sh.pick=0; renderSheet(sh.i); }
+  else if(d.pick!=null){ sh.pick=+d.pick; renderSheet(sh.i); }
+  else if(d.scope){ sh.scope=d.scope; renderSheet(sh.i); }
+  else if(d.apply!=null){ const i=+d.apply, o=sh._opts[sh.pick];
+    swapped={i, alt:o.a, kg:o.kg, src:o.src, scope:sh.scope, fromSet:i===0?scen:0, reason:sh.reason};
+    closeSheet(); render(); toast('Zamieniono ćwiczenie'); }
+  else if('undo' in d){ swapped=null; document.getElementById('layer').innerHTML=''; render(); }
+});
+render();
+</script>
+
+</body></html>
