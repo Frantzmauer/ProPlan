@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="ŻELAZO EA">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-OBga5K9p.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DvJ14ihG.css">
+  <script type="module" crossorigin src="./assets/index-BmixlgyU.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-0xQ3_u_Y.css">
 </head>
 <body>
 
@@ -52,6 +52,7 @@
   <div class="section">
     <div class="section-h"><div><div class="eyebrow">Jadłospis</div><h2>Co dziś jesz</h2></div><div class="side" id="mealsProgress"></div></div>
     <div class="macros" id="macrosBox"></div>
+    <div class="diet-score" id="dietScore" aria-live="polite" style="display:none"></div>
     <div class="panel" id="mealsCard"></div>
   </div>
 
@@ -128,10 +129,15 @@
   <div class="section">
     <div class="eyebrow">Obwody (cm) · raz w tygodniu, rano, na czczo</div>
     <div class="panel panel-pad">
+      <div id="msEditNote" class="ms-edit-note" style="display:none"></div>
       <div id="msInputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px"></div>
-      <button class="btn" id="msSave" style="width:100%;margin-top:12px">Zapisz pomiar</button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn ghost" id="msCancel" style="display:none;flex:1">Anuluj</button>
+        <button class="btn" id="msSave" style="flex:2">Zapisz pomiar</button>
+      </div>
       <div id="msTable" style="margin-top:14px"></div>
       <canvas class="chart" id="msChart"></canvas>
+      <div id="msHist"></div>
       <div class="empty" id="msEmpty">Zapisz pierwszy pomiar — wystarczy wpisać to, co zmierzyłeś.</div>
     </div>
   </div>
@@ -222,7 +228,7 @@
   <div class="section" style="margin-top:14px" data-grp="ver">
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
-      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.3</b><span>sprawdzona wersja</span></a>
+      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.4</b><span>sprawdzona wersja</span></a>
       <a class="ver-btn" id="verBeta" href="../beta/"><b>Beta</b><span>nowości przed wydaniem · do testów</span></a>
       <a class="ver-btn" id="verEarly" href="../early/" style="display:none"><b>Early Access</b><span>nowości przed stabilną · dla Premium</span></a>
       <a class="ver-btn" id="verUsers" href="../users/" style="display:none"><b>USERS</b><span>konta, plany i limity · wersja robocza</span></a>
@@ -553,7 +559,7 @@
 <div id="mealDialog">
   <div class="md-card">
     <div class="md-title">Dodaj posiłek</div>
-    <label class="md-lab">Co zjadłeś?</label>
+    <label class="md-lab">Co było do jedzenia?</label>
     <div class="md-row">
       <input type="text" id="mdTxt" class="md-in" placeholder="np. duży kebab z sosem czosnkowym">
       <button class="mic" id="mdMic" type="button" aria-label="Powiedz, co zjadłeś" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
@@ -561,6 +567,11 @@
       <button class="mic" id="mdScan" type="button" aria-label="Zeskanuj kod kreskowy z opakowania"><svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13.5 8v8M17 8v8"/></svg></button>
     </div>
     <div class="md-voice" id="mdVoice" style="display:none"></div>
+    <div id="mdRepBox">
+      <label class="md-lab">Zastępuje</label>
+      <div class="md-chips" id="mdRep" role="radiogroup" aria-label="Czy ten posiłek zastępuje posiłek z planu"></div>
+      <div class="md-rep-hint" id="mdRepHint"></div>
+    </div>
     <button class="btn ghost" id="mdEstimate" style="width:100%;margin-top:8px;padding:11px;font-size:14px">✨ Oszacuj kalorie z opisu</button>
     <div id="mdEstMsg" style="font-size:12px;color:var(--steel);margin-top:6px;display:none"></div>
     <label class="md-lab">Kalorie (kcal)</label>

@@ -41,7 +41,7 @@ export function moreStatus(){
   set('mmProf', `${p.name||'bez imienia'} · ${S.kcalGoal||DEFAULT_KCAL} kcal · start ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
   set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
-  set('mmVer', ({stable:'Stabilna · v1.3', early:'Early Access', users:'USERS'})[APP_VER] || 'Beta');
+  set('mmVer', ({stable:'Stabilna · v1.4', early:'Early Access', users:'USERS'})[APP_VER] || 'Beta');
   { const q=quotaCur(); set('mmPlan', q ? `Zostało ${quotaLeft('coach')} z ${q.coach.max} pytań · ${quotaLeft('form')} z ${q.form.max} nagrań · ${quotaLeft('est')} z ${q.est.max} szacowań` : 'Limity Trenera AI', q&&quotaLeft('coach')===0); }
   { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
     if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
