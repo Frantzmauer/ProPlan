@@ -229,6 +229,17 @@ export function dayMeals(iso, dow, L, wk, goalOverride?){
   return slots;
 }
 
+// suma dnia jak w Diecie: odhaczone posiłki z planu (bez zastąpionych) + własne; goal = cel kalorii tego dnia
+export function dayTotals(iso, goal){
+  const L=S.log[iso], tot={kcal:0,p:0,c:0,f:0}; if(!L) return tot;
+  const add=x=>{ tot.kcal+=+x.kcal||0; tot.p+=+x.p||0; tot.c+=+x.c||0; tot.f+=+x.f||0; };
+  const own=(L.custom||[]).filter(c=>!c._del && c.done!==false), rep=new Set(own.map(c=>c.rep).filter(Boolean));
+  const dow=parseISO(iso).getDay();
+  if(DIET[dow]) dayMeals(iso, dow, L, weekOf(dayIndexFor(iso)), goal).forEach((x,i)=>{ if(L.meals&&L.meals['m'+i]&&!rep.has('m'+i)) add(x.mc); });
+  own.forEach(add);
+  return tot;
+}
+
 /* ---- progresja: ostatnia sesja tego samego ćwiczenia (po nazwie, także z poprzedniej fazy) ---- */
 export function prevSession(exName, iso){
   const d=parseISO(iso);

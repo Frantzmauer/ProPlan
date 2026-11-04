@@ -2,7 +2,7 @@
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { bcClose } from '../features/scanner';
 import { voiceReset, voiceStop } from '../ui/dictation';
-import { MT } from './meals';
+import { MT, mdRepRender } from './meals';
 import { swapCue } from './train';
 
 export let GUIDE;
@@ -30,6 +30,7 @@ export function openMealDialog(iso, keepReplace?){
   dlg.querySelector('#mdC').value='';
   dlg.querySelector('#mdF').value='';
   dlg.dataset.iso=iso;
+  mdRepRender(iso);   // „Zastępuje”: z „Zamień” / „Inaczej” już wybrany posiłek
   dlg.querySelector('#mdEstMsg').style.display='none';
   voiceReset();
   dlg.classList.add('show');

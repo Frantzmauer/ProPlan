@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zastępuje posiłek ŻELAZO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Prototyp: Dieta → „Dodaj posiłek” z wyborem „Zastępuje” + ocena dnia diety (kcal 85–110% celu, białko ≥ 80%).
+   Kolory i kroje z aplikacji, szerokość telefonu 375 px, przykładowe dane z 03.11. */
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --dim:#9aa3ab; --faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --gold:#ffc94a;
+  --disp:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:#05070a;color:var(--ink);margin:0}
+body{font-family:var(--body);font-size:14.5px;line-height:1.45;padding-block:16px 40px;padding-inline:16px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.note{max-width:375px;margin:0 auto 12px;font-size:12.5px;color:var(--dim)}
+.note b{color:var(--ink)}
+.phone{position:relative;max-width:375px;margin:0 auto;background:var(--bg);border:1px solid var(--line);border-radius:28px;overflow:hidden;min-height:760px;padding:18px 14px 90px}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--disp);font-size:30px;line-height:1;margin:2px 0 12px;text-transform:uppercase}
+.macros{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.macro{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center}
+.macro .lab{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.macro .v{font-family:var(--disp);font-size:24px;font-weight:700;line-height:1.1}
+.macro.kcal .v{color:var(--amber)}
+.macro .g{font-size:11.5px;color:var(--faint)}
+/* NOWE: ocena dnia diety */
+.score{margin-top:10px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.score .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.score .h b{font-size:13.5px}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.pill.ok{background:rgba(78,201,126,.14);color:var(--green)}
+.pill.no{background:rgba(226,84,58,.14);color:var(--red)}
+.pill.wip{background:var(--panel2);color:var(--dim)}
+.crit{display:flex;gap:8px;font-size:12.5px;color:var(--dim)}
+.crit span{flex:1;display:flex;gap:6px;align-items:baseline}
+.crit .ok{color:var(--green)} .crit .no{color:var(--red)}
+.score .tip{font-size:12.5px;color:var(--gold)}
+.new{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;color:#0e1114;background:var(--steel);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:2px}
+.list{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.meal{display:flex;gap:10px;padding:12px;border-bottom:1px solid var(--line)}
+.meal:last-child{border-bottom:0}
+.check{flex:none;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:grid;place-items:center;margin-top:2px}
+.check.on{background:var(--green);border-color:var(--green)}
+.check.on::after{content:"";width:10px;height:6px;border-left:2.5px solid #0e1114;border-bottom:2.5px solid #0e1114;transform:rotate(-45deg) translate(1px,-1px)}
+.body{flex:1;min-width:0}
+.tag{font-family:var(--disp);font-size:16px;font-weight:700;color:var(--amber);text-transform:none}
+.tag.own{color:var(--steel)}
+.txt{margin-top:2px}
+.meal.done .txt{color:var(--dim)}
+.kc{font-size:12.5px;color:var(--faint);margin-top:2px}
+.st{display:inline-block;margin-top:6px;font-size:11.5px;border-radius:999px;padding:2px 9px;background:var(--panel2);color:var(--faint)}
+.add{display:block;width:100%;margin-top:12px;padding:13px;border-radius:12px;border:1px dashed var(--line);background:var(--panel2);color:var(--steel);font-weight:600}
+/* okno „Dodaj posiłek” */
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end}
+.sheet-bg.show{display:flex}
+.sheet{width:100%;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 14px 18px;max-height:92%;overflow:auto}
+.md-title{font-family:var(--disp);font-size:24px;font-weight:600;margin-bottom:6px}
+.md-lab{display:block;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px}
+.md-in{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;font-size:16px}
+.md-in:focus{outline:none;border-color:var(--amber)}
+.row{display:flex;gap:8px}
+.mic{flex:none;width:46px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--dim)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:40px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);font-size:13.5px;font-weight:600;color:var(--dim)}
+.chips button.on{border-color:var(--amber);background:var(--amber-soft);color:var(--ink)}
+.chips button small{font-weight:500;color:var(--faint);margin-left:4px}
+.rep-hint{font-size:12.5px;color:var(--dim);margin-top:6px;min-height:36px}
+.macros-in{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.btns{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;min-height:46px;border-radius:12px;border:0;background:var(--amber);color:#0e1114;font-family:var(--disp);font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--dim)}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;display:none;white-space:nowrap}
+.reset{display:block;margin:12px auto 0;background:none;border:0;color:var(--faint);font-size:12.5px;text-decoration:underline}
+</style>
+</head><body>
+<p class="note"><b>Prototyp</b> — dane z 03.11 (śniadanie i przekąska z planu zjedzone). Kliknij <b>„＋ Dodaj posiłek”</b>, wybierz w <b>„Zastępuje”</b> obiad albo kolację i zobacz, jak zmienia się lista i <b>ocena dnia</b>. Kwadraty po lewej odhaczają posiłki.</p>
+<div class="phone" id="phone">
+  <div class="eyebrow">Jadłospis</div>
+  <h1>Co dziś jesz</h1>
+  <div class="macros" id="macros"></div>
+  <div class="score" id="score" aria-live="polite"></div>
+  <div class="list" id="list"></div>
+  <button class="add" id="addBtn">＋ Dodaj posiłek</button>
+
+  <div class="sheet-bg" id="sheet" role="dialog" aria-modal="true" aria-labelledby="mdT">
+    <div class="sheet">
+      <div class="md-title" id="mdT">Dodaj posiłek</div>
+      <label class="md-lab" for="mdTxt">Co było do jedzenia?</label>
+      <div class="row"><input class="md-in" id="mdTxt" placeholder="np. kurczak z puree"><button class="mic" aria-label="Zdjęcie posiłku">📷</button><button class="mic" aria-label="Skaner kodu">▥</button></div>
+      <label class="md-lab">Zastępuje <span class="new">NOWE</span></label>
+      <div class="chips" id="repChips"></div>
+      <div class="rep-hint" id="repHint"></div>
+      <label class="md-lab" for="mdKcal">Kalorie (kcal)</label>
+      <input class="md-in" id="mdKcal" type="number" inputmode="numeric" placeholder="np. 650">
+      <div class="macros-in">
+        <div><label class="md-lab" for="mdP">Białko</label><input class="md-in" id="mdP" type="number" inputmode="numeric" placeholder="g"></div>
+        <div><label class="md-lab" for="mdC">Węgle</label><input class="md-in" id="mdC" type="number" inputmode="numeric" placeholder="g"></div>
+        <div><label class="md-lab" for="mdF">Tłuszcz</label><input class="md-in" id="mdF" type="number" inputmode="numeric" placeholder="g"></div>
+      </div>
+      <div class="btns"><button class="btn ghost" id="mdCancel">Anuluj</button><button class="btn" id="mdSave">Dodaj</button></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+<button class="reset" id="reset">Zacznij od nowa</button>
+
+<script>
+const GOAL={kcal:2100,p:180,c:200,f:75};
+const START=()=>({
+  plan:[
+    {tag:'Śniadanie', txt:'Płatki owsiane 80 g, odżywka WPC 40 g, owoce jagodowe 45 g, orzechy 11 g, mleko 1,5% 110 g', kcal:622,p:47,c:68,f:17, on:true},
+    {tag:'Przekąska', txt:'Skyr naturalny 330 ml, banan, 20 g orzechów włoskich', kcal:378,p:36,c:38,f:13, on:true},
+    {tag:'Obiad', txt:'Łosoś 155 g, bulgur (such.) 70 g, warzywa 110 g, oliwa 4 g, szparagi', kcal:616,p:42,c:53,f:26, on:false},
+    {tag:'Kolacja', txt:'Twaróg półtłusty 200 g, 2 jaja, 1 kromka chleba żytniego, pomidor', kcal:520,p:48,c:28,f:22, on:false},
+  ],
+  own:[
+    {txt:'Kanapka z wędliną', kcal:308,p:14,c:30,f:14, rep:null},
+    {txt:'Rosół z makaronem', kcal:148,p:14,c:12,f:5, rep:null},
+  ]
+});
+let D=START(), rep=null;
+const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const replaced=i=>D.own.some(o=>o.rep===i);
+
+function totals(){
+  const t={kcal:0,p:0,c:0,f:0}, add=x=>{t.kcal+=x.kcal;t.p+=x.p;t.c+=x.c;t.f+=x.f;};
+  D.plan.forEach((m,i)=>{ if(m.on && !replaced(i)) add(m); }); D.own.forEach(add); return t;
+}
+function render(){
+  const t=totals();
+  $('macros').innerHTML=[['kcal','kcal',t.kcal,GOAL.kcal,''],['Białko','',t.p,GOAL.p,'g'],['Węgle','',t.c,GOAL.c,'g'],['Tłuszcz','',t.f,GOAL.f,'g']]
+    .map(([l,c,v,g,u])=>`<div class="macro ${c}"><div class="lab">${l}</div><div class="v">${Math.round(v)}</div><div class="g">z ${g}${u}</div></div>`).join('');
+  // ocena dnia: kcal 85–110% celu, białko ≥ 80% celu; dziś „w toku”, po północy ostateczna
+  const lo=Math.round(GOAL.kcal*.85), hi=Math.round(GOAL.kcal*1.10), pMin=Math.round(GOAL.p*.8);
+  const kOk=t.kcal>=lo && t.kcal<=hi, pOk=t.p>=pMin, all=kOk&&pOk;
+  const tip=!kOk && t.kcal<lo ? `Do zaliczenia brakuje ${lo-Math.round(t.kcal)} kcal${!pOk?' i '+(pMin-Math.round(t.p))+' g białka':''}.`
+    : !kOk ? `Ponad ${hi} kcal — dzień nie będzie zaliczony.` : !pOk ? `Brakuje ${pMin-Math.round(t.p)} g białka — np. skyr 330 ml (~33 g).` : '';
+  $('score').innerHTML=`<div class="h"><b>Dzień diety <span class="new">NOWE</span></b><span class="pill ${all?'ok':'wip'}">${all?'✓ zaliczony':'w toku · do północy'}</span></div>
+    <div class="crit"><span><b class="${kOk?'ok':'no'}">${kOk?'✓':'✗'}</b> kcal ${Math.round(t.kcal/GOAL.kcal*100)}% <small>(${lo}–${hi})</small></span>
+    <span><b class="${pOk?'ok':'no'}">${pOk?'✓':'✗'}</b> białko ${Math.round(t.p/GOAL.p*100)}% <small>(min. ${pMin} g)</small></span></div>
+    ${tip?`<div class="tip">${tip}</div>`:''}`;
+  $('list').innerHTML=D.plan.map((m,i)=>{ const r=D.own.find(o=>o.rep===i);
+      return `<div class="meal ${m.on&&!r?'done':''}"><button class="check ${m.on&&!r?'on':''}" data-p="${i}" aria-label="Odhacz: ${m.tag}" ${r?'disabled':''}></button>
+        <div class="body"><div class="tag">${m.tag}</div><div class="txt" style="${r?'text-decoration:line-through;color:var(--faint)':''}">${esc(m.txt)}</div>
+        <div class="kc">${m.kcal} kcal · B ${m.p} / W ${m.c} / T ${m.f}</div>${r?`<span class="st">zastąpiony: ${esc(r.txt)}</span>`:''}</div></div>`; }).join('')
+    + D.own.map((o,j)=>`<div class="meal done"><span class="check on"></span><div class="body"><div class="tag own">${o.rep!=null?'Zamiast: '+D.plan[o.rep].tag:'Własny'}</div>
+        <div class="txt">${esc(o.txt)}</div><div class="kc">${o.kcal} kcal · B ${o.p} / W ${o.c} / T ${o.f}</div></div></div>`).join('');
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{ const m=D.plan[+b.dataset.p]; m.on=!m.on; render(); });
+}
+function chips(){
+  // do zastąpienia tylko posiłki z planu, które nie są odhaczone ani już zastąpione
+  const free=D.plan.map((m,i)=>({m,i})).filter(x=>!x.m.on && !replaced(x.i));
+  $('repChips').innerHTML=`<button data-r="" class="${rep==null?'on':''}">Dodatkowy</button>`+free.map(x=>`<button data-r="${x.i}" class="${rep===x.i?'on':''}">${x.m.tag}<small>${x.m.kcal}</small></button>`).join('');
+  $('repHint').textContent=rep==null ? 'Doliczy się do dnia obok posiłków z planu (np. przekąska poza planem).'
+    : `${D.plan[rep].tag} z planu przestanie się liczyć — w jego miejsce wejdzie to, co wpiszesz.`;
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ rep=b.dataset.r===''?null:+b.dataset.r; chips(); });
+}
+function open(){ rep=null; ['mdTxt','mdKcal','mdP','mdC','mdF'].forEach(id=>$(id).value=''); chips(); $('sheet').classList.add('show'); setTimeout(()=>$('mdTxt').focus(),50); }
+function close(){ $('sheet').classList.remove('show'); }
+function toast(t){ const el=$('toast'); el.textContent=t; el.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display='none',2200); }
+$('addBtn').onclick=open; $('mdCancel').onclick=close;
+$('sheet').onclick=e=>{ if(e.target===$('sheet')) close(); };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
+$('mdSave').onclick=()=>{
+  const txt=$('mdTxt').value.trim()||'Własny posiłek', n=id=>parseInt($(id).value)||0;
+  if(!n('mdKcal')){ $('mdKcal').focus(); return; }
+  D.own.push({txt, kcal:n('mdKcal'), p:n('mdP'), c:n('mdC'), f:n('mdF'), rep});
+  close(); render(); toast(rep==null?'Dodano posiłek':`Zastąpiono: ${D.plan[rep].tag}`);
+};
+$('reset').onclick=()=>{ D=START(); render(); };
+render();
+</script>
+</body></html>

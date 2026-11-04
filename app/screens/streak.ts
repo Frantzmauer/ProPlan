@@ -1,10 +1,12 @@
 // ŻELAZO — Seria dni i oceny kategorii dnia.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
-import { dayIndexFor, weekOf } from '../core/backup';
+import { dayIndexFor } from '../core/backup';
 import { S } from '../core/state';
 import { parseISO, todayISO } from '../lib/dates';
-import { DEFAULT_KCAL, DIET, workoutOn } from '../plan/data';
-import { dayMeals, exAny } from './train';
+import { dietScore } from '../lib/dietday';
+import { macroGoalFor, workoutOn } from '../plan/data';
+import { goalOn } from './progress';
+import { dayTotals, exAny } from './train';
 
 export let STREAK_CATS, calMonth, calCat;
 
@@ -18,19 +20,12 @@ export function isTrainingDay(iso){
   const w=workoutOn(iso); return !!(w&&w.type==='lift');
 }
 
-// czy dieta danego dnia zaliczona? ≥3 z 4 posiłków ORAZ kalorie ≤ cel
+// czy dieta danego dnia zaliczona? kcal 85–110% celu tego dnia i białko ≥ 80% (app/lib/dietday) — z planu czy własne, bez znaczenia
 export function dietMet(iso){
   const L=S.log[iso]; if(!L) return false;
-  const di=dayIndexFor(iso); if(di<1) return false;
-  const wk=weekOf(di); const dow=parseISO(iso).getDay();
-  const diet=DIET[dow]; if(!diet) return false;
-  const goal=S.kcalGoal||DEFAULT_KCAL;
-  let checked=0, kcal=0;
-  dayMeals(iso, dow, L, wk).forEach((x,i)=>{
-    if(L.meals&&L.meals['m'+i]){ checked++; kcal+=x.mc.kcal; }
-  });
-  (L.custom||[]).forEach(c=>{ if(c.done!==false&&!c._del) kcal+=(c.kcal||0); });
-  return checked>=3 && kcal<=goal;
+  if(dayIndexFor(iso)<1) return false;
+  const goal=goalOn(iso);
+  return dietScore(dayTotals(iso, goal), macroGoalFor(goal)).ok;
 }
 
 // czy trening danego dnia wykonany? (dzień treningowy + ≥1 seria odhaczona)

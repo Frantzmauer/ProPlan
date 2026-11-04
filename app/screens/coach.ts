@@ -10,6 +10,7 @@ import { showInAppReminder } from '../features/reminders';
 import { restApplyLive, restCurrent, restOverride, restStats } from '../features/rest';
 import { addDays, parseISO, todayISO } from '../lib/dates';
 import { coachKeep } from '../lib/merge.js';
+import { KCAL_HI, KCAL_LO, PROT_MIN, dietScore } from '../lib/dietday';
 import { hm } from '../lib/mealtime';
 import { prAnalyze, prBest } from '../lib/records';
 import { DEFAULT_KCAL, DIET, HOME, macroGoalFor, phaseInfo, planSrc, workoutOn } from '../plan/data';
@@ -37,7 +38,8 @@ export const COACH_CTX_MAX = 40000;   // serwer przycina do COACH_MAX_CONTEXT (K
 export const COACH_APP_GUIDE = `Jak działa aplikacja ŻELAZO (gdy mówisz, co kliknąć, podawaj tylko to, co jest tutaj; jeśli czegoś tu nie ma — powiedz, że nie wiesz, zamiast zgadywać):
 - Dolny pasek zakładek: Trening, Dieta, Postęp, Zakupy, Więcej. Nad nim przełącznik dni „‹ DZIŚ ›” (albo przesunięcie palcem w bok); „↩ DZIŚ” wraca do dzisiaj.
 - Trening: karta dnia z ćwiczeniami i seriami do odhaczenia (kg × powtórzenia). Przy ćwiczeniu: „Zamień ćwiczenie” (powód: zajęte stanowisko, ból, brak sprzętu; tylko ten dzień albo na stałe) i „Pomiń”; trening można „Przesuń” na inny dzień. Tryb treningu: start, pauza, przerwy z minutnikiem, podsumowanie i rekordy. Przed treningiem check-in (sen, zakwasy, energia). Ocena techniki z nagrania serii.
-- Dieta → „Co dziś jesz”: posiłki z planu. Kwadrat po lewej odhacza zjedzony posiłek. Cyfry 1–3 zmieniają wariant posiłku. „od Trenera” = posiłek podmieniony Twoją propozycją. „Zamień” przy nieodhaczonym posiłku z planu: wpisuje się, co zjedzono zamiast niego — ten posiłek z planu przestaje się liczyć, liczy się wpisany. „＋ Dodaj posiłek”: opis, dyktowanie, zdjęcie (AI szacuje kalorie), skaner kodu kreskowego, „Oszacuj kalorie z opisu”; pole „kcal” + „Dodaj kalorie” dla samej liczby. Własny posiłek usuwa się krzyżykiem. Wieczorem karta „Domknij dzień”: Wg planu / Inaczej / Pominięty. Przy późnym odhaczeniu aplikacja pyta, o której był posiłek. Niżej: karta „Twoje nawyki · ostatnie 7 dni”, „Codzienne filary” (sen, kroki, dziennik, bez alkoholu, bez słodyczy) i woda.
+- Dieta → „Co dziś jesz”: posiłki z planu. Kwadrat po lewej odhacza zjedzony posiłek. Cyfry 1–3 zmieniają wariant posiłku. „od Trenera” = posiłek podmieniony Twoją propozycją. „Zamień” przy nieodhaczonym posiłku z planu: wpisuje się, co zjedzono zamiast niego — ten posiłek z planu przestaje się liczyć, liczy się wpisany. „＋ Dodaj posiłek”: opis, dyktowanie, zdjęcie (AI szacuje kalorie), skaner kodu kreskowego, „Oszacuj kalorie z opisu”, a w polu „Zastępuje” wybór: „Dodatkowy” albo posiłek z planu, który ten wpis zastępuje (jak „Zamień”); pole „kcal” + „Dodaj kalorie” dla samej liczby. Pod makrami karta „Dzień diety” (reguła niżej, z podpowiedzią, czego brakuje). Własny posiłek usuwa się krzyżykiem. Wieczorem karta „Domknij dzień”: Wg planu / Inaczej / Pominięty. Przy późnym odhaczeniu aplikacja pyta, o której był posiłek. Niżej: karta „Twoje nawyki · ostatnie 7 dni”, „Codzienne filary” (sen, kroki, dziennik, bez alkoholu, bez słodyczy) i woda.
+- Dzień diety zaliczony (seria 🍽️, kalendarz, karta „Dzień diety”): kalorie ${Math.round(KCAL_LO*100)}–${Math.round(KCAL_HI*100)}% celu obowiązującego tego dnia ORAZ białko co najmniej ${Math.round(PROT_MIN*100)}% celu białka. Nie ma znaczenia, czy jedzenie pochodzi z planu, czy z własnych posiłków. Dzisiejszy dzień jest „w toku” do północy. Gdy dzień jest blisko progu, podpowiedz konkretny posiłek, który go domknie (zwykle białko).
 - Postęp: gdzie jesteś w planie, rekordy, waga i trend (wydatek kalorii z trendu wagi i propozycja celu), obwody (zapis pomiaru, historia z przyciskiem „Edytuj”), konsekwencja, serie, kalendarz.
 - Zakupy: lista na tydzień.
 - Więcej: Ćwiczenia (nauka techniki), Cykl i samopoczucie, Przerwy między seriami, Profil i plan (profil, cel kalorii suwakiem, start planu), Pakiet i limity AI, Synchronizacja i konta, Przypomnienia, Kopia i eksport, Wersja aplikacji.
@@ -56,8 +58,8 @@ export function coachFoodDay(iso, today){
     const k='m'+i, on=!!(L.meals&&L.meals[k]), a=L.ate&&L.ate[k], t=L._t&&L._t['meal:'+k], rep=custom.find(c=>c.rep===k);
     tags[k]=x.slot.tag;
     let st;
-    if(on){ add(x.mc); st='ZJEDZONY'+(a>=0?' ok. '+hm(a):'')+(t?' (odhaczony '+hhmm(t)+')':''); }
-    else if(rep) st='zastąpiony własnym posiłkiem (niżej)';
+    if(rep) st='zastąpiony własnym posiłkiem (niżej)';
+    else if(on){ add(x.mc); st='ZJEDZONY'+(a>=0?' ok. '+hm(a):'')+(t?' (odhaczony '+hhmm(t)+')':''); }
     else if(a===-1) st='pominięty';
     else st=iso<today?'nie odhaczony':'jeszcze nie odhaczony';
     rows.push(`  - ${x.slot.tag}${x.adj?' [od Trenera]':''}: ${strip(x.mc.txt)} — ${x.mc.kcal} kcal, B${x.mc.p} W${x.mc.c} T${x.mc.f} → ${st}`);
@@ -67,8 +69,9 @@ export function coachFoodDay(iso, today){
     rows.push(`  - własny${c.rep&&tags[c.rep]?' zamiast „'+tags[c.rep]+'”':''}${when?' '+when:''}: ${String(c.txt||'').slice(0,90)} — ${c.kcal||0} kcal, B${c.p||0} W${c.c||0} T${c.f||0}`); });
   const habName={sleep:'sen 7–8h',sun:'cel kroków',notool:'dziennik',noalco:'bez alkoholu',nosugar:'bez słodyczy'};
   const hab=Object.entries(L.habits||{}).filter(([,v])=>v).map(([h])=>habName[h]||h);
-  const r=v=>Math.round(v);
-  return `${dd(iso)} (${['Nd','Pn','Wt','Śr','Cz','Pt','Sb'][dow]})${iso===today?' DZIŚ':''}: zjedzone ${r(tot.kcal)}/${g.kcal} kcal, B ${r(tot.p)}/${g.p} g, W ${r(tot.c)}/${g.c} g, T ${r(tot.f)}/${g.f} g`
+  const r=v=>Math.round(v), sc=dietScore(tot, g);
+  const verdict=sc.ok?'dzień diety ZALICZONY':(iso===today?'w toku':'niezaliczony')+' (kcal '+(sc.kcalOk?'✓':'✗')+' '+sc.kcalPct+'%, białko '+(sc.pOk?'✓':'✗')+' '+sc.pPct+'%)';
+  return `${dd(iso)} (${['Nd','Pn','Wt','Śr','Cz','Pt','Sb'][dow]})${iso===today?' DZIŚ':''}: zjedzone ${r(tot.kcal)}/${g.kcal} kcal, B ${r(tot.p)}/${g.p} g, W ${r(tot.c)}/${g.c} g, T ${r(tot.f)}/${g.f} g — ${verdict}`
     +(L.water?`, woda ${L.water} szkl.`:'')+(hab.length?', nawyki: '+hab.join(', '):'')+(rows.length?'\n'+rows.join('\n'):'');
 }
 

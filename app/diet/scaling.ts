@@ -1,8 +1,12 @@
 // ŻELAZO — Skalowanie posiłków do celu kalorii (z ochroną białka).
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
+import { dayIndexFor } from '../core/backup';
 import { S, save } from '../core/state';
 import { mark } from '../lib/state';
-import { DEFAULT_KCAL, DIET, autoVariant, variantBase } from '../plan/data';
+import { dietScore, dietTip } from '../lib/dietday';
+import { todayISO } from '../lib/dates';
+import { DIET, autoVariant, macroGoalFor, variantBase } from '../plan/data';
+import { goalOn } from '../screens/progress';
 import { esc } from '../screens/accounts';
 import { openMealDialog } from '../screens/guide';
 import { MT, mtAskHtml, mtAteNow, mtBind, mtCloseHtml, mtOnCheck, mtStampCustom, mtStampHtml } from '../screens/meals';
@@ -46,8 +50,8 @@ export function scaleFactors(goalKcal, base, floor){
 export function renderMeals(iso, dow, L, wk){
   const diet=DIET[dow];
   const card=document.getElementById('mealsCard');
-  const goal=S.kcalGoal||DEFAULT_KCAL;
-  const dm=dayMeals(iso, dow, L, wk);
+  const goal=goalOn(iso);   // cel kalorii obowiązujący tego dnia (dziś = obecny)
+  const dm=dayMeals(iso, dow, L, wk, goal);
   let done=0, tot={kcal:0,p:0,c:0,f:0};
   let html='';
   diet.meals.forEach((slot,i)=>{
@@ -104,7 +108,9 @@ export function renderMeals(iso, dow, L, wk){
   card.innerHTML=mtCloseHtml(iso, L, dow)+html;
   mtBind(card, iso, L, dow);
   card.querySelectorAll('[data-meal]').forEach(el=>{
-    el.onclick=()=>{const k=el.dataset.meal;L.meals[k]=!L.meals[k];mark(L,'meal:'+k);mtOnCheck(iso, L, k, dow);save();renderToday()};
+    el.onclick=()=>{const k=el.dataset.meal;
+      if(!L.meals[k] && (L.custom||[]).some(c=>c.rep===k && !c._del)) return;   // zastąpiony — liczy się zamiennik
+      L.meals[k]=!L.meals[k];mark(L,'meal:'+k);mtOnCheck(iso, L, k, dow);save();renderToday()};
   });
   card.querySelectorAll('[data-vpick]').forEach(el=>{
     el.onclick=(e)=>{e.stopPropagation();const mi=+el.dataset.vpick, vx=+el.dataset.vx;if(!L.var)L.var={};L.var[mi]=vx;mark(L,'var:'+mi);save();renderToday();};
@@ -119,8 +125,7 @@ export function renderMeals(iso, dow, L, wk){
       mark(L,'custom');save();renderToday();};
   });
   card.querySelectorAll('[data-mrep]').forEach(el=>{
-    el.onclick=(e)=>{ e.stopPropagation(); const k=el.dataset.mrep, tag=diet.meals[+k.slice(1)].tag;
-      MT.replace={iso, key:k}; openMealDialog(iso, true); document.getElementById('mdTxt').placeholder=tag+' — co było zamiast?'; };
+    el.onclick=(e)=>{ e.stopPropagation(); MT.replace={iso, key:el.dataset.mrep}; openMealDialog(iso, true); };
   });
   document.getElementById('addMealBtn').onclick=()=>openMealDialog(iso);
   const qk=document.getElementById('quickKcal');
@@ -135,7 +140,22 @@ export function renderMeals(iso, dow, L, wk){
 
   const totalMeals=diet.meals.length+customs.length;
   document.getElementById('mealsProgress').textContent=`${done}/${totalMeals} posiłków`;
-  renderMacros(tot);
+  renderMacros(tot, goal);
+  renderDietScore(iso, tot, goal);
+}
+
+// karta „Dzień diety”: kcal 85–110% celu i białko ≥ 80% — dziś na bieżąco, wcześniejsze dni z wynikiem
+export function renderDietScore(iso, tot, goal){
+  const box=document.getElementById('dietScore'), today=todayISO();
+  if(!box) return;
+  if(iso>today || dayIndexFor(iso)<1){ box.style.display='none'; return; }   // przyszłość i dni przed startem planu się nie liczą
+  const s=dietScore(tot, macroGoalFor(goal)), tip=iso===today?dietTip(tot, s):'';
+  const pill=s.ok?'<span class="ds-pill ok">✓ zaliczony</span>':iso===today?'<span class="ds-pill wip">w toku · do północy</span>':'<span class="ds-pill no">niezaliczony</span>';
+  box.style.display='';
+  box.innerHTML=`<div class="ds-h"><b>Dzień diety</b>${pill}</div>
+    <div class="ds-crit"><span><b class="${s.kcalOk?'ok':'no'}">${s.kcalOk?'✓':'✗'}</b> kcal ${s.kcalPct}% <small>(${s.lo}–${s.hi})</small></span>
+    <span><b class="${s.pOk?'ok':'no'}">${s.pOk?'✓':'✗'}</b> białko ${s.pPct}% <small>(min. ${s.pMin} g)</small></span></div>
+    ${tip?`<div class="ds-tip">${tip}</div>`:''}`;
 }
 
 

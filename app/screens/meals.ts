@@ -1,5 +1,6 @@
 // ŻELAZO — Dieta: kiedy jesz i kiedy zapisujesz, domknięcie dnia, nawyki, zdjęcie posiłku.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
+import { dayIndexFor, weekOf } from '../core/backup';
 import { netDown } from '../core/shell';
 import { CLOUD, S, cloudCall, save } from '../core/state';
 import { cyDiff } from '../features/cycle';
@@ -11,7 +12,8 @@ import { mark } from '../lib/state';
 import { DIET } from '../plan/data';
 import { esc } from './accounts';
 import { openMealDialog } from './guide';
-import { renderToday } from './train';
+import { goalOn } from './progress';
+import { dayMeals, renderToday } from './train';
 
 export let MT_LATE, MT_EVE, MT, mtMin, mtHM, PH;
 
@@ -103,9 +105,25 @@ export function mtBind(card, iso, L, dow){
     const k=b.dataset.k, i=+k.slice(1), tag=DIET[dow].meals[i].tag; if(!L.ate) L.ate={};
     if(b.dataset.mtc==='plan'){ L.meals[k]=true; mark(L,'meal:'+k); L.ate[k]=mtUsual(tag); mark(L,'ate:'+k); }
     else if(b.dataset.mtc==='skip'){ L.ate[k]=-1; mark(L,'ate:'+k); }
-    else { MT.replace={iso, key:k}; openMealDialog(iso, true); document.getElementById('mdTxt').placeholder=tag+' — co było zamiast?'; return; }
+    else { MT.replace={iso, key:k}; openMealDialog(iso, true); return; }
     save(); renderToday();
   });
+}
+
+// okno posiłku → „Zastępuje”: dodatkowy albo zamiast posiłku z planu, który nie jest odhaczony ani już zastąpiony (MT.replace)
+export function mdRepRender(iso){
+  const box=document.getElementById('mdRepBox'), L=S.log[iso]||{}, dow=parseISO(iso).getDay();
+  const free=DIET[dow] ? dayMeals(iso, dow, L, weekOf(dayIndexFor(iso)), goalOn(iso)).map((x,i)=>({key:'m'+i, tag:x.slot.tag, kcal:x.mc.kcal}))
+    .filter(x=>!(L.meals&&L.meals[x.key]) && !(L.custom||[]).some(c=>c.rep===x.key && !c._del)) : [];
+  if(MT.replace && (MT.replace.iso!==iso || !free.some(x=>x.key===MT.replace.key))) MT.replace=null;
+  const cur=MT.replace?MT.replace.key:'', sel=free.find(x=>x.key===cur);
+  box.style.display=free.length?'':'none';
+  document.getElementById('mdRep').innerHTML=[{key:'', tag:'Dodatkowy', kcal:0}, ...free].map(x=>
+    `<button type="button" role="radio" aria-checked="${x.key===cur}" data-mdrep="${x.key}">${esc(x.tag)}${x.kcal?`<small>${x.kcal}</small>`:''}</button>`).join('');
+  document.getElementById('mdRepHint').textContent=sel ? `${sel.tag} z planu przestanie się liczyć — w jego miejsce wejdzie to, co wpiszesz.`
+    : 'Doliczy się do dnia obok posiłków z planu (np. przekąska poza planem).';
+  document.getElementById('mdTxt').placeholder=sel ? sel.tag+' — co było zamiast?' : 'np. duży kebab z sosem czosnkowym';
+  document.querySelectorAll('[data-mdrep]').forEach(b=>b.onclick=()=>{ MT.replace=b.dataset.mdrep?{iso, key:b.dataset.mdrep}:null; mdRepRender(iso); });
 }
 
 // przypomnienia o posiłkach: ok. 40 min po Twojej zwykłej porze, jeśli posiłek nie jest zapisany; domknięcie dnia, gdy są luki

@@ -122,6 +122,7 @@ test('Dieta: „Zamień” — własny posiłek zamiast posiłku z planu', async
   await page.locator('.nav button[data-v="diet"]').click();
   await page.locator('#mealsCard [data-mrep="m0"]').click();
   await expect(page.locator('#mdTxt')).toHaveAttribute('placeholder', /co było zamiast/);
+  await expect(page.locator('#mdRep [aria-checked="true"]')).toHaveAttribute('data-mdrep', 'm0');   // „Zamień” = ten posiłek wybrany w „Zastępuje”
   await page.locator('#mdTxt').fill('Kurczak z puree');
   await page.locator('#mdKcal').fill('331');
   await page.locator('#mdSave').click();
@@ -180,6 +181,38 @@ test('Trener dostaje dziennik jedzenia i opis aplikacji (USERS)', async ({ page 
   expect(sent.context).toMatch(/DZIŚ: zjedzone [1-9]\d*\/2200 kcal/);
   expect(sent.context).toContain('ZJEDZONY');
   expect(sent.context).toContain('Jak działa aplikacja ŻELAZO');
+  expect(sent.context).toContain('Dzień diety zaliczony');
+  expect(sent.context).toMatch(/DZIŚ: zjedzone .* — (w toku|dzień diety ZALICZONY)/);
   expect(sent.features).toContain('obwody');
+  expect(errors).toEqual([]);
+});
+
+test('Dieta: „Zastępuje” w oknie posiłku i karta „Dzień diety”', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page);
+  await page.goto('/beta/');
+  await page.locator('.nav button[data-v="diet"]').click();
+  await expect(page.locator('#dietScore')).toContainText('w toku');
+  await page.locator('#addMealBtn').click();
+  await expect(page.locator('#mdRep [aria-checked="true"]')).toHaveText('Dodatkowy');
+  await page.locator('#mdRep [data-mdrep="m2"]').click();
+  await expect(page.locator('#mdRepHint')).toContainText('przestanie się liczyć');
+  await page.locator('#mdTxt').fill('Kurczak z puree');
+  await page.locator('#mdKcal').fill('600');
+  await page.locator('#mdP').fill('45');
+  await page.locator('#mdSave').click();
+  await expect(page.locator('#mealsCard')).toContainText('zastąpiony: Kurczak z puree');
+  await expect(page.locator('#mealsCard [data-mrep="m2"]')).toHaveCount(0);
+  // ponowne otwarcie: zastąpiony posiłek nie jest już do wyboru
+  await page.locator('#addMealBtn').click();
+  await expect(page.locator('#mdRep [data-mdrep="m2"]')).toHaveCount(0);
+  await page.locator('#mdCancel').click();
+  // dodatkowy posiłek domyka dzień: 2200 kcal → 1870–2420, białko ≥ 80%
+  await page.locator('#addMealBtn').click();
+  await page.locator('#mdTxt').fill('Dzień w posiłkach własnych');
+  await page.locator('#mdKcal').fill('1400');
+  await page.locator('#mdP').fill('150');
+  await page.locator('#mdSave').click();
+  await expect(page.locator('#dietScore')).toContainText('✓ zaliczony');
   expect(errors).toEqual([]);
 });

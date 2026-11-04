@@ -77,9 +77,9 @@ export function saveMealDialog(){
   mark(L,'custom');save();closeMealDialog();renderToday();
 }
 
-export function renderMacros(tot){
+export function renderMacros(tot, kcalGoal?){
   const box=document.getElementById('macrosBox');
-  const goal=macroGoalFor(S.kcalGoal||DEFAULT_KCAL);
+  const goal=macroGoalFor(kcalGoal||S.kcalGoal||DEFAULT_KCAL);
   const defs=[
     {lab:'kcal',cls:'kcal',v:tot.kcal,g:goal.kcal,u:''},
     {lab:'Białko',cls:'',v:tot.p,g:goal.p,u:'g'},
@@ -89,7 +89,7 @@ export function renderMacros(tot){
   box.innerHTML=defs.map(d=>`
     <div class="macro ${d.cls}">
       <div class="lab">${d.lab}</div>
-      <div class="num">${d.v}</div>
+      <div class="num">${Math.round(d.v)}</div>
       <div class="goal">z ${d.g}${d.u}</div>
       <div class="bar"><span style="width:${Math.min(100,d.g?d.v/d.g*100:0)}%"></span></div>
     </div>`).join('');
