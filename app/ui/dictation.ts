@@ -64,14 +64,15 @@ export function saveMealDialog(){
   if(!txt && !kcal){ closeMealDialog(); return; }
   const L=log(iso);
   if(!L.custom)L.custom=[];
+  const rep=MT.replace && MT.replace.iso===iso ? MT.replace.key : undefined;   // „Zamień” przy posiłku albo „Inaczej” w domknięciu dnia
   L.custom.push({
     txt:txt||'Własny posiłek', kcal,
     p:parseInt(dlg.querySelector('#mdP').value)||0,
     c:parseInt(dlg.querySelector('#mdC').value)||0,
     f:parseInt(dlg.querySelector('#mdF').value)||0,
-    done:true, _t:Date.now(), ate:mtAteNow(iso), src:MT.src||undefined
+    done:true, _t:Date.now(), ate:mtAteNow(iso), src:MT.src||undefined, rep
   });
-  if(MT.replace && MT.replace.iso===iso){ if(!L.ate) L.ate={}; L.ate[MT.replace.key]=-1; mark(L,'ate:'+MT.replace.key); }   // „Inaczej” w domknięciu dnia
+  if(rep){ if(!L.ate) L.ate={}; L.ate[rep]=-1; mark(L,'ate:'+rep); }
   MT.replace=null; MT.src=null;
   mark(L,'custom');save();closeMealDialog();renderToday();
 }

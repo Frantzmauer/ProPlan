@@ -387,7 +387,8 @@ function doPost(e) {
       // scal przychodzący stan z tym, co już mamy (ochrona przed wyścigiem 2 urządzeń)
       return out(withLock(function () {
         var current = read(me.account);
-        var merged = current ? mergeState(current, req.data) : req.data;
+        var keepMax = me.admin ? COACH_KEEP_ADMIN : COACH_KEEP;
+        var merged = current ? mergeState(current, req.data, keepMax) : coachTrim(req.data, keepMax);
         write(me.account, merged);
         return { ok: true, data: merged };
       }));
@@ -477,7 +478,8 @@ var COACH_SYSTEM = [
   '- Nie wywołuj narzędzia przy ogólnych radach ani gdy użytkownik tylko pyta o opinię — wtedy wystarczy tekst. W tekście krótko wyjaśnij, co proponujesz i dlaczego.'
 ].join('\n');
 var MEAL_SLOTS = ['Śniadanie', 'Przekąska', 'Obiad', 'Po treningu', 'Kolacja'];
-var COACH_MAX_CONTEXT = 16000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
+var OBW_NAMES = ['pas', 'klatka', 'ramie', 'udo', 'biodra'];   // jak OBW_KEY w app/screens/coach.ts
+var COACH_MAX_CONTEXT = 40000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
 function coachReply(req, acc) {
   if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
@@ -568,9 +570,18 @@ function coachReply(req, acc) {
         properties: { cwiczenie: { type: 'string', description: 'Nazwa ćwiczenia dokładnie jak w danych' }, sekundy: { type: 'integer' } } } };
     required.push('przerwy');
   }
+  var meas = features.indexOf('obwody') >= 0;
+  if (meas) {
+    props.obwody = { type: 'array', description: 'Poprawka albo dopisanie obwodu ciała — TYLKO gdy użytkownik o to prosi (np. pomylił się przy pomiarze). ' +
+      'data = dzień pomiaru RRRR-MM-DD (z „Obwody” w danych albo dzień podany przez użytkownika, nie w przyszłości), pomiar = który obwód, cm = nowa wartość. Pusta lista, jeśli bez zmian.',
+      items: { type: 'object', additionalProperties: false, required: ['data', 'pomiar', 'cm'],
+        properties: { data: { type: 'string', description: 'RRRR-MM-DD' }, pomiar: { type: 'string', enum: OBW_NAMES },
+          cm: { type: 'number', description: 'Obwód w cm (10–250, co 0,5)' } } } };
+    required.push('obwody');
+  }
   var tool = {
     name: 'zaproponuj_zmiany',
-    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii' + (steps ? ' i kroków' : '') + (rests ? ', a także przerwy między seriami' : '') + '. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
+    description: 'Proponuje użytkownikowi konkretne zmiany w planie: ciężary/serie/powtórzenia ćwiczeń z planu, wymianę ćwiczenia na inne, zamianę posiłku z jadłospisu oraz opcjonalnie nowy dzienny cel kalorii' + (steps ? ' i kroków' : '') + (rests ? ', a także przerwy między seriami' : '') + (meas ? ' oraz poprawki obwodów ciała na prośbę użytkownika' : '') + '. Użytkownik akceptuje je przyciskiem w aplikacji; obowiązują od dnia akceptacji. Nieużywane listy zostaw puste.',
     strict: true,
     input_schema: { type: 'object', additionalProperties: false, required: required, properties: props }
   };
@@ -659,11 +670,16 @@ function cleanProposal(p, names) {
   }).map(function (r) {
     return { cwiczenie: String(r.cwiczenie), sekundy: Math.max(30, Math.min(300, Math.round(+r.sekundy / 15) * 15)) };
   }).slice(0, 12);
-  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki && !mv.length && !rest.length) return null;
+  var today = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM-dd');
+  var obw = (Array.isArray(p.obwody) ? p.obwody : []).filter(function (o) {
+    return o && /^\d{4}-\d{2}-\d{2}$/.test(String(o.data)) && String(o.data) <= today && OBW_NAMES.indexOf(o.pomiar) >= 0 && +o.cm >= 10 && +o.cm <= 250;
+  }).map(function (o) { return { data: String(o.data), pomiar: o.pomiar, cm: Math.round(+o.cm * 2) / 2 }; }).slice(0, 10);
+  if (!ex.length && !swaps.length && !meals.length && !kcal && !kroki && !mv.length && !rest.length && !obw.length) return null;
   var out = { podsumowanie: String(p.podsumowanie || '').slice(0, 300), cwiczenia: ex, zamiany_cwiczen: swaps, posilki: meals, cel_kcal: kcal };
   if (kroki) out.cel_krokow = kroki;   // tylko gdy Trener go zaproponował — stabilna wersja tego pola nie dostaje
   if (mv.length) out.przesuniecia = mv;
   if (rest.length) out.przerwy = rest;   // tylko wersje z features 'przerwy'
+  if (obw.length) out.obwody = obw;     // tylko wersje z features 'obwody'
   return out;
 }
 
@@ -909,7 +925,17 @@ function przygotujDane() {
 // Ta sama logika scalania co w aplikacji (nic nie ginie przy
 // równoczesnym zapisie z dwóch urządzeń).
 // ============================================================
-function mergeState(local, inc){
+var COACH_KEEP = 40, COACH_KEEP_ADMIN = 100;   // jak COACH_KEEP / COACH_KEEP_ADMIN w app/lib/merge.js
+// pierwszy zapis konta (bez scalania): czat tylko do limitu tego konta
+function coachTrim(data, maxKeep) {
+  var c = data && data.coach;
+  if (!c || !Array.isArray(c.msgs)) return data;
+  var keep = Math.min(maxKeep, Math.max(COACH_KEEP, +c.keep || 0));
+  c.msgs = c.msgs.slice(-keep);
+  if (keep > COACH_KEEP) c.keep = keep; else delete c.keep;
+  return data;
+}
+function mergeState(local, inc, maxKeep){
   var out=JSON.parse(JSON.stringify(local));
   if(!inc) return out;
 
@@ -1062,7 +1088,10 @@ function mergeState(local, inc){
       if(!x || (m.st||0)>(x.st||0)) cmap[m.id]=m;
     });
     var msgs=Object.keys(cmap).map(function(k){return cmap[k];}).sort(function(x,y){return (x.t||0)-(y.t||0);});
-    out.coach={clearedAt:cl, msgs:msgs.slice(-40)};
+    // coach.keep (40–100) ustawia aplikacja administratora; maxKeep = ile wolno temu kontu (push: 100 admin, 40 reszta)
+    var keep=Math.min(maxKeep||COACH_KEEP, Math.max(COACH_KEEP, +ca.keep||0, +cb.keep||0));
+    out.coach={clearedAt:cl, msgs:msgs.slice(-keep)};
+    if(keep>COACH_KEEP) out.coach.keep=keep;
   }
   return out;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeState } from '../../app/lib/merge.js';
+import { COACH_KEEP, COACH_KEEP_ADMIN, coachKeep, mergeState } from '../../app/lib/merge.js';
 
 // minimalny stan aplikacji — tylko pola, które scalanie zawsze czyta
 const base = (o: Record<string, unknown> = {}) => ({ log: {}, weights: [], measures: [], shop: {}, ...o });
@@ -45,5 +45,39 @@ describe('scalanie danych z dwóch urządzeń', () => {
     const snap = JSON.stringify(a);
     mergeState(a, base({ log: { d: { meals: { m1: true }, _m: 2 } } }));
     expect(JSON.stringify(a)).toBe(snap);
+  });
+});
+
+describe('czat z Trenerem: ile wiadomości zostaje', () => {
+  const msgs = (n: number, from = 0) => Array.from({ length: n }, (_, i) => ({ id: 'x' + (from + i), t: from + i + 1, role: 'user', content: '' }));
+
+  it('zwykłe konto: 40 ostatnich wiadomości', () => {
+    const m = mergeState(base({ coach: { clearedAt: 0, msgs: msgs(30) } }), base({ coach: { clearedAt: 0, msgs: msgs(30, 30) } }));
+    expect(m.coach.msgs).toHaveLength(COACH_KEEP);
+    expect(m.coach.msgs[0].id).toBe('x20');
+    expect(m.coach.keep).toBeUndefined();
+  });
+
+  it('administrator (keep=100 po którejkolwiek stronie): do 100 wiadomości', () => {
+    const m = mergeState(base({ coach: { clearedAt: 0, keep: 100, msgs: msgs(70) } }), base({ coach: { clearedAt: 0, msgs: msgs(50, 70) } }));
+    expect(m.coach.msgs).toHaveLength(COACH_KEEP_ADMIN);
+    expect(m.coach.keep).toBe(100);
+  });
+
+  it('keep spoza zakresu wraca do 40–100', () => {
+    expect(coachKeep({ keep: 5000 })).toBe(COACH_KEEP_ADMIN);
+    expect(coachKeep({ keep: 3 }, null)).toBe(COACH_KEEP);
+    expect(coachKeep()).toBe(COACH_KEEP);
+  });
+});
+
+describe('posiłek zastąpiony własnym („Zamień”)', () => {
+  it('powiązanie z posiłkiem z planu przetrwa scalanie', () => {
+    const own = { txt: 'Kurczak z puree', kcal: 331, p: 17, c: 0, f: 0, done: true, _t: 5, rep: 'm3' };
+    const a = base({ log: { d: { meals: {}, custom: [own], ate: { m3: -1 }, _t: { 'ate:m3': 5 }, _m: 5 } } });
+    const b = base({ log: { d: { meals: { m0: true }, _t: { 'meal:m0': 3 }, _m: 3 } } });
+    const L = mergeState(b, a).log.d;
+    expect(L.custom[0].rep).toBe('m3');
+    expect(L.ate.m3).toBe(-1);
   });
 });

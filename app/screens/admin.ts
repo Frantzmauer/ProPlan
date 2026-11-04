@@ -5,6 +5,7 @@ import { CLOUD, S, cloudCall, save, saveCloud } from '../core/state';
 import { planEnforced, planSet } from '../features/plan-limits';
 import { setupReminders, showInAppReminder } from '../features/reminders';
 import { todayISO } from '../lib/dates';
+import { COACH_KEEP_ADMIN } from '../lib/merge.js';
 import { esc, inviteLink, slugAccount } from './accounts';
 import { moreOpen } from './more';
 import { cloudToken, refreshCloudUI } from './sync-ui';
@@ -37,6 +38,8 @@ export async function checkAdmin(){
 }
 
 export function setAdmin(on){
+  // administrator trzyma dłuższą rozmowę z Trenerem (serwer przytnie do 40 każdemu innemu kontu)
+  if(on && (!S.coach || S.coach.keep!==COACH_KEEP_ADMIN)){ S.coach=S.coach||{clearedAt:0, msgs:[]}; S.coach.keep=COACH_KEEP_ADMIN; save(); }
   document.getElementById('adminSection').style.display=on?'block':'none';
   verVisible(on);
   // USERS: konta, plany i limity w osobnym panelu (Więcej → Konta i plany); tu zostają zaproszenia i token

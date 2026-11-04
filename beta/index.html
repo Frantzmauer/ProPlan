@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="ŻELAZO β">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-OBga5K9p.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DvJ14ihG.css">
+  <script type="module" crossorigin src="./assets/index-C9_NQGf1.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-WgHu1mSN.css">
 </head>
 <body>
 
@@ -128,10 +128,15 @@
   <div class="section">
     <div class="eyebrow">Obwody (cm) · raz w tygodniu, rano, na czczo</div>
     <div class="panel panel-pad">
+      <div id="msEditNote" class="ms-edit-note" style="display:none"></div>
       <div id="msInputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px"></div>
-      <button class="btn" id="msSave" style="width:100%;margin-top:12px">Zapisz pomiar</button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn ghost" id="msCancel" style="display:none;flex:1">Anuluj</button>
+        <button class="btn" id="msSave" style="flex:2">Zapisz pomiar</button>
+      </div>
       <div id="msTable" style="margin-top:14px"></div>
       <canvas class="chart" id="msChart"></canvas>
+      <div id="msHist"></div>
       <div class="empty" id="msEmpty">Zapisz pierwszy pomiar — wystarczy wpisać to, co zmierzyłeś.</div>
     </div>
   </div>

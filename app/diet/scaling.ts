@@ -3,8 +3,9 @@
 import { S, save } from '../core/state';
 import { mark } from '../lib/state';
 import { DEFAULT_KCAL, DIET, autoVariant, variantBase } from '../plan/data';
+import { esc } from '../screens/accounts';
 import { openMealDialog } from '../screens/guide';
-import { mtAskHtml, mtAteNow, mtBind, mtCloseHtml, mtOnCheck, mtStampCustom, mtStampHtml } from '../screens/meals';
+import { MT, mtAskHtml, mtAteNow, mtBind, mtCloseHtml, mtOnCheck, mtStampCustom, mtStampHtml } from '../screens/meals';
 import { dayMeals, renderToday } from '../screens/train';
 import { renderMacros } from '../ui/dictation';
 
@@ -55,17 +56,20 @@ export function renderMeals(iso, dow, L, wk){
     const key='m'+i, on=!!L.meals[key];
     if(on){done++;tot.kcal+=mc.kcal;tot.p+=mc.p;tot.c+=mc.c;tot.f+=mc.f;}
     const isAuto = !(L.var && L.var[i]!==undefined);
+    // zastąpiony własnym posiłkiem („Zamień” albo „Inaczej” w domknięciu dnia)
+    const rep=!on && (L.custom||[]).find(c=>c.rep===key && !c._del);
     const dots=madj?'<span class="vman">od Trenera</span>':slot.v.map((_,vx)=>`<button class="vdot ${vx===vi?'on':''}" data-vpick="${i}" data-vx="${vx}" title="Wariant ${vx+1}">${vx+1}</button>`).join('');
+    const swap=(on||rep)?'':`<button class="mrep" data-mrep="${key}" aria-label="Zamień: ${slot.tag} — wpisz, co było zamiast">Zamień</button>`;
     html+=`<div class="meal ${on?'done':''}">
       <div class="check ${on?'on':''}" data-meal="${key}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
       <div class="body">
         <div class="meal-head">
           <span class="tag">${slot.tag}</span>
-          <span class="vdots">${dots}</span>
+          <span class="vdots">${swap}${dots}</span>
         </div>
         <div class="txt" data-meal="${key}">${mc.txt}</div>
         <div class="kcal">${mc.kcal} kcal · B ${mc.p} / W ${mc.c} / T ${mc.f}${(isAuto||madj)?'':' · <span class="vman">ręczny wariant</span>'}</div>
-        ${mtStampHtml(iso, L, key, on)}${mtAskHtml(iso, key, slot.tag)}
+        ${rep?`<span class="mt-st skip">zastąpiony: ${esc(rep.txt||'własny posiłek')}</span>`:mtStampHtml(iso, L, key, on)}${mtAskHtml(iso, key, slot.tag)}
       </div>
     </div>`;
   });
@@ -79,7 +83,7 @@ export function renderMeals(iso, dow, L, wk){
       <div class="check ${on?'on':''}" data-custom="${ci}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
       <div class="body">
         <div class="meal-head">
-          <span class="tag" style="color:var(--steel)">Własny</span>
+          <span class="tag" style="color:var(--steel)">${cm.rep&&diet.meals[+cm.rep.slice(1)]?'Zamiast: '+diet.meals[+cm.rep.slice(1)].tag:'Własny'}</span>
           <button class="vdot" data-cdel="${ci}" title="Usuń" style="color:var(--red);border-color:rgba(226,84,58,.35)">✕</button>
         </div>
         <div class="txt" data-custom="${ci}">${cm.txt||'Posiłek'}</div>
@@ -109,7 +113,14 @@ export function renderMeals(iso, dow, L, wk){
     el.onclick=()=>{const ci=+el.dataset.custom;L.custom[ci].done=(L.custom[ci].done===false);L.custom[ci]._t=Date.now();mark(L,'custom');save();renderToday();};
   });
   card.querySelectorAll('[data-cdel]').forEach(el=>{
-    el.onclick=(e)=>{e.stopPropagation();const ci=+el.dataset.cdel;L.custom[ci]._del=Date.now();L.custom[ci].done=false;mark(L,'custom');save();renderToday();};
+    el.onclick=(e)=>{e.stopPropagation();const ci=+el.dataset.cdel, c=L.custom[ci];c._del=Date.now();c.done=false;
+      // usunięty zamiennik: posiłek z planu wraca jako nieodhaczony
+      if(c.rep && L.ate && L.ate[c.rep]===-1){ delete L.ate[c.rep]; mark(L,'ate:'+c.rep); }
+      mark(L,'custom');save();renderToday();};
+  });
+  card.querySelectorAll('[data-mrep]').forEach(el=>{
+    el.onclick=(e)=>{ e.stopPropagation(); const k=el.dataset.mrep, tag=diet.meals[+k.slice(1)].tag;
+      MT.replace={iso, key:k}; openMealDialog(iso, true); document.getElementById('mdTxt').placeholder=tag+' — co było zamiast?'; };
   });
   document.getElementById('addMealBtn').onclick=()=>openMealDialog(iso);
   const qk=document.getElementById('quickKcal');

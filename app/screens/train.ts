@@ -27,7 +27,9 @@ export function log(iso){ if(!S.log[iso]) S.log[iso]={meals:{},ex:{},habits:{},w
 // postęp dnia do paska dnia i kropek na zakładkach
 export function daySummary(iso){
   const di=dayIndexFor(iso), L=S.log[iso]||{meals:{},ex:{}};
-  const meals=Object.values(L.meals||{}).filter(Boolean).length;
+  // posiłek z planu zastąpiony własnym („Zamień”) też jest zjedzony
+  const rep=new Set((L.custom||[]).filter(c=>c.rep && !c._del && c.done!==false).map(c=>c.rep));
+  const meals=Object.entries(L.meals||{}).filter(([k,v])=>v && !rep.has(k)).length+rep.size;
   let w = (di>=1&&di<=168) ? workoutOn(iso) : REST;
   if(di===0) w=COOK; else if(di===-1) w=SHOP_DAY;
   if(w.type==='cardio'){ const d=!!(L.ex&&L.ex[iso+'_cardio']); return {train:'cardio '+(d?'✓':'<b>0/1</b>'), trainDone:d?1:0, trainAll:1, meals}; }

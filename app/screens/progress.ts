@@ -11,7 +11,7 @@ import { prDD, renderRecords } from './history';
 import { estMaintenance, kcalSlider, updateKcalHint } from './more';
 import { dayMeals, renderToday } from './train';
 
-export let TD_WIN, TD_SPAN, TD_WN, TD_DAYS, TD_EVERY, tdFmt, MEASURES, msChartKey;
+export let TD_WIN, TD_SPAN, TD_WN, TD_DAYS, TD_EVERY, tdFmt, MEASURES, msChartKey, msEdit;
 
 /* ============================================================
    WEIGHT
@@ -109,7 +109,8 @@ export function renderMeasures(){
     box.innerHTML=MEASURES.map(m=>`<label style="font-size:12px;color:var(--ink-dim)">${m.l}
       <input type="number" step="0.5" inputmode="decimal" class="md-in" id="ms_${m.k}" placeholder="cm" style="margin-top:4px"></label>`).join('');
   }
-  const ms=(S.measures||[]).slice().sort((a,b)=>a.d<b.d?-1:1);
+  // pomiar bez żadnej wartości (np. po cofnięciu zmiany od Trenera) nie liczy się jako pomiar
+  const ms=(S.measures||[]).filter(m=>MEASURES.some(x=>m[x.k]>0)).sort((a,b)=>a.d<b.d?-1:1);
   document.getElementById('msEmpty').style.display=ms.length?'none':'block';
   const first=k=>{const x=ms.find(m=>m[k]>0);return x?x[k]:null;};
   const last=k=>{for(let i=ms.length-1;i>=0;i--) if(ms[i][k]>0) return ms[i][k]; return null;};
@@ -128,7 +129,33 @@ export function renderMeasures(){
   const series=ms.filter(m=>m[msChartKey]>0).map(m=>({d:m.d,w:m[msChartKey]}));
   const c=document.getElementById('msChart'); c.style.display=series.length?'block':'none';
   if(series.length) drawChart(series,'msChart');
+  // historia pomiarów: każdy zapis można poprawić
+  const fmtD=d=>d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4);
+  document.getElementById('msHist').innerHTML=ms.length?`<div class="eyebrow" style="margin-top:14px">Historia pomiarów</div>`+ms.slice().reverse().map(m=>
+    `<div class="ms-hist"><div><b>${fmtD(m.d)}</b><span>${MEASURES.filter(x=>m[x.k]>0).map(x=>x.l.split(' ')[0]+' '+fmt(m[x.k])).join(' · ')}</span></div>
+      <button class="btn ghost" data-msedit="${m.d}" aria-label="Edytuj pomiar z ${fmtD(m.d)}">Edytuj</button></div>`).join(''):'';
+  document.querySelectorAll('[data-msedit]').forEach(b=>b.onclick=()=>msStartEdit(b.dataset.msedit));
+  msEditUi();
 }
+
+// edycja zapisanego pomiaru: wartości do pól, „Zapisz zmiany” nadpisuje ten dzień (puste pole usuwa wartość)
+export function msStartEdit(d){
+  const e=(S.measures||[]).find(m=>m.d===d); if(!e) return;
+  msEdit=d;
+  MEASURES.forEach(m=>{ document.getElementById('ms_'+m.k).value=e[m.k]>0?String(e[m.k]).replace('.',','):''; });
+  msEditUi();
+  document.getElementById('msInputs').scrollIntoView({block:'center', behavior:'smooth'});
+}
+
+export function msEditUi(){
+  const note=document.getElementById('msEditNote'), on=!!msEdit;
+  note.style.display=on?'block':'none';
+  if(on) note.textContent='Edytujesz pomiar z '+msEdit.slice(8,10)+'.'+msEdit.slice(5,7)+'.'+msEdit.slice(0,4)+'. Puste pole usuwa wartość.';
+  document.getElementById('msCancel').style.display=on?'':'none';
+  document.getElementById('msSave').textContent=on?'Zapisz zmiany':'Zapisz pomiar';
+}
+
+export function msStopEdit(){ msEdit=null; MEASURES.forEach(m=>document.getElementById('ms_'+m.k).value=''); msEditUi(); }
 
 export function drawChart(ws, canvasId?){
   const c=document.getElementById(canvasId||'wChart');
@@ -203,15 +230,19 @@ MEASURES = [
   {k:'hips',l:'Biodra',down:true},
 ];
 msChartKey = 'waist';
+msEdit = null;
 document.getElementById('msSave').onclick=()=>{
-  const iso=todayISO(); const vals={}; let any=false;
+  const iso=msEdit||todayISO(); const vals={}; let any=false;
   MEASURES.forEach(m=>{const v=parseFloat(document.getElementById('ms_'+m.k).value.replace(',','.')); if(v>=10&&v<=250){vals[m.k]=v;any=true;}});
-  if(!any){document.getElementById('ms_waist').focus();return;}
+  if(!any && !msEdit){document.getElementById('ms_waist').focus();return;}
   if(!S.measures) S.measures=[];
   let e=S.measures.find(x=>x.d===iso);
   if(!e){e={d:iso};S.measures.push(e);}
+  if(msEdit) MEASURES.forEach(m=>{ delete e[m.k]; });   // edycja: dzień dokładnie taki, jak w polach
   Object.assign(e,vals); e._t=Date.now();
-  MEASURES.forEach(m=>document.getElementById('ms_'+m.k).value='');
+  if(msEdit) restToast('Zapisano zmiany pomiaru');
+  msStopEdit();
   save(); renderMeasures();
 };
+document.getElementById('msCancel').onclick=()=>msStopEdit();
 }

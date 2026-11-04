@@ -114,3 +114,68 @@ test('skaner: kod wpisany ręcznie → produkt z Open Food Facts', async ({ page
   await expect(page.locator('#mdKcal')).toHaveValue('96');
   expect(errors).toEqual([]);
 });
+
+test('Dieta: „Zamień” — własny posiłek zamiast posiłku z planu', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page);
+  await page.goto('/beta/');
+  await page.locator('.nav button[data-v="diet"]').click();
+  await page.locator('#mealsCard [data-mrep="m0"]').click();
+  await expect(page.locator('#mdTxt')).toHaveAttribute('placeholder', /co było zamiast/);
+  await page.locator('#mdTxt').fill('Kurczak z puree');
+  await page.locator('#mdKcal').fill('331');
+  await page.locator('#mdSave').click();
+  await expect(page.locator('#mealsCard')).toContainText('zastąpiony: Kurczak z puree');
+  await expect(page.locator('#mealsCard')).toContainText('Zamiast:');
+  await expect(page.locator('#mealsCard [data-mrep="m0"]')).toHaveCount(0);
+  await expect(page.locator('#mealsProgress')).toContainText('1/');
+  await expect(page.locator('#dateLabel')).toContainText('posiłki 1/4');
+  // usunięcie zamiennika: posiłek z planu znów do odhaczenia
+  await page.locator('#mealsCard [data-cdel]').click();
+  await expect(page.locator('#mealsCard [data-mrep="m0"]')).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test('Postęp: edycja zapisanego obwodu', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page);
+  await page.goto('/beta/');
+  await page.locator('.nav button[data-v="progress"]').click();
+  await page.locator('#ms_waist').fill('98');
+  await page.locator('#msSave').click();
+  await expect(page.locator('#msHist')).toContainText('Pas 98,0');
+  await page.locator('#msHist [data-msedit]').click();
+  await expect(page.locator('#ms_waist')).toHaveValue('98');
+  await expect(page.locator('#msSave')).toHaveText('Zapisz zmiany');
+  await page.locator('#ms_waist').fill('105');
+  await page.locator('#msSave').click();
+  await expect(page.locator('#msHist')).toContainText('Pas 105,0');
+  await expect(page.locator('#msHist .ms-hist')).toHaveCount(1);
+  await expect(page.locator('#msSave')).toHaveText('Zapisz pomiar');
+  expect(errors).toEqual([]);
+});
+
+test('Trener dostaje dziennik jedzenia i opis aplikacji (USERS)', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  let sent: { context?: string; features?: string[] } = {};
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    if (b.action !== 'coach') return route.fallback();
+    sent = b;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, text: 'OK.' }) });
+  });
+  await page.goto('/users/');
+  await page.locator('.nav button[data-v="diet"]').click();
+  await page.locator('#mealsCard [data-meal="m0"]').first().click();
+  await page.locator('#coachFab').click();
+  await page.locator('#coachIn').fill('Ile dziś zjadłem?');
+  await page.locator('#coachSend').click();
+  await expect(page.locator('#coachMsgs')).toContainText('OK.');
+  expect(sent.context).toContain('Dziennik jedzenia — ostatnie 14 dni');
+  expect(sent.context).toMatch(/DZIŚ: zjedzone [1-9]\d*\/2200 kcal/);
+  expect(sent.context).toContain('ZJEDZONY');
+  expect(sent.context).toContain('Jak działa aplikacja ŻELAZO');
+  expect(sent.features).toContain('obwody');
+  expect(errors).toEqual([]);
+});

@@ -1,6 +1,9 @@
 // Scalanie stanu aplikacji z dwóch źródeł (telefon + serwer / inne urządzenie).
 // Ta sama logika działa na serwerze (apps-script/Kod.js → mergeState) — zmiany wprowadzaj w obu miejscach.
 export const COACH_KEEP=40;      // tyle ostatnich wiadomości czatu z Trenerem trzymamy i synchronizujemy
+export const COACH_KEEP_ADMIN=100;   // administrator: coach.keep=100 (ustawia aplikacja po potwierdzeniu admina; serwer pilnuje, żeby tylko jemu)
+// ile wiadomości trzymać dla danego czatu (coach.keep z obu stron, w granicach 40–100)
+export function coachKeep(...cs){ return Math.min(COACH_KEEP_ADMIN, Math.max(COACH_KEEP, ...cs.map(c=>(c&&+c.keep)||0))); }
 
 // SCALANIE dwóch stanów (lokalny + wczytany). Zasada: nic nie gubimy.
 // - odznaczone posiłki/nawyki/ćwiczenia: suma (jeśli gdziekolwiek odhaczone → odhaczone)
@@ -173,7 +176,9 @@ export function mergeState(local, inc){
       const x=map[m.id];
       if(!x || (m.st||0)>(x.st||0)) map[m.id]=m;
     });
-    out.coach={clearedAt:cl, msgs:Object.values(map).sort((x,y)=>(x.t||0)-(y.t||0)).slice(-COACH_KEEP)};
+    const keep=coachKeep(a, b);
+    out.coach={clearedAt:cl, msgs:Object.values(map).sort((x,y)=>(x.t||0)-(y.t||0)).slice(-keep)};
+    if(keep>COACH_KEEP) out.coach.keep=keep;
   }
   return out;
 }
