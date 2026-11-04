@@ -27,6 +27,9 @@
 4. Później: płatności (najpierw decyzja: sprzedaż przez stronę vs. w sklepach — prowizje 15–30% w sklepach),
    przeniesienie serwera z Apps Script do backendu z bazą danych, App Store.
 
+**Zaparkowane — „code bravo”:** własna domena, prywatne repozytorium, Cloudflare Pages i przeprowadzka użytkowników
+ze starego adresu. Czeka na zakup domeny przez właściciela. Pełny opis: `docs/CODE-BRAVO.md`.
+
 ## Znane ograniczenia
 - Limity planów działają tylko w USERS i Early Access (`cfg.enforce`); w becie i stabilnej da się je obejść.
   Domyka to dopiero uruchomienie USERS dla wszystkich.

@@ -4,6 +4,12 @@ Aplikacja do treningu i diety (plan 24 tygodnie) z Trenerem AI. Web (PWA na GitH
 aplikacja w **Google Play**, potem w **App Store** (Capacitor, ten sam kod). Właściciel pisze po polsku;
 odpowiadaj po polsku. Aktualny stan i kolejne kroki: `docs/STAN.md`.
 
+## Komendy właściciela
+- **„code bravo”** → przeczytaj `docs/CODE-BRAVO.md` i wykonaj go: własna domena, prywatne repozytorium, hosting w
+  Cloudflare Pages, przeprowadzka użytkowników ze starego adresu. Najpierw sprawdź warunki z części A (domena kupiona i aktywna
+  w Cloudflare). Do tego czasu **nie zmieniaj widoczności repozytorium ani hostingu** — zmiana repo na prywatne na darmowym planie
+  wyłącza GitHub Pages i aplikacja przestaje działać.
+
 ## Zasady ustalone z właścicielem
 - **Najpierw prototyp**, gdy właściciel o to prosi (zwykle przy nowym ekranie): klikalny plik HTML w stylu
   aplikacji, szerokość telefonu 375 px, przykładowe dane. Gotowe prototypy: `docs/prototypes/`.
