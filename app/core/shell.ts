@@ -70,12 +70,12 @@ try{
     localStorage.setItem('zelazo_seen_ea','1');
   }
 }catch(e){}
-// jednorazowo po aktualizacji do 1.2: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
-APP_REL = '1.2';
+// jednorazowo po aktualizacji do 1.3: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
+APP_REL = '1.3';
 try{
   if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
-    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.2 — co nowego',
-      'Zamień ćwiczenie, gdy brakuje sprzętu albo coś boli. Własne przerwy dla każdego ćwiczenia (ustawia je też Trener). Check-in przed treningiem: sen, zakwasy i energia dopasowują trening. Cykl i samopoczucie — dobrowolnie, w Więcej. Wykres 1RM nie spada już do zera przy seriach powyżej 12 powtórzeń.'), 1200);
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.3 — co nowego',
+      'Kalorie z trendu wagi: wydatek liczony z Twoich danych i propozycja celu. Zdjęcie posiłku — Trener rozpoznaje składniki, gramatury i kalorie. Godziny posiłków, przypomnienie po zwykłej porze i karta „Twoje nawyki”. Cykl: prognoza okresu i wzorce z check-inów. Szybsza aplikacja, która działa też bez internetu.'), 1200);
     localStorage.setItem('zelazo_seen_rel', APP_REL);
   }
 }catch(e){}
