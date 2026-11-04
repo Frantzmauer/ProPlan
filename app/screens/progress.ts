@@ -142,7 +142,8 @@ export function renderMeasures(){
 export function msStartEdit(d){
   const e=(S.measures||[]).find(m=>m.d===d); if(!e) return;
   msEdit=d;
-  MEASURES.forEach(m=>{ document.getElementById('ms_'+m.k).value=e[m.k]>0?String(e[m.k]).replace('.',','):''; });
+  // pole type=number przyjmuje tylko kropkę (przecinek = puste pole); przeglądarka sama pokaże ją po polsku
+  MEASURES.forEach(m=>{ document.getElementById('ms_'+m.k).value=e[m.k]>0?String(e[m.k]):''; });
   msEditUi();
   document.getElementById('msInputs').scrollIntoView({block:'center', behavior:'smooth'});
 }

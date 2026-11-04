@@ -142,14 +142,18 @@ test('Postęp: edycja zapisanego obwodu', async ({ page }) => {
   await page.goto('/beta/');
   await page.locator('.nav button[data-v="progress"]').click();
   await page.locator('#ms_waist').fill('98');
+  await page.locator('#ms_chest').fill('115.5');
   await page.locator('#msSave').click();
   await expect(page.locator('#msHist')).toContainText('Pas 98,0');
+  await expect(page.locator('#msHist')).toContainText('Klatka 115,5');
   await page.locator('#msHist [data-msedit]').click();
   await expect(page.locator('#ms_waist')).toHaveValue('98');
+  await expect(page.locator('#ms_chest')).toHaveValue('115.5');   // wartość z częścią dziesiętną też wraca do pola
   await expect(page.locator('#msSave')).toHaveText('Zapisz zmiany');
   await page.locator('#ms_waist').fill('105');
   await page.locator('#msSave').click();
   await expect(page.locator('#msHist')).toContainText('Pas 105,0');
+  await expect(page.locator('#msHist')).toContainText('Klatka 115,5');
   await expect(page.locator('#msHist .ms-hist')).toHaveCount(1);
   await expect(page.locator('#msSave')).toHaveText('Zapisz pomiar');
   expect(errors).toEqual([]);
