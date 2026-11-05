@@ -44,7 +44,8 @@ window.addEventListener('online', ()=>{ updateNetPill(true); netResync(); });
 window.addEventListener('offline', ()=>updateNetPill());
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) netResync(); });
 setTimeout(updateNetPill, 0);   // po całym skrypcie — WO jest zadeklarowane niżej
-if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(()=>{});
+// w aplikacji na telefon (Capacitor) pliki są w paczce — kopia offline przez service worker niepotrzebna
+if('serviceWorker' in navigator && !(window as any).Capacitor?.isNativePlatform?.() && (location.protocol==='https:' || location.hostname==='localhost')) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(()=>{});
 
 APP_VER = appChannel();
 document.getElementById(({stable:'verStable', early:'verEarly', users:'verUsers'})[APP_VER]||'verBeta').classList.add('on');

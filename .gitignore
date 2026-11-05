@@ -21,3 +21,11 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+
+# Aplikacja na telefon (Capacitor): paczka webowa budowana przed `npx cap sync` (tools/build.py native)
+native/
+# Klucze podpisu aplikacji i hasła do nich — NIGDY do repo (utrata klucza = brak aktualizacji w Google Play)
+*.jks
+*.keystore
+keystore.properties
+android/key.properties

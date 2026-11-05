@@ -1,0 +1,9 @@
+{
+  "appId": "pl.zelazo.app",
+  "appName": "ŻELAZO",
+  "webDir": "native/www",
+  "android": {
+    "backgroundColor": "#0e1114"
+  },
+  "backgroundColor": "#0e1114"
+}

@@ -10,11 +10,14 @@ Wersje:
   users   /users/  konta, plany, panel admina, limity, płatności (wersja robocza)
   early   /early/  Early Access — dla Premium, po testach w becie
   stable  /        wszyscy — sprawdzone funkcje
+  native  native/www/  aplikacja na telefon (Capacitor): jak stabilna, z ikonami i modelem sylwetki w paczce
+                       (działa bez internetu); nie trafia do repo ani na GitHub Pages — budowana przed `npx cap sync`
 
 Użycie:
   python3 tools/build.py beta users                 # nowa funkcja: beta + USERS z bieżącego app/
   python3 tools/build.py stable early --from <ref>  # po testach: stabilna + Early Access z przetestowanego commita
   python3 tools/build.py --check                    # czy pliki wersji zgadzają się ze źródłem (bez zapisu)
+  python3 tools/build.py native [--from <ref>]      # aplikacja na telefon → native/www (potem: npx cap sync android)
 
 Najpierw Vite buduje dist/ (index.html + assets/ z hashami w nazwach), potem każda wersja dostaje
 kopię z wypełnionymi miejscami: ikony, manifest, nazwa na ekranie głównym, znaczek.
@@ -39,6 +42,10 @@ CHANNELS = {
     'users':  {'dir': 'users', 'icons': '../icons/', 'apple': 'ŻELAZO U',  'tag': 'USERS',
                'name': 'ŻELAZO USERS — konta i plany', 'short': 'ŻELAZO U',
                'desc': 'ŻELAZO — wersja robocza kont, planów i limitów.'},
+    # aplikacja na telefon: ścieżki jak w stabilnej (icons/, models/ obok index.html), kopie katalogów w paczce
+    'native': {'dir': 'native/www', 'icons': 'icons/', 'apple': 'ŻELAZO', 'tag': '',
+               'name': 'ŻELAZO — plan, trening, dieta', 'short': 'ŻELAZO',
+               'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.', 'copy': ['icons', 'models']},
 }
 SOURCES = ['app', 'vite.config.js', 'package.json', 'package-lock.json']
 
@@ -94,7 +101,7 @@ def main(argv):
             sys.exit(f'Nieznana wersja: {a}. Dostępne: {", ".join(CHANNELS)}')
         i += 1
     if check and not chans:
-        chans = list(CHANNELS)
+        chans = [c for c in CHANNELS if c != 'native']   # native/www nie jest w repo
     if not chans:
         sys.exit(__doc__)
     dist = vite_build(ref)
@@ -122,6 +129,11 @@ def main(argv):
         for n, b in assets.items():
             open(os.path.join(ad, n), 'wb').write(b)
         print('zapisano', os.path.relpath(ad, ROOT) + '/', '(' + ', '.join(assets) + ')')
+        for sub in CHANNELS[ch].get('copy', []):   # native: ikony i modele w paczce aplikacji
+            dst = os.path.join(d, sub)
+            if os.path.isdir(dst): shutil.rmtree(dst)
+            shutil.copytree(os.path.join(ROOT, sub), dst)
+            print('skopiowano', os.path.relpath(dst, ROOT) + '/')
     if check:
         print('różni się od źródła: ' + ', '.join(stale) if stale else 'wszystkie wersje zgodne ze źródłem')
         return 1 if stale else 0
