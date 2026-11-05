@@ -209,7 +209,7 @@ function adminAction(req) {
     Object.keys(all).forEach(function (k) {
       if (k.indexOf('user_') === 0) {
         var u = JSON.parse(all[k]);
-        users.push({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h, plan: u.plan || '' });
+        users.push(Object.assign({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h, plan: u.plan || '' }, langView(u)));
       } else if (k.indexOf('inv_') === 0) {
         var i = JSON.parse(all[k]);
         if (now > i.expires) { PROPS.deleteProperty(k); return; }
@@ -268,6 +268,11 @@ function adminAction(req) {
     if (pn) u.plan = pn; else delete u.plan;   // pusty = plan domyślny z cfg
     setJSON('user_' + target, u);
     return { ok: true, plan: u.plan || '' };
+  }
+  if (a === 'adminSetLang') {
+    if (req.lang !== 'pl' && req.lang !== 'en') return { ok: false, error: 'Nieznany język' };
+    u.lang = req.lang; u.langAt = Date.now(); setJSON('user_' + target, u);
+    return Object.assign({ ok: true }, langView(u));
   }
   if (a === 'adminDisable' || a === 'adminEnable') {
     u.disabled = (a === 'adminDisable'); setJSON('user_' + target, u);
@@ -331,7 +336,10 @@ function doPost(e) {
 
     var me = auth(req);
     if (!me) return out({ ok: false, error: 'Zły token' });
-    if (req.action === 'ping') return out(Object.assign({ ok: true, pong: true, admin: me.admin }, planView(me, req)));
+    if (me.user) accountLang(me, req);
+    // ping: język od administratora (nowszy niż na urządzeniu) — aplikacja go przejmie
+    if (req.action === 'ping') return out(Object.assign({ ok: true, pong: true, admin: me.admin },
+      me.user && me.user.lang && (me.user.langAt || 0) > (+req.langAt || 0) ? { lang: me.user.lang, langAt: me.user.langAt } : {}, planView(me, req)));
     if (String(req.action).indexOf('admin') === 0) {
       if (!me.admin) return out({ ok: false, error: 'Brak uprawnień' });
       return out(withLock(function () { return adminAction(req); }));
@@ -480,6 +488,18 @@ var COACH_SYSTEM = [
 var MEAL_SLOTS = ['Śniadanie', 'Przekąska', 'Obiad', 'Po treningu', 'Kolacja'];
 // język konta (Profil → Język) — aplikacja wysyła lang przy każdym zapytaniu; bez niego polski
 function langOf(req) { return req && req.lang === 'en' ? 'en' : 'pl'; }
+// Język ustawia użytkownik (Profil; aplikacja wysyła lang i langAt) albo administrator (user_<konto>: lang, langAt).
+// Nowsza decyzja wygrywa. seenLang/seenLangAt = co ostatnio zgłosiło urządzenie (do panelu i „czeka na urządzenie”).
+function accountLang(me, req) {
+  var u = me.user; if (!u) return;
+  var at = +req.langAt || 0, l = req.lang === 'en' ? 'en' : req.lang === 'pl' ? 'pl' : '';
+  if (l && at >= (u.langAt || 0) && (u.seenLang !== l || (u.seenLangAt || 0) !== at)) { u.seenLang = l; u.seenLangAt = at; setJSON('user_' + me.account, u); }
+  if (u.lang && (u.langAt || 0) > at) req.lang = u.lang;   // wybór administratora, którego urządzenie jeszcze nie przejęło
+}
+function langView(u) {
+  var adminNewer = u.lang && (u.langAt || 0) > (u.seenLangAt || 0);
+  return { lang: adminNewer ? u.lang : (u.seenLang || u.lang || 'pl'), langPending: !!adminNewer };
+}
 var COACH_LANG_EN = 'LANGUAGE: the user chose English. Always reply in natural, plain English, also when the user writes in Polish. ' +
   'The app data above is in Polish — translate exercise names, meals and products into English when you mention them (twaróg = quark / cottage cheese, skyr stays skyr). ' +
   'In the tool zaproponuj_zmiany keep the existing exercise names (nazwa, z, cwiczenie) exactly as in the data, because the app matches them; ' +

@@ -27,7 +27,8 @@ async function seed(page: Page, { cloud = false, admin = false } = {}) {
       : b.action === 'usage' ? { ok: true, usage: {}, ...plan }
       : b.action === 'pull' || b.action === 'push' ? { ok: true, data: null }
       : b.action === 'coach' ? { ok: true, text: 'Odpowiedź testowa Trenera.', quota: { ...quota, coach: { n: 4, max: 30 } } }
-      : b.action === 'adminList' ? { ok: true, users: [{ account: 'anna', plan: '', lastSeen: Date.now(), usage: { coach: 27, form: 2, est: 40, usd: 2.1 } }],
+      : b.action === 'adminSetLang' ? { ok: true, lang: b.lang, langPending: true }
+      : b.action === 'adminList' ? { ok: true, users: [{ account: 'anna', plan: '', lastSeen: Date.now(), lang: 'pl', usage: { coach: 27, form: 2, est: 40, usd: 2.1 } }],
           invites: [], myUsage: { usd: 1 }, totalUsd: 3.1, totalAllUsd: 5, plans, cfg: cfgS }
       : { ok: true };
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(res) });
@@ -241,5 +242,36 @@ test('Język konta: English → Trener po angielsku, lang w zapytaniu (USERS)', 
   await page.locator('#coachChips button').first().click();
   await expect(page.locator('#coachMsgs')).toContainText('Great job.');
   expect(sent.lang).toBe('en');
+  expect(errors).toEqual([]);
+});
+
+test('panel admina: język konta — znaczek i zmiana (USERS)', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true, admin: true });
+  await page.goto('/users/');
+  await page.locator('.nav button[data-v="set"]').click();
+  await page.locator('#mmAdmBtn').click();
+  const acc = page.locator('.ap-acc', { hasText: 'anna' });
+  await expect(acc.locator('.ap-lang')).toHaveText('PL');
+  await acc.click();
+  await page.locator('#apAccLang [data-aplang="en"]').click();
+  await expect(page.locator('#apAccLang [data-aplang="en"]')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#apPanel')).toContainText('Czeka na urządzenie');
+  await expect(acc.locator('.ap-lang')).toHaveText('EN…');
+  expect(errors).toEqual([]);
+});
+
+test('język ustawiony przez administratora: aplikacja przejmuje go przy połączeniu', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    if (b.action !== 'ping') return route.fallback();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, pong: true, admin: false, lang: 'en', langAt: 5000 }) });
+  });
+  await page.goto('/users/');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('zelazo_v1') || '{}').profile.lang)).toBe('en');
+  await page.locator('#coachFab').click();
+  await expect(page.locator('#coachMsgs')).toContainText("I'm your Coach");
   expect(errors).toEqual([]);
 });

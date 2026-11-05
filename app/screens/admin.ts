@@ -1,7 +1,7 @@
 // ŻELAZO — Zużycie AI i panel administratora (konta, plany, ustawienia).
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { APP_VER, verVisible } from '../core/shell';
-import { CLOUD, S, cloudCall, save, saveCloud } from '../core/state';
+import { CLOUD, S, applyAccountLang, cloudCall, save, saveCloud } from '../core/state';
 import { planEnforced, planSet } from '../features/plan-limits';
 import { setupReminders, showInAppReminder } from '../features/reminders';
 import { todayISO } from '../lib/dates';
@@ -34,7 +34,7 @@ export async function loadUsage(){
 // ---- panel administratora (widoczny tylko z tokenem administratora) ----
 export async function checkAdmin(){
   if(!CLOUD.url||!CLOUD.token) return;
-  try{ const j=await cloudCall('ping',{}); setAdmin(!!j.admin); planSet(j); }catch(e){ setAdmin(false); }
+  try{ const j=await cloudCall('ping',{}); setAdmin(!!j.admin); planSet(j); applyAccountLang(j); }catch(e){ setAdmin(false); }
 }
 
 export function setAdmin(on){
@@ -154,7 +154,7 @@ export function apViewAcc(){
       const x=apUse(u);
       if(u.legacy) return `<button class="ap-acc" type="button" data-apacc="${esc(u.account)}"><span class="nm"><span>${esc(u.account)}</span><span class="ap-pill adm">stare konto</span></span><span class="md-hint" style="margin:0">${fmtUsd(x.usd)}</span><span class="meta">używa tokenu administratora · wyślij własny link</span></button>`;
       const p=apEff(u), L=(AP.plans[p]||{}).limits||{}, r=apRatio(x.coach,L.coach);
-      return `<button class="ap-acc" type="button" data-apacc="${esc(u.account)}"><span class="nm"><span>${esc(u.account)}</span>${apPill(p,u)}${!u.admin&&!u.plan?'<span class="md-hint" style="margin:0">domyślny</span>':''}${u.disabled?'<span class="ap-pill off">zablokowane</span>':''}</span><span class="md-hint" style="margin:0">${fmtUsd(x.usd)}</span>
+      return `<button class="ap-acc" type="button" data-apacc="${esc(u.account)}"><span class="nm"><span>${esc(u.account)}</span>${apPill(p,u)}${u.admin?'':apLang(u)}${!u.admin&&!u.plan?'<span class="md-hint" style="margin:0">domyślny</span>':''}${u.disabled?'<span class="ap-pill off">zablokowane</span>':''}</span><span class="md-hint" style="margin:0">${fmtUsd(x.usd)}</span>
         <span class="ap-bar"><span class="${apBarCls(r)}" style="width:${Math.min(100,r*100)}%"></span></span>
         <span class="meta"><span class="${r>=1?'ap-bad':r>=.8?'ap-warn':''}">Trener ${x.coach}/${L.coach}</span><span>Oceny ${x.form}/${L.form}</span><span>Szacowania ${x.est}/${L.est}</span><span>· ${u.admin?'Ty':esc(fmtDate(u.lastSeen))}</span></span></button>`; }).join(''):'<div class="ap-note">Brak kont dla tego filtra.</div>'}</div>`;
 }
@@ -260,7 +260,10 @@ export function apOpenAcc(name){
     pn.innerHTML=head+(u.admin?`<div class="ap-note">To Twoje konto administratora — jego plan ustawiasz w zakładce Ustawienia.</div>`:`
       <div class="ap-sec">Plan</div>
       <div class="ap-seg" id="apAccPlan">${['',...Object.keys(AP.data.plans)].map(k=>`<button type="button" data-app="${esc(k)}" class="${(u.plan||'')===k?'on':''}">${k?esc(AP.data.plans[k].name):'Domyślny ('+esc((AP.data.plans[AP.data.cfg.defaultPlan]||{}).name||'')+')'}</button>`).join('')}</div>
-      <div class="md-hint" style="margin:0">Zmiana działa od następnego zapytania tej osoby. Zużycie w tym miesiącu zostaje i liczy się do nowych limitów.</div>`)+
+      <div class="md-hint" style="margin:0">Zmiana działa od następnego zapytania tej osoby. Zużycie w tym miesiącu zostaje i liczy się do nowych limitów.</div>
+      <div class="ap-sec">Język · Language</div>
+      <div class="ap-seg" id="apAccLang">${[['pl','🇵🇱 Polski'],['en','🇬🇧 English']].map(([k,l])=>`<button type="button" data-aplang="${k}" class="${(u.lang||'pl')===k?'on':''}">${l}</button>`).join('')}</div>
+      <div class="md-hint" style="margin:0">${u.langPending?'Czeka na urządzenie — aplikacja tej osoby przełączy się przy najbliższym połączeniu. ':''}Trener i AI odpowiadają w tym języku od razu; reszta aplikacji jest na razie po polsku. Osoba może go potem zmienić sama w Profilu.</div>`)+
       `<div class="ap-sec">${esc(monthName((u.usage||{}).m||todayISO().slice(0,7)))}</div>
       ${m('Pytania do Trenera',x.coach,L.coach)}${m('Oceny techniki',x.form,L.form)}${m('Szacowania kalorii',x.est,L.est)}
       <div class="ap-note">Koszt AI w tym miesiącu: <b>${fmtUsd(x.usd)}</b> (≈ ${apZl(x.usd*AP_PLN)})</div>`+
@@ -275,6 +278,11 @@ export function apOpenAcc(name){
     const r=await adminCall('adminSetPlan',{target:u.account, plan:b.dataset.app}); if(!r) return;
     u.plan=r.plan||''; apRender(); apOpenAcc(name);
   });
+  pn.querySelectorAll('#apAccLang [data-aplang]').forEach(b=>b.onclick=async()=>{
+    if((u.lang||'pl')===b.dataset.aplang && !u.langPending) return;
+    const r=await adminCall('adminSetLang',{target:u.account, lang:b.dataset.aplang}); if(!r) return;
+    u.lang=r.lang; u.langPending=r.langPending; apRender(); apOpenAcc(name);
+  });
   pn.querySelectorAll('[data-apact]').forEach(b=>b.onclick=async()=>{
     const a=b.dataset.apact, t=u.account;
     if(a==='adminDelete' && prompt('Usunąć konto „'+t+'” razem z danymi? Plik trafi do kosza Dysku (30 dni na odzyskanie).\nWpisz nazwę konta, aby potwierdzić:')!==t) return;
@@ -285,6 +293,10 @@ export function apOpenAcc(name){
     AP.data=null; apLoad(); loadAdmin();
   });
 }
+
+// znaczek języka przy koncie na liście (szczegóły i zmiana w arkuszu konta)
+export function apLang(u){ const en=u.lang==='en';
+  return `<span class="ap-lang${en?' en':''}${u.langPending?' wait':''}" title="${en?'English':'Polski'}${u.langPending?' · czeka na urządzenie':''}">${en?'EN':'PL'}${u.langPending?'…':''}</span>`; }
 
 export function apCloseSheet(){ document.getElementById('apSheet').style.display='none'; }
 

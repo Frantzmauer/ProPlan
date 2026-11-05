@@ -42,8 +42,20 @@ export function scheduleCloudPush(){ SYNC.schedule(); }
 // wersja aplikacji z adresu: stabilna w katalogu głównym, pozostałe w /beta/, /early/, /users/ (funkcja, bo potrzebna od startu)
 export function appChannel(){ return channelFromPath(location.pathname); }
 
-// lang: język konta — Trener, ocena techniki i szacowanie AI odpowiadają w nim (serwer: langOf w Kod.js)
-export function cloudCall(action, payload){ return apiCall(CLOUD, appChannel(), action, Object.assign({lang:langOf(S.profile)}, payload||{})); }
+// lang: język konta — Trener, ocena techniki i szacowanie AI odpowiadają w nim (serwer: langOf / accountLang w Kod.js)
+// langAt: kiedy ustawiony; język od administratora wygrywa tylko, gdy jest nowszy (wybór sprzed tej zmiany = 1)
+export function cloudCall(action, payload){
+  const p=S.profile||{};
+  return apiCall(CLOUD, appChannel(), action, Object.assign({lang:langOf(p), langAt:p.langAt||(p.lang?1:0)}, payload||{}));
+}
+
+// ping: administrator zmienił język tego konta — przejmij go (zapisze się w profilu i zsynchronizuje)
+export function applyAccountLang(j){
+  if(!j || !j.lang || !S.profile || (+j.langAt||0)<=(S.profile.langAt||0)) return;
+  S.profile.lang=j.lang==='en'?'en':'pl'; S.profile.langAt=+j.langAt; S._settingsM=Date.now(); save();
+  const el=document.getElementById('pfLang') as HTMLSelectElement|null; if(el) el.value=S.profile.lang;
+  renderCoach();
+}
 
 export function cloudPush(){ return SYNC.push(); }
 
@@ -62,7 +74,7 @@ export async function cloudTest(){
   refreshCloudUI('...test');
   try{
     const j=await cloudCall('ping', {});
-    CLOUD.lastError=''; saveCloud(); refreshCloudUI(); setAdmin(!!j.admin);
+    CLOUD.lastError=''; saveCloud(); refreshCloudUI(); setAdmin(!!j.admin); applyAccountLang(j);
     showInAppReminder('✅ Połączenie działa', 'Skrypt odpowiada poprawnie.');
   }catch(e){ CLOUD.lastError=e.message; saveCloud(); refreshCloudUI(); alert('Test nieudany: '+e.message); }
 }

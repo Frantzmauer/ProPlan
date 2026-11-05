@@ -104,7 +104,7 @@ export function updateTdee(){
 // zapis pojedynczego pola profilu — nie rusza pozostałych, nie wywołuje wrażenia zmiany kalorii
 export function saveProfileField(key){
   if(key==='name'){ S.profile.name=document.getElementById('pfName').value.trim(); S._settingsM=Date.now(); save(); applyName(); return; }
-  if(key==='lang'){ S.profile.lang=document.getElementById('pfLang').value==='en'?'en':'pl'; S._settingsM=Date.now(); save(); return; }
+  if(key==='lang'){ S.profile.lang=document.getElementById('pfLang').value==='en'?'en':'pl'; S.profile.langAt=Date.now(); S._settingsM=Date.now(); save(); return; }
   if(key==='weight') S.profile.weight=parseFloat(document.getElementById('pfWeight').value)||S.profile.weight;
   if(key==='height') S.profile.height=parseFloat(document.getElementById('pfHeight').value)||S.profile.height;
   if(key==='age')    S.profile.age=parseInt(document.getElementById('pfAge').value)||S.profile.age;
