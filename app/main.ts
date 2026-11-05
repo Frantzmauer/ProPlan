@@ -28,6 +28,7 @@ import { __init_25 } from './features/rest';
 import { __init_26 } from './features/checkin';
 import { __init_27 } from './features/cycle';
 import { __init_29 } from './features/formcheck';
+import { __init_30 } from './features/body3d';
 
 __init_1();
 __init_2();
@@ -58,3 +59,4 @@ __init_26();
 __init_27();
 __init_28();
 __init_29();
+__init_30();

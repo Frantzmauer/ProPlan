@@ -3,6 +3,7 @@
 import { dayIndexFor, weekOf } from '../core/backup';
 import { S, save } from '../core/state';
 import { cyChartBands, cyDiff, cyTracking, cyWeightNote } from '../features/cycle';
+import { bodyRefresh } from '../features/body3d';
 import { restToast } from '../features/rest';
 import { addDays, parseISO, todayISO } from '../lib/dates';
 import { TREND, estimateExpenditure, proposeGoal } from '../lib/trend';
@@ -136,6 +137,7 @@ export function renderMeasures(){
       <button class="btn ghost" data-msedit="${m.d}" aria-label="Edytuj pomiar z ${fmtD(m.d)}">Edytuj</button></div>`).join(''):'';
   document.querySelectorAll('[data-msedit]').forEach(b=>b.onclick=()=>msStartEdit(b.dataset.msedit));
   msEditUi();
+  bodyRefresh();   // sylwetka 3D z nowych obwodów (jeśli otwarta)
 }
 
 // edycja zapisanego pomiaru: wartości do pól, „Zapisz zmiany” nadpisuje ten dzień (puste pole usuwa wartość)

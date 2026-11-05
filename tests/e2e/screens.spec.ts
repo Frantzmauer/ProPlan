@@ -275,3 +275,26 @@ test('język ustawiony przez administratora: aplikacja przejmuje go przy połąc
   await expect(page.locator('#coachMsgs')).toContainText("I'm your Coach");
   expect(errors).toEqual([]);
 });
+
+test('Postęp: sylwetka 3D z obwodów, porównanie ze startem', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page);
+  await page.goto('/beta/');
+  await page.locator('.nav button[data-v="progress"]').click();
+  // obecny pomiar z formularza, start z wcześniejszą datą dopisany w danych
+  await page.locator('#ms_waist').fill('101'); await page.locator('#ms_chest').fill('114'); await page.locator('#msSave').click();
+  await page.evaluate(() => {
+    const k = 'zelazo_v1', S = JSON.parse(localStorage.getItem(k) || '{}');
+    S.measures.unshift({ d: '2026-10-01', waist: 110, chest: 112, _t: 1 }); localStorage.setItem(k, JSON.stringify(S));
+  });
+  await page.reload();
+  await page.locator('.nav button[data-v="progress"]').click();
+  await page.locator('#b3Open').click();
+  await expect(page.locator('#b3Stage canvas')).toBeVisible();
+  await expect(page.locator('#b3Msg')).toBeHidden({ timeout: 15000 });
+  await expect(page.locator('#b3Chg')).toContainText('Pas');
+  await expect(page.locator('#b3Chg')).toContainText('-9');
+  await page.locator('#b3Mode [data-m="cmp"]').click();
+  await expect(page.locator('#b3Leg')).toContainText('start');
+  expect(errors).toEqual([]);
+});

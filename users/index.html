@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="ŻELAZO U">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-DiQj2X8B.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BmQXG5FS.css">
+  <script type="module" crossorigin src="./assets/index-C0HG8qC6.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CBI5hHY5.css">
 </head>
 <body>
 
@@ -124,6 +124,27 @@
       <div class="cy-wnote" id="wCycleNote" style="display:none"></div>
       <div class="empty" id="wEmpty">Zapisz pierwszą wagę, żeby zobaczyć trend.</div>
       <div class="td" id="tdeeCard"></div>
+    </div>
+  </div>
+  <div class="section" id="b3Section">
+    <div class="eyebrow">Sylwetka 3D · z Twoich obwodów</div>
+    <div class="panel b3-panel">
+      <div id="b3Intro" class="b3-intro">
+        <div>Zobacz swoją sylwetkę zbudowaną z obwodów i wzrostu — i jak zmienia się od startu.</div>
+        <button class="btn" id="b3Open" type="button">Pokaż sylwetkę 3D</button>
+        <div class="b3-foot">Pobiera model ok. 0,5 MB (raz).</div>
+      </div>
+      <div id="b3View" style="display:none">
+        <div class="b3-stage" id="b3Stage"><div class="b3-msg" id="b3Msg" role="status"></div><div class="b3-leg" id="b3Leg"></div><div class="b3-hint">przeciągnij, żeby obrócić</div></div>
+        <div class="b3-empty" id="b3Empty" style="display:none">Zapisz pierwszy pomiar obwodów niżej — sylwetka dopasuje się do Twoich wymiarów.</div>
+        <div id="b3Ctl">
+          <div class="b3-seg" id="b3Mode"><button type="button" data-m="now" class="on">Teraz</button><button type="button" data-m="start">Start</button><button type="button" data-m="cmp">Porównaj</button></div>
+          <div class="b3-tl"><label for="b3Tl"><span>Pomiar</span><b id="b3Date">—</b></label><input type="range" id="b3Tl" min="0" max="0" step="1" value="0"></div>
+          <div class="b3-chg" id="b3Chg"></div>
+        </div>
+        <div class="b3-row"><button type="button" id="b3Rot">▶ Obracaj</button><button type="button" id="b3Front">Przód</button><button type="button" id="b3Side">Bok</button></div>
+        <div class="b3-foot">Kształt jest przybliżony — pokazuje kierunek zmian, nie dokładną sylwetkę. Brakujące obwody biorą wartość z poprzedniego pomiaru, wzrost i płeć z profilu. Model: MakeHuman (CC0) · three.js (MIT).</div>
+      </div>
     </div>
   </div>
   <div class="section">

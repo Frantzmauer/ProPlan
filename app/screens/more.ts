@@ -16,6 +16,7 @@ import { kcalRecord, renderWeight } from './progress';
 import { renderShop } from './shop';
 import { updateStreak } from './streak';
 import { renderToday } from './train';
+import { bodyRefresh } from '../features/body3d';
 
 export let MORE_TITLES, sd, kcalSlider, pf;
 
@@ -113,6 +114,7 @@ export function saveProfileField(key){
   S._settingsM=Date.now();
   save();
   updateTdee(); updateKcalHint(); // tylko pola liczbowe odświeżają zapotrzebowanie
+  if(key==='height'||key==='sex') bodyRefresh();   // sylwetka 3D: wzrost i płeć z profilu
 }
 
 export function applyName(){
