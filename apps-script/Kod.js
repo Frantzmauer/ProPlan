@@ -463,7 +463,7 @@ function usageView(acc) {
 // TRENER AI („Zapytaj Trenera”) — Claude przez ten serwer; klucz nigdy nie trafia do przeglądarki.
 // Aplikacja wysyła zwięzłe podsumowanie danych użytkownika (tylko jego własnych) + historię rozmowy.
 // ============================================================
-var COACH_MODEL = 'claude-opus-5';
+var COACH_MODEL = 'claude-opus-5-5';   // następca Opus 5: ta sama jakość, o 20% tańszy (4 $ / 20 $ za 1 mln tokenów)
 var COACH_SYSTEM = [
   'Jesteś Trenerem w aplikacji ŻELAZO — doświadczonym trenerem personalnym i dietetykiem sportowym.',
   'Rozmawiasz po polsku, bezpośrednio, ciepło i konkretnie, jak dobry trener na siłowni. Mów do użytkownika po imieniu, jeśli je znasz.',
@@ -727,7 +727,8 @@ var FORM_SYSTEM = [
   'Pisz po polsku, krótko i konkretnie, jak trener na siłowni. Najważniejsze najpierw. Maksymalnie 3 poprawki.',
   'Jeśli kąt kamery, światło albo kadr nie pozwalają ocenić techniki — powiedz to wprost (ocena „nie da się ocenić”) i podaj, jak ustawić kamerę.',
   'Bezpieczeństwo: wskaż ruchy grożące kontuzją (np. zaokrąglony odcinek lędźwiowy pod obciążeniem, kolana mocno do środka).',
-  'Nie stawiasz diagnoz medycznych; przy bólu zalecasz konsultację z fizjoterapeutą.'
+  'Nie stawiasz diagnoz medycznych; przy bólu zalecasz konsultację z fizjoterapeutą.',
+  'Odpowiadasz zawsze i wyłącznie wywołaniem narzędzia ocena_techniki — bez tekstu poza nim.'
 ].join(' ');
 function formCheck(req, acc) {
   if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
@@ -763,10 +764,12 @@ function formCheck(req, acc) {
       } }
   };
   var payload = {
-    model: COACH_MODEL, max_tokens: 2000, tools: [tool],
+    // Opus 5.5 nie przyjmuje wymuszonego narzędzia (tool_choice tool/any → 400): auto + polecenie w instrukcji + strict.
+    // effort high = jak dotąd (domyślny na Opus 5; na Opus 5.5 domyślny jest medium); max_tokens z zapasem na myślenie
+    model: COACH_MODEL, max_tokens: 4000, tools: [tool], output_config: { effort: 'high' },
     system: FORM_SYSTEM + (langOf(req) === 'en' ? '\n\nLANGUAGE: write every text field (podsumowanie, mocne_strony, poprawki, bezpieczenstwo, nagranie) in plain English. ' +
       'Keep the enum values (ocena, waga) exactly as listed in Polish — the app translates them.' : ''),
-    tool_choice: { type: 'tool', name: 'ocena_techniki' }, fallbacks: 'default',
+    tool_choice: { type: 'auto' }, fallbacks: 'default',
     messages: [{ role: 'user', content: content }]
   };
   var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {

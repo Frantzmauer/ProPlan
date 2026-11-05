@@ -34,6 +34,7 @@ export function __set_coachAtt(v){ coachAtt=v; return v; }
    Aplikacja dokłada zwięzłe podsumowanie danych WYŁĄCZNIE bieżącego użytkownika.
    ============================================================ */
 export const COACH_CTX_MAX = 40000;   // serwer przycina do COACH_MAX_CONTEXT (Kod.js) — trzymaj tak samo
+export const COACH_TURNS = 8, COACH_OLD_MAX = 500;   // historia rozmowy wysyłana do Trenera: ile wiadomości, skrót starszych odpowiedzi
 
 // co jest w aplikacji: Trener podaje tylko te ścieżki zamiast zgadywać przyciski
 export const COACH_APP_GUIDE = `Jak działa aplikacja ŻELAZO (gdy mówisz, co kliknąć, podawaj tylko to, co jest tutaj; jeśli czegoś tu nie ma — powiedz, że nie wiesz, zamiast zgadywać):
@@ -388,7 +389,11 @@ export async function coachSend(text, {voice=false}={}){
         const hh=loadCoach(), me=hh.find(x=>x.id===um.id); if(me){ me.att={ex:att.ex, n:imgs.length}; saveCoach(hh); renderCoach(); }
       }
     }
-    const msgs=h.filter(m=>!m.local).slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
+    // historia dla Trenera: 8 ostatnich wiadomości (nie korzystają z pamięci podręcznej — to największa zmienna część wejścia);
+    // starsze odpowiedzi Trenera skrócone, 2 ostatnie wiadomości w całości
+    const hist=h.filter(m=>!m.local).slice(-COACH_TURNS);
+    const msgs=hist.map((m,i)=>{ const old=i<hist.length-2 && m.role==='assistant' && m.content.length>COACH_OLD_MAX;
+      return {role:m.role, content:(old?m.content.slice(0,COACH_OLD_MAX)+'… [skrócone]':m.content)+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}; });
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
     const ctx=buildCoachContext();
     const j=await cloudCall('coach',Object.assign({messages:msgs, context:ctx.stat, contextLive:ctx.live, exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia','przerwy','obwody']}, extra));

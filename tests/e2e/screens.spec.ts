@@ -303,3 +303,34 @@ test('Postęp: sylwetka 3D z obwodów, porównanie ze startem', async ({ page })
   await expect(page.locator('#b3Leg')).toContainText('start');
   expect(errors).toEqual([]);
 });
+
+test('Trener: historia rozmowy — 8 ostatnich wiadomości, starsze odpowiedzi skrócone (USERS)', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  // 12 wcześniejszych wiadomości, długie odpowiedzi Trenera
+  await page.addInitScript(() => {
+    const k = 'zelazo_v1', S = JSON.parse(localStorage.getItem(k) || '{}'); if (S.coach) return;
+    const msgs = []; for (let i = 0; i < 12; i++) msgs.push({ id: 'm' + i, t: i + 1, role: i % 2 ? 'assistant' : 'user', content: (i % 2 ? 'Odpowiedź ' : 'Pytanie ') + i + ' ' + 'x'.repeat(i % 2 ? 1500 : 20) });
+    S.coach = { clearedAt: 0, msgs }; localStorage.setItem(k, JSON.stringify(S));
+  });
+  let sent: { messages?: { role: string; content: string }[] } = {};
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    if (b.action !== 'coach') return route.fallback();
+    sent = b;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, text: 'OK.' }) });
+  });
+  await page.goto('/users/');
+  await page.locator('#coachFab').click();
+  await page.locator('#coachIn').fill('Nowe pytanie');
+  await page.locator('#coachSend').click();
+  await expect(page.locator('#coachMsgs')).toContainText('OK.');
+  const m = sent.messages || [];
+  expect(m).toHaveLength(8);
+  expect(m[m.length - 1].content).toBe('Nowe pytanie');
+  expect(m[0].role).toBe('assistant');
+  expect(m[0].content).toMatch(/… \[skrócone\]$/);              // starsza odpowiedź Trenera — skrót
+  expect(m[0].content.length).toBeLessThan(560);
+  expect(m[m.length - 2].content.length).toBeGreaterThan(1500);   // ostatnia odpowiedź w całości
+  expect(errors).toEqual([]);
+});
