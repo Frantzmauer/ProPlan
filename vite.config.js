@@ -7,7 +7,7 @@ import { resolve, extname } from 'node:path';
 // Adres zastępczy: Vite nie próbuje dołączać plików spod pełnego adresu, więc ikony i manifest zostają
 // poza pakietem (każda wersja ma do nich inną ścieżkę). build.py podmienia go na ścieżkę wersji.
 export const SLOT = 'https://zelazo.invalid/';
-const TYPES = { '.svg': 'image/svg+xml', '.png': 'image/png', '.gz': 'application/gzip' };
+const TYPES = { '.svg': 'image/svg+xml', '.png': 'image/png', '.zbm': 'application/octet-stream' };
 
 function channelSlots() {
   let serve = false;

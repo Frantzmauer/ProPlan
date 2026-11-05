@@ -10,7 +10,7 @@ export let B3;
 const LABEL = {waist:'Pas', chest:'Klatka', arm:'Ramię', thigh:'Udo', hips:'Biodra'};
 const DOWN = {waist:1, hips:1}, NEUTRAL = {chest:1, arm:1, thigh:1};   // spadek pasa i bioder = dobrze; reszta bez oceny (zależy od celu)
 
-function modelUrl(sex){ return new URL((APP_VER==='stable'?'':'../')+'models/body-'+sex+'.bin.gz', location.href).href; }
+function modelUrl(sex){ return new URL((APP_VER==='stable'?'':'../')+'models/body-'+sex+'.zbm', location.href).href; }
 
 async function loadModel(sex): Promise<BodyModel>{
   if(B3.models[sex]) return B3.models[sex];

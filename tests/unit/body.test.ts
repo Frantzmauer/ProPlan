@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { applyBody, bodyTimeline, fitBody, parseBody, predictBody } from '../../app/lib/body';
 
 // prawdziwe pliki modelu z repozytorium (tools/body_model.py)
-const load = (sex: string) => { const b = gunzipSync(readFileSync(`models/body-${sex}.bin.gz`)); return parseBody(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)); };
+const load = (sex: string) => { const b = gunzipSync(readFileSync(`models/body-${sex}.zbm`)); return parseBody(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)); };
 const male = load('male'), female = load('female');
 
 describe('sylwetka 3D: plik modelu', () => {

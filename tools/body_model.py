@@ -6,7 +6,7 @@ w kopii z repozytorium naver/anny (commit 8f35dc2), katalog src/anny/data/mpfb2/
   3dobjs/base.obj, mesh_metadata/basemesh_vertex_groups.json oraz kształty (targets) — lista w TARGETS niżej.
 
 Użycie:
-  python3 tools/body_model.py <katalog z danymi mpfb2>      # zapisuje models/body-male.bin.gz i models/body-female.bin.gz
+  python3 tools/body_model.py <katalog z danymi mpfb2>      # zapisuje models/body-male.zbm i models/body-female.zbm
 
 Co robi:
   1. Bierze ciało, oczy i spodenki (helper-tights przycięte od pasa do połowy uda; bez włosów, zębów, spódnicy) i składa sylwetkę kobiecą i męską
@@ -17,7 +17,7 @@ Co robi:
   3. Mierzy na siatce (jak taśmą: obwód przekroju po wypukłej otoczce) wzrost i obwody dla sylwetki bazowej
      i dla każdego kształtu. Aplikacja z tych liczb dobiera kształty do pomiarów użytkownika (app/lib/body.ts).
 
-Format pliku (gzip; GitHub Pages nie kompresuje .bin, aplikacja rozpakowuje DecompressionStream) — wewnątrz little-endian: 'ZBM1', uint32 długość nagłówka JSON, JSON (dopełniony spacjami do 4 bajtów),
+Format pliku .zbm (zawartość w gzip, ale bez końcówki .gz — GitHub Pages nie publikował plików .gz; aplikacja rozpakowuje DecompressionStream) — wewnątrz little-endian: 'ZBM1', uint32 długość nagłówka JSON, JSON (dopełniony spacjami do 4 bajtów),
 potem: Float32 pozycje (nv×3), Uint16 trójkąty (nt×3, dopełnione do 4 bajtów; najpierw skóra, potem legginsy —
 header.groups), Int16 przesunięcia każdego kształtu (nv×3; wartość × scale = przesunięcie w jednostkach siatki),
 Uint8 znacznik topu dla każdego wierzchołka (nv, dopełnione do 4 bajtów). Jednostka siatki = 10 cm.
@@ -286,7 +286,7 @@ def main(data):
         header = {'v': 1, 'sex': sex, 'nv': len(used), 'nt': len(out_tris), 'unit_cm': UNIT_CM,
                   'source': 'MakeHuman / MPFB2 (CC0 1.0) via naver/anny 8f35dc2',
                   'groups': groups, 'morphs': meta, 'base': m0, 'jac': jac}
-        path = os.path.join(ROOT, 'models', 'body-%s.bin.gz' % sex)
+        path = os.path.join(ROOT, 'models', 'body-%s.zbm' % sex)
         write_bin(path, header, pos, out_tris, morphs, [1 if i in top else 0 for i in used])
         print('zapisano', os.path.relpath(path, ROOT), '%d KB' % (os.path.getsize(path) // 1024), '— baza:', m0)
         for k, v in jac.items():

@@ -1,4 +1,4 @@
-// Sylwetka 3D: model MakeHuman (CC0, tools/body_model.py → models/body-*.bin.gz) dopasowany do pomiarów.
+// Sylwetka 3D: model MakeHuman (CC0, tools/body_model.py → models/body-*.zbm) dopasowany do pomiarów.
 // Każdy kształt ma stronę + i − (np. waist+ / waist−). Plik modelu zawiera dla każdego kształtu, o ile cm
 // zmienia wzrost i obwody (jac); dopasowanie dobiera kształty tak, żeby obwody modelu były jak najbliżej pomiarów.
 
