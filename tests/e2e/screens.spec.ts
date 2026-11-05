@@ -164,7 +164,7 @@ test('Postęp: edycja zapisanego obwodu', async ({ page }) => {
 test('Trener dostaje dziennik jedzenia i opis aplikacji (USERS)', async ({ page }) => {
   const errors = watch(page);
   await seed(page, { cloud: true });
-  let sent: { context?: string; features?: string[] } = {};
+  let sent: { context?: string; contextLive?: string; features?: string[] } = {};
   await page.route(SERVER, async route => {
     const b = JSON.parse(route.request().postData() || '{}');
     if (b.action !== 'coach') return route.fallback();
@@ -178,12 +178,14 @@ test('Trener dostaje dziennik jedzenia i opis aplikacji (USERS)', async ({ page 
   await page.locator('#coachIn').fill('Ile dziś zjadłem?');
   await page.locator('#coachSend').click();
   await expect(page.locator('#coachMsgs')).toContainText('OK.');
-  expect(sent.context).toContain('Dziennik jedzenia — ostatnie 14 dni');
-  expect(sent.context).toMatch(/DZIŚ: zjedzone [1-9]\d*\/2200 kcal/);
-  expect(sent.context).toContain('ZJEDZONY');
-  expect(sent.context).toContain('Jak działa aplikacja ŻELAZO');
+  // część bieżąca: dziennik (zwięzły, z legendą); stała: opis aplikacji na początku
+  expect(sent.contextLive).toContain('Dziennik jedzenia, ostatnie 14 dni');
+  expect(sent.contextLive).toMatch(/DZIŚ\|[1-9]\d*\/2200\|B\d+\/\d+/);
+  expect(sent.contextLive).toMatch(/\n {2}✓Śniadanie/);
+  expect(sent.contextLive).toMatch(/DZIŚ\|.*\|(w toku|ZAL)/);
+  expect(sent.context).toMatch(/^Jak działa aplikacja ŻELAZO/);
   expect(sent.context).toContain('Dzień diety zaliczony');
-  expect(sent.context).toMatch(/DZIŚ: zjedzone .* — (w toku|dzień diety ZALICZONY)/);
+  expect(sent.context).not.toContain('Dziennik jedzenia');
   expect(sent.features).toContain('obwody');
   expect(errors).toEqual([]);
 });

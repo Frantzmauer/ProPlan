@@ -438,12 +438,14 @@ function recordUsage(acc, kind, model, u) {
       var m = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM');
       if (r.m !== m) {   // nowy miesiąc: poprzedni zostaje jako „prev”
         if (r.m) r.prev = { m: r.m, usd: r.usd || 0, n: r.n || 0 };
-        r.m = m; r.usd = 0; r.n = 0; r.coach = 0; r.est = 0; r.form = 0; r.tin = 0; r.tout = 0;
+        r.m = m; r.usd = 0; r.n = 0; r.coach = 0; r.est = 0; r.form = 0; r.tin = 0; r.tout = 0; r.tcr = 0; r.tcw = 0;
       }
       var c = costUSD(model, u);
       r.usd += c; r.all = (r.all || 0) + c; r.n += 1; r[kind] = (r[kind] || 0) + 1;
       r.tin += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
       r.tout += (u.output_tokens || 0);
+      r.tcr = (r.tcr || 0) + (u.cache_read_input_tokens || 0);       // odczyt z pamięci podręcznej (10% ceny)
+      r.tcw = (r.tcw || 0) + (u.cache_creation_input_tokens || 0);   // zapis do pamięci podręcznej (125% ceny)
       setJSON(k, r);
     });
   } catch (e) { /* licznik nie może zablokować odpowiedzi */ }
@@ -453,7 +455,8 @@ function usageView(acc) {
   var m = Utilities.formatDate(new Date(), 'Europe/Warsaw', 'yyyy-MM');
   if (!r) return { m: m, usd: 0, n: 0, coach: 0, est: 0, form: 0, all: 0, prev: null };
   if (r.m !== m) return { m: m, usd: 0, n: 0, coach: 0, est: 0, form: 0, all: r.all || 0, prev: { m: r.m, usd: r.usd || 0, n: r.n || 0 } };
-  return { m: r.m, usd: r.usd || 0, n: r.n || 0, coach: r.coach || 0, est: r.est || 0, form: r.form || 0, all: r.all || 0, prev: r.prev || null };
+  return { m: r.m, usd: r.usd || 0, n: r.n || 0, coach: r.coach || 0, est: r.est || 0, form: r.form || 0, all: r.all || 0, prev: r.prev || null,
+    tin: r.tin || 0, tout: r.tout || 0, tcr: r.tcr || 0, tcw: r.tcw || 0 };   // tokeny: wejście (razem z pamięcią podręczną), wyjście, odczyt i zapis pamięci
 }
 
 // ============================================================
@@ -509,7 +512,11 @@ var COACH_MAX_CONTEXT = 40000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
 function coachReply(req, acc) {
   if (!CLAUDE_API_KEY) return { ok: false, error: 'Trener niedostępny: brak klucza CLAUDE_API_KEY w skrypcie. ' + propNames() };
+  // context = część stała (profil, plan, treningi), contextLive = bieżąca (dziś, dziennik jedzenia, tydzień) — osobne punkty
+  // pamięci podręcznej: odhaczenie posiłku zmienia tylko bieżącą, stała dalej czyta się z pamięci (10% ceny).
+  // Starsze wersje aplikacji wysyłają tylko context (całość) — działa jak dotąd.
   var ctx = String(req.context || '').slice(0, COACH_MAX_CONTEXT);
+  var live = String(req.contextLive || '').slice(0, COACH_MAX_CONTEXT);
   var hist = Array.isArray(req.messages) ? req.messages.slice(-COACH_MAX_TURNS) : [];
   var messages = [];
   hist.forEach(function (m) {
@@ -621,8 +628,8 @@ function coachReply(req, acc) {
     system: [
       { type: 'text', text: COACH_SYSTEM },
       // dane użytkownika w cache: kolejne pytania w tej samej rozmowie czytają je taniej
-      { type: 'text', text: 'DANE UŻYTKOWNIKA (z aplikacji, stan na dziś):\n' + ctx, cache_control: { type: 'ephemeral' } }
-    ].concat(imgs.length ? [{ type: 'text', text: 'Do pytania dołączono klatki z nagrania techniki i wstępną automatyczną ocenę. ' +
+      { type: 'text', text: (live ? 'DANE UŻYTKOWNIKA — stałe (profil, plan, treningi):\n' : 'DANE UŻYTKOWNIKA (z aplikacji, stan na dziś):\n') + ctx, cache_control: { type: 'ephemeral' } }
+    ].concat(live ? [{ type: 'text', text: 'DANE UŻYTKOWNIKA — bieżące (dziś, dziennik jedzenia, tydzień):\n' + live, cache_control: { type: 'ephemeral' } }] : []).concat(imgs.length ? [{ type: 'text', text: 'Do pytania dołączono klatki z nagrania techniki i wstępną automatyczną ocenę. ' +
       'Oceń technikę ponownie, znając cały kontekst użytkownika (plan, ciężary i historia serii, dieta, regeneracja, a z rozmowy — bóle, kontuzje, ograniczenia sprzętowe). ' +
       'Potwierdź albo skoryguj wstępną ocenę i wyjaśnij dlaczego. Pomiary kątów z obrazu 2D są przybliżone — opieraj się na tym, co widać. ' +
       'Jeśli technika lub ograniczenia tego wymagają, możesz zaproponować zmiany narzędziem (lżejszy ciężar, mniej powtórzeń, wymiana ćwiczenia).' }] : [])

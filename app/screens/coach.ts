@@ -46,8 +46,12 @@ export const COACH_APP_GUIDE = `Jak działa aplikacja ŻELAZO (gdy mówisz, co k
 - Więcej: Ćwiczenia (nauka techniki), Cykl i samopoczucie, Przerwy między seriami, Profil i plan (profil, cel kalorii suwakiem, start planu), Pakiet i limity AI, Synchronizacja i konta, Przypomnienia, Kopia i eksport, Wersja aplikacji.
 - Ty zmieniasz dane tylko kartą propozycji (narzędzie zaproponuj_zmiany) — zmiana wchodzi dopiero po kliknięciu „Zastosuj od dziś”, a „Cofnij” ją wycofuje. Wpisów treningów, wagi i posiłków nie edytujesz — wskaż, gdzie użytkownik zrobi to sam.`;
 
+// legenda zwięzłego dziennika (jeden wiersz na dzień, posiłki tylko dla ostatnich dni) — mniej tokenów niż proza
+export const FOOD_LEGEND = 'Dziennik jedzenia, ostatnie 14 dni (dni bez wpisów pominięte; „brak zapisu jedzenia” = dzień z innymi wpisami, ale bez posiłków — nie wiadomo, czy jedzenia nie było, czy nie zapisano). Wiersz dnia: data|kcal zjedzone/cel|B, W, T g zjedzone/cel|ocena dnia (ZAL = dzień diety zaliczony; inaczej w toku albo nie, z % celu kcal i białka i ✓/✗)|woda szkl.|nawyki. Sumy liczone jak w zakładce Dieta (posiłki z planu + własne) — są wiarygodne, nie licz dnia tylko z własnych. Posiłki pod wierszem dnia (tylko 4 ostatnie dni): ✓ zjedzony, → zastąpiony własnym, ✗ pominięty, · nie odhaczony; * = od Trenera; „ok.GG:MM” = kiedy zjedzono, „z GG:MM” = kiedy odhaczono; liczby = kcal/B/W/T; + = własny posiłek („→Obiad” = zamiast obiadu z planu).';
+export const FOOD_DETAIL_DAYS = 4;
+
 // dzień w Diecie dokładnie tak, jak liczy aplikacja: posiłki z planu (wariant / od Trenera), własne, suma kcal i makro
-export function coachFoodDay(iso, today){
+export function coachFoodDay(iso, today, detail=true){
   const L=S.log[iso]||(iso===today?{meals:{}}:null); if(!L) return '';
   const dow=parseISO(iso).getDay(), goal=goalOn(iso), g=macroGoalFor(goal), dd=x=>x.slice(8,10)+'.'+x.slice(5,7);
   const hhmm=t=>{ const d=new Date(t), k=todayISO(d); return (k!==iso?dd(k)+' ':'')+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
@@ -58,29 +62,33 @@ export function coachFoodDay(iso, today){
   if(DIET[dow]) dayMeals(iso, dow, L, weekOf(dayIndexFor(iso)), goal).forEach((x,i)=>{
     const k='m'+i, on=!!(L.meals&&L.meals[k]), a=L.ate&&L.ate[k], t=L._t&&L._t['meal:'+k], rep=custom.find(c=>c.rep===k);
     tags[k]=x.slot.tag;
-    let st;
-    if(rep) st='zastąpiony własnym posiłkiem (niżej)';
-    else if(on){ add(x.mc); st='ZJEDZONY'+(a>=0?' ok. '+hm(a):'')+(t?' (odhaczony '+hhmm(t)+')':''); }
-    else if(a===-1) st='pominięty';
-    else st=iso<today?'nie odhaczony':'jeszcze nie odhaczony';
-    rows.push(`  - ${x.slot.tag}${x.adj?' [od Trenera]':''}: ${strip(x.mc.txt)} — ${x.mc.kcal} kcal, B${x.mc.p} W${x.mc.c} T${x.mc.f} → ${st}`);
+    const nums=`${x.mc.kcal}/${x.mc.p}/${x.mc.c}/${x.mc.f}`;
+    if(rep){ rows.push(`  →${x.slot.tag}`); return; }
+    if(on){ add(x.mc); rows.push(`  ✓${x.slot.tag}${x.adj?'*':''}${a>=0?' ok.'+hm(a):''}${t?' z '+hhmm(t):''} ${nums} ${strip(x.mc.txt).slice(0,50)}`); return; }
+    rows.push(`  ${a===-1?'✗':'·'}${x.slot.tag}${x.adj?'*':''} ${nums}`);
   });
   custom.forEach(c=>{ add(c);
-    const when=c.ate>=0?'ok. '+hm(c.ate):(c._t?hhmm(c._t):'');
-    rows.push(`  - własny${c.rep&&tags[c.rep]?' zamiast „'+tags[c.rep]+'”':''}${when?' '+when:''}: ${String(c.txt||'').slice(0,90)} — ${c.kcal||0} kcal, B${c.p||0} W${c.c||0} T${c.f||0}`); });
-  const habName={sleep:'sen 7–8h',sun:'cel kroków',notool:'dziennik',noalco:'bez alkoholu',nosugar:'bez słodyczy'};
+    const when=c.ate>=0?' ok.'+hm(c.ate):(c._t?' z '+hhmm(c._t):'');
+    rows.push(`  +${c.rep&&tags[c.rep]?'→'+tags[c.rep]:''}${when} ${c.kcal||0}/${c.p||0}/${c.c||0}/${c.f||0} ${String(c.txt||'').slice(0,50)}`); });
+  const habName={sleep:'sen',sun:'kroki',notool:'dziennik',noalco:'bez alk.',nosugar:'bez słod.'};
   const hab=Object.entries(L.habits||{}).filter(([,v])=>v).map(([h])=>habName[h]||h);
   const r=v=>Math.round(v), sc=dietScore(tot, g);
-  const verdict=sc.ok?'dzień diety ZALICZONY':(iso===today?'w toku':'niezaliczony')+' (kcal '+(sc.kcalOk?'✓':'✗')+' '+sc.kcalPct+'%, białko '+(sc.pOk?'✓':'✗')+' '+sc.pPct+'%)';
-  return `${dd(iso)} (${['Nd','Pn','Wt','Śr','Cz','Pt','Sb'][dow]})${iso===today?' DZIŚ':''}: zjedzone ${r(tot.kcal)}/${g.kcal} kcal, B ${r(tot.p)}/${g.p} g, W ${r(tot.c)}/${g.c} g, T ${r(tot.f)}/${g.f} g — ${verdict}`
-    +(L.water?`, woda ${L.water} szkl.`:'')+(hab.length?', nawyki: '+hab.join(', '):'')+(rows.length?'\n'+rows.join('\n'):'');
+  const verdict=sc.ok?'ZAL':(iso===today?'w toku':'nie')+` kcal ${sc.kcalPct}%${sc.kcalOk?'✓':'✗'} B ${sc.pPct}%${sc.pOk?'✓':'✗'}`;
+  const day=`${dd(iso)} ${['Nd','Pn','Wt','Śr','Cz','Pt','Sb'][dow]}${iso===today?' DZIŚ':''}`;
+  // dzień bez żadnego zjedzonego posiłku (np. tylko trening albo woda): jedna krótka informacja zamiast zer
+  if(!tot.kcal) return `${day}|brak zapisu jedzenia`+(L.water?`|woda ${L.water}`:'')+(hab.length?'|'+hab.join(','):'');
+  return `${day}|${r(tot.kcal)}/${g.kcal}|B${r(tot.p)}/${g.p}|W${r(tot.c)}/${g.c}|T${r(tot.f)}/${g.f}|${verdict}`
+    +(L.water?`|woda ${L.water}`:'')+(hab.length?'|'+hab.join(','):'')+(detail&&rows.length?'\n'+rows.join('\n'):'');
 }
 
+// kontekst Trenera w dwóch częściach (osobne punkty pamięci podręcznej na serwerze):
+// stat — opis aplikacji, profil, plan, waga, obwody, treningi i rekordy (w trakcie rozmowy zwykle się nie zmienia),
+// live — data, realizacja tygodnia, dziennik jedzenia, check-in (zmienia się po każdym odhaczeniu posiłku czy wody)
 export function buildCoachContext(){
   const p=S.profile||{}, today=todayISO(), wkNow=weekOf(dayIndexFor(today));
-  const inPlan=wkNow>=1&&wkNow<=24, out=[];
+  const inPlan=wkNow>=1&&wkNow<=24, out=[COACH_APP_GUIDE], live=[];
   const dd=iso=>iso.slice(8,10)+'.'+iso.slice(5,7);
-  out.push(`Dzisiaj: ${today}. Start planu: ${S.startDate}. ${inPlan?'Tydzień '+wkNow+'/24 — '+phaseInfo(wkNow).name:'Poza 24-tygodniowym planem'}.`);
+  live.push(`Dzisiaj: ${today}. Start planu: ${S.startDate}. ${inPlan?'Tydzień '+wkNow+'/24 — '+phaseInfo(wkNow).name:'Poza 24-tygodniowym planem'}.`);
   out.push(`Profil: ${p.name||'bez imienia'}, ${p.sex==='f'?'kobieta':'mężczyzna'}, ${p.age||'?'} lat, ${p.height||'?'} cm, waga w profilu ${p.weight||'?'} kg, aktywność ×${p.activity||'?'}.`);
   const g=macroGoalFor(S.kcalGoal||DEFAULT_KCAL);
   out.push(`Cel dzienny: ${g.kcal} kcal (szacowane utrzymanie ${estMaintenance()} kcal), białko ${g.p} g, węglowodany ${g.c} g, tłuszcz ${g.f} g. Jadłospis z aplikacji: 4 posiłki dziennie skalowane do celu.`);
@@ -128,11 +136,11 @@ export function buildCoachContext(){
   }
   const habName={sleep:'sen 7–8h',sun:'cel kroków',notool:'dziennik',noalco:'bez alkoholu',nosugar:'bez słodyczy'};
   const wkRows=Object.entries(weeks).filter(([,W])=>W.days).slice(-8).map(([wk,W])=>`tydz. ${wk}: siłownia ${W.gym}/${W.gymP}`+(W.homeP?`, dom ${W.home}/${W.homeP}`:'')+`, bieg ${W.run}/${W.runP}, posiłki z planu ${Math.round(100*W.meals/(4*W.days))}%, woda śr. ${(W.water/W.days).toFixed(1)} szkl., dni z wpisami ${W.logged}/${W.days}`+(Object.keys(W.hab).length?', nawyki: '+Object.entries(W.hab).map(([h,n])=>(habName[h]||h)+' '+n+'d').join(', '):''));
-  out.push(wkRows.length?'Realizacja tygodniowa (zrobione/zaplanowane):\n'+wkRows.join('\n'):'Realizacja: brak wpisów.');
+  live.push(wkRows.length?'Realizacja tygodniowa (zrobione/zaplanowane):\n'+wkRows.join('\n'):'Realizacja: brak wpisów.');
   const exRows=Object.entries(exHist).map(([n,a])=>'- '+n+': '+a.slice(-5).join(' | '));
   out.push(exRows.length?'Historia ćwiczeń (ostatnie sesje, kg×powtórzenia):\n'+exRows.join('\n'):'Historia ćwiczeń: brak zapisanych serii.');
-  { const days=[]; for(let i=13;i>=0;i--){ const x=coachFoodDay(addDays(today,-i), today); if(x) days.push(x); }
-    if(days.length) out.push('Dziennik jedzenia — ostatnie 14 dni (dni bez wpisów pominięte). Suma dnia liczona tak samo jak w zakładce Dieta: odhaczone posiłki z planu + własne posiłki; „pominięty”, „nie odhaczony” i „zastąpiony” się nie liczą. Godzina „ok.” = kiedy zjedzono, „odhaczony” = kiedy zapisano. Te sumy są wiarygodne — nie licz dnia tylko z własnych posiłków:\n'+days.join('\n')); }
+  { const days=[]; for(let i=13;i>=0;i--){ const x=coachFoodDay(addDays(today,-i), today, i<FOOD_DETAIL_DAYS); if(x) days.push(x); }
+    if(days.length) live.push(FOOD_LEGEND+'\n'+days.join('\n')); }
   // treningi zmierzone w trybie treningu (czas, przerwy vs plan) — ostatnie 8
   { const ss=Object.keys(S.log).sort().filter(k=>k<=today && hasSession(S.log[k])).slice(-8).map(k=>{ const x=S.log[k].session, f=t=>fmtDur(t);
       return '- '+dd(k)+' '+(x.title||'trening')+': '+f(x.dur)+' (praca '+f(x.work)+'), przerwy śr. '+f(x.avgRest)+(x.avgRestPlan?' przy planie '+f(x.avgRestPlan):'')+', serie '+x.done+'/'+x.total+(x.skipped?' (pominięte '+x.skipped+')':'')
@@ -149,7 +157,7 @@ export function buildCoachContext(){
   { const since=addDays(today,-14), lv=['słabo','OK','dobrze'], sr=['mocne','lekkie','brak'], en=['niska','OK','wysoka'], pl={normal:'trening wg planu', light:'lżej (−10%)', light2:'lżej (−10%, seria mniej)', moved:'przesunięty', move:'lekki ruch zamiast treningu', skip:'pominięty check-in'};
     const rows=Object.keys(S.log).filter(k=>k>=since && k<=today && S.log[k].checkin && S.log[k].checkin.plan!=='skip').sort().map(k=>{ const c=S.log[k].checkin;
       return '- '+dd(k)+': sen '+lv[c.sleep]+', zakwasy '+sr[c.sore]+', energia '+en[c.energy]+' → '+(pl[c.plan]||c.plan); });
-    if(rows.length) out.push('Samopoczucie przed treningiem (check-in):\n'+rows.join('\n')); }
+    if(rows.length) live.push('Samopoczucie przed treningiem (check-in):\n'+rows.join('\n')); }
   // zamiany ćwiczeń zrobione samodzielnie (przycisk Zamień) — ostatnie 14 dni
   { const since=addDays(today,-14), why={busy:'zajęte stanowisko',pain:'BÓL',gear:'brak sprzętu'}, sw=[];
     Object.values((S.adj&&S.adj.ex)||{}).forEach(l=>l.forEach(y=>{ if(y.user && y.swap && y.from>=since) sw.push('- '+dd(y.from)+': '+(y.was||'?')+' → '+y.swap.n+' ('+(why[y.reason]||'—')+', '+(y.to?'tylko ten dzień':'na stałe')+(y.fromSet?', od serii '+y.fromSet:'')+')'); }));
@@ -162,8 +170,8 @@ export function buildCoachContext(){
   { const sa=stepsAdj(today); out.push(`Dzienny cel kroków: ${sa?sa.goal:DEFAULT_STEPS}`+(sa?` (ustawiony przez Trenera od ${sa.from})`:' (startowy)')+'. Nawyk „ruch/kroki” = osiągnięty cel. Możesz zaproponować nowy cel polem cel_krokow.'); }
   const tg=coachTargets();
   if(tg.length) out.push('Ćwiczenia w planie na najbliższe 2 tygodnie (aktualne cele; nazwy dokładnie takie do narzędzia zaproponuj_zmiany):\n'+tg.map(t=>'- '+t.n+': '+t.txt).join('\n'));
-  // opis aplikacji zawsze w całości — przycinane są dane, nie on
-  return out.join('\n').slice(0,COACH_CTX_MAX-COACH_APP_GUIDE.length-1)+'\n'+COACH_APP_GUIDE;
+  // opis aplikacji jest na początku części stałej (zawsze w całości); przycinane są dane na końcu
+  return {stat:out.join('\n').slice(0,COACH_CTX_MAX), live:live.join('\n').slice(0,COACH_CTX_MAX)};
 }
 
 // aktualne cele ćwiczeń z najbliższych 14 dni (z uwzględnieniem zmian od Trenera)
@@ -382,7 +390,8 @@ export async function coachSend(text, {voice=false}={}){
     }
     const msgs=h.filter(m=>!m.local).slice(-16).map(m=>({role:m.role, content:m.content+(m.proposal?'\n\n[Zaproponowane zmiany: '+propText(m.proposal)+' — decyzja użytkownika: '+(m.applied?'zastosował od '+todayISO():m.dismissed?'odrzucił':'jeszcze nie zdecydował')+']':'')}));
     // features: serwer pokaże Trenerowi pole cel_krokow tylko wersjom, które je obsługują
-    const j=await cloudCall('coach',Object.assign({messages:msgs, context:buildCoachContext(), exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia','przerwy','obwody']}, extra));
+    const ctx=buildCoachContext();
+    const j=await cloudCall('coach',Object.assign({messages:msgs, context:ctx.stat, contextLive:ctx.live, exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia','przerwy','obwody']}, extra));
     if(j.quota) quotaSet(j.quota);
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
     reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');

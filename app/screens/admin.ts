@@ -27,7 +27,7 @@ export async function loadUsage(){
         <div class="b"><div class="n">${u.est}</div><div class="l">Szacowania kalorii</div></div>
       </div>
       <div class="md-hint" style="margin-top:10px">${u.prev?'Poprzedni miesiąc ('+esc(monthName(u.prev.m))+'): '+fmtUsd(u.prev.usd)+' · ':''}Łącznie od początku: ${fmtUsd(u.all)}.
-      Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. ${planEnforced()?'Limity Twojego planu: Więcej → Pakiet i limity AI.':'Limit: 30 pytań do Trenera i 40 szacowań dziennie.'}</div>`;
+      ${u.tin?`Tokeny w tym miesiącu: wejście ${Math.round(u.tin/1000)} tys. (z pamięci podręcznej ${Math.round(100*(u.tcr||0)/u.tin)}% — czytane za 10% ceny), wyjście ${Math.round((u.tout||0)/1000)} tys. `:''}Szacunek z liczby tokenów i cennika Claude API — dokładny rachunek jest w panelu Anthropic. ${planEnforced()?'Limity Twojego planu: Więcej → Pakiet i limity AI.':'Limit: 30 pytań do Trenera i 40 szacowań dziennie.'}</div>`;
   }catch(e){ sec.style.display='none'; }
 }
 
