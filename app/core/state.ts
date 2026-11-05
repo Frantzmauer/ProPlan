@@ -2,6 +2,7 @@
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { showInAppReminder } from '../features/reminders';
 import { EMPTY_CLOUD, apiCall, channelFromPath } from '../lib/api';
+import { langOf } from '../lib/lang';
 import { mergeState } from '../lib/merge.js';
 import { defaultState, hasUserData, migrateState, normalizeIncoming } from '../lib/state';
 import { KEYS, readJSON, writeJSON } from '../lib/storage';
@@ -41,7 +42,8 @@ export function scheduleCloudPush(){ SYNC.schedule(); }
 // wersja aplikacji z adresu: stabilna w katalogu głównym, pozostałe w /beta/, /early/, /users/ (funkcja, bo potrzebna od startu)
 export function appChannel(){ return channelFromPath(location.pathname); }
 
-export function cloudCall(action, payload){ return apiCall(CLOUD, appChannel(), action, payload||{}); }
+// lang: język konta — Trener, ocena techniki i szacowanie AI odpowiadają w nim (serwer: langOf w Kod.js)
+export function cloudCall(action, payload){ return apiCall(CLOUD, appChannel(), action, Object.assign({lang:langOf(S.profile)}, payload||{})); }
 
 export function cloudPush(){ return SYNC.push(); }
 

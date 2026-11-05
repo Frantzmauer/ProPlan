@@ -216,3 +216,30 @@ test('Dieta: „Zastępuje” w oknie posiłku i karta „Dzień diety”', asyn
   await expect(page.locator('#dietScore')).toContainText('✓ zaliczony');
   expect(errors).toEqual([]);
 });
+
+test('Język konta: English → Trener po angielsku, lang w zapytaniu (USERS)', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  let sent: { lang?: string } = {};
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    if (b.action !== 'coach') return route.fallback();
+    sent = b;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, text: 'Great job.' }) });
+  });
+  await page.goto('/users/');
+  await page.locator('#coachFab').click();
+  await expect(page.locator('#coachChips button').first()).toHaveText('Jak mi idzie? Oceń moje postępy');
+  await page.locator('#coachClose').click();
+  // Więcej → Profil: Język · Language
+  await page.evaluate(() => { const el = document.getElementById('pfLang') as HTMLSelectElement; el.value = 'en'; el.dispatchEvent(new Event('change')); });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('zelazo_v1') || '{}').profile.lang)).toBe('en');
+  await page.locator('#coachFab').click();
+  await expect(page.locator('#coachMsgs')).toContainText("I'm your Coach");
+  await expect(page.locator('#coachChips button').first()).toHaveText('How am I doing? Review my progress');
+  await expect(page.locator('#coachIn')).toHaveAttribute('placeholder', 'Type or say your question…');
+  await page.locator('#coachChips button').first().click();
+  await expect(page.locator('#coachMsgs')).toContainText('Great job.');
+  expect(sent.lang).toBe('en');
+  expect(errors).toEqual([]);
+});

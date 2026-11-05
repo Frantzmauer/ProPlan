@@ -5,12 +5,13 @@ import { netDown } from '../core/shell';
 import { CLOUD, S, cloudCall, save } from '../core/state';
 import { cyCoachContext } from '../features/cycle';
 import { fcGet, fcIssues, fcRenderFrame } from '../features/formcheck';
-import { EA_LOCAL, EA_SHORT, featOn, planEnforced, quotaLeft, quotaLoad, quotaSet, quotaUi } from '../features/plan-limits';
+import { EA_SHORT, featOn, planEnforced, quotaLeft, quotaLoad, quotaSet, quotaUi } from '../features/plan-limits';
 import { showInAppReminder } from '../features/reminders';
 import { restApplyLive, restCurrent, restOverride, restStats } from '../features/rest';
 import { addDays, parseISO, todayISO } from '../lib/dates';
 import { coachKeep } from '../lib/merge.js';
 import { KCAL_HI, KCAL_LO, PROT_MIN, dietScore } from '../lib/dietday';
+import { COACH_UI, langOf, speechLocale } from '../lib/lang';
 import { hm } from '../lib/mealtime';
 import { prAnalyze, prBest } from '../lib/records';
 import { DEFAULT_KCAL, DIET, HOME, macroGoalFor, phaseInfo, planSrc, workoutOn } from '../plan/data';
@@ -214,10 +215,14 @@ export function renderCoach(){
   const box=document.getElementById('coachMsgs'), h=loadCoach();
   const ready=CLOUD.on&&CLOUD.url&&CLOUD.token;
   document.getElementById('coachSetup').style.display=ready?'none':'block';
-  document.getElementById('coachChips').style.display=(ready&&!h.length)?'flex':'none';
-  box.innerHTML=(h.length?'':`<div class="coach-b a">Cześć${S.profile&&S.profile.name?', '+esc(S.profile.name):''}! Jestem Twoim Trenerem. Widzę Twoje treningi, dietę, wagę i postępy — zapytaj, co poprawić, jak dobrać ciężary albo jakie suplementy mają sens.</div>`)+
+  const ui=COACH_UI[langOf(S.profile)], chips=document.getElementById('coachChips');
+  chips.style.display=(ready&&!h.length)?'flex':'none';
+  if(chips.dataset.lang!==langOf(S.profile)){ chips.dataset.lang=langOf(S.profile); chips.innerHTML=ui.chips.map(c=>`<button>${esc(c)}</button>`).join('');
+    chips.querySelectorAll('button').forEach(b=>b.onclick=()=>coachSend(b.textContent)); }
+  document.getElementById('coachIn').placeholder=ui.placeholder;
+  box.innerHTML=(h.length?'':`<div class="coach-b a">${esc(ui.hello(S.profile&&S.profile.name?S.profile.name:''))}</div>`)+
     h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>')+(m.att?`<span class="att">📎 ${m.att.n} klatek: ${esc(m.att.ex)}</span>`:''):coachMd(m.content)+(m.local?'<span class="ea-note">bez AI · nie liczy się do limitu</span>':'')}${m.kind==='form'?`<button class="coach-ask-vid" data-att="${esc(m.id)}">📎 Zapytaj o to nagranie</button>`:''}</div>`+(m.proposal?propCard(m,i):'')).join('')+
-    (coachBusy?'<div class="coach-b a" style="color:var(--ink-dim)">Trener myśli…</div>':'');
+    (coachBusy?`<div class="coach-b a" style="color:var(--ink-dim)">${ui.thinking}</div>`:'');
   box.scrollTop=box.scrollHeight;
   box.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{ const m=loadCoach().find(x=>x.id===b.dataset.att); if(m){ coachAtt={id:m.id, ex:m.ex||'nagranie', t:m.t}; renderCoachAtt(); document.getElementById('coachIn').focus(); } });
   renderCoachAtt();
@@ -352,7 +357,7 @@ export async function coachSend(text, {voice=false}={}){
   coachSpeakStop();
   // krótkie podziękowanie w trwającej rozmowie: odpowiedź bez AI, nie zjada limitu
   if(planEnforced() && EA_SHORT.test(text) && loadCoach().length){
-    const h0=loadCoach(), a=EA_LOCAL[Math.floor(Math.random()*EA_LOCAL.length)];
+    const loc=COACH_UI[langOf(S.profile)].local, h0=loadCoach(), a=loc[Math.floor(Math.random()*loc.length)];
     h0.push({role:'user',content:text, id:coachId(), t:Date.now(), local:1});
     h0.push({role:'assistant',content:a, id:coachId(), t:Date.now(), local:1}); saveCoach(h0);
     document.getElementById('coachIn').value=''; renderCoach();
@@ -414,10 +419,10 @@ export function coachSpeak(text, onEnd?){
   const clean=String(text).replace(/\*\*|__|_|#+\s*/g,'').replace(/^\s*[-•]\s+/gm,'').replace(/\s+/g,' ').trim();
   const parts=clean.match(/[^.!?…]+[.!?…]*\s*/g)||[clean], chunks=[];
   parts.forEach(p=>{ const last=chunks[chunks.length-1]; if(last && (last+p).length<220) chunks[chunks.length-1]=last+p; else chunks.push(p); });
-  const voice=(TTS.getVoices()||[]).find(v=>/^pl/i.test(v.lang));
+  const loc=speechLocale(langOf(S.profile)), voice=(TTS.getVoices()||[]).find(v=>v.lang.toLowerCase().startsWith(loc.slice(0,2)));
   coachVoice.say('🔊 Trener mówi… stuknij 🎤, żeby przerwać i odpowiedzieć.','info');
   chunks.forEach((c,i)=>{
-    const u=new SpeechSynthesisUtterance(c.trim()); u.lang='pl-PL'; if(voice) u.voice=voice;
+    const u=new SpeechSynthesisUtterance(c.trim()); u.lang=loc; if(voice) u.voice=voice;
     if(i===chunks.length-1){ u.onend=()=>{ if(seq===coachSpeakSeq && onEnd) onEnd(); }; u.onerror=()=>{ if(!coachVoice.active()) coachVoice.say(''); }; }
     TTS.speak(u);
   });
@@ -465,6 +470,6 @@ coachSpeakSeq = 0;
 document.getElementById('coachClear').onclick=()=>{ if(confirm('Wyczyścić rozmowę z Trenerem? Zniknie na wszystkich Twoich urządzeniach.')){ S.coach={clearedAt:Date.now(), msgs:[]}; save(); renderCoach(); } };
 document.getElementById('coachSend').onclick=()=>coachSend(document.getElementById('coachIn').value);
 document.getElementById('coachIn').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); coachSend(e.target.value); } });
-document.querySelectorAll('#coachChips button').forEach(b=>b.onclick=()=>coachSend(b.textContent));
+// podpowiedzi (#coachChips) buduje renderCoach w języku konta
 document.getElementById('coachGoSync').onclick=()=>{ document.getElementById('coachDialog').classList.remove('show'); document.querySelector('.nav button[data-v="set"]').click(); moreOpen('sync'); setTimeout(()=>document.getElementById('cloudState').scrollIntoView({block:'center'}),300); };
 }

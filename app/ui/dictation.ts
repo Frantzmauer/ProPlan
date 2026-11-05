@@ -1,6 +1,7 @@
 // ŻELAZO — Dyktowanie (rozpoznawanie mowy pl-PL) — opis posiłku i rozmowa z Trenerem.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { S, save } from '../core/state';
+import { langOf, speechLocale } from '../lib/lang';
 import { mark } from '../lib/state';
 import { DEFAULT_KCAL, macroGoalFor } from '../plan/data';
 import { closeMealDialog } from '../screens/guide';
@@ -21,7 +22,7 @@ export function makeDictation(o){
     const base=o.input.value.trim();
     let r;
     try{ r=new SpeechRec(); }catch(e){ say('Dyktowanie nie działa w tej przeglądarce — użyj mikrofonu na klawiaturze.','info'); return; }
-    r.lang='pl-PL'; r.interimResults=true; r.continuous=false;
+    r.lang=speechLocale(langOf(S.profile)); r.interimResults=true; r.continuous=false;
     let heard='';
     r.onresult=e=>{
       // Chrome na Androidzie podaje kolejne przybliżenia jako osobne wyniki („porcja”, „porcja kurczaka”…):

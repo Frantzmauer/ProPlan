@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="ŻELAZO U">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-BmixlgyU.js"></script>
+  <script type="module" crossorigin src="./assets/index-CtrWNW5s.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-0xQ3_u_Y.css">
 </head>
 <body>
@@ -390,6 +390,10 @@
         <input type="text" class="time-in" id="pfName" placeholder="np. Marek" style="width:130px">
       </div>
       <div class="settings-row">
+        <div class="l"><div class="t">Język · Language</div><div class="s">Trener i AI · Coach &amp; AI</div></div>
+        <select class="time-in" id="pfLang" aria-label="Język · Language"><option value="pl">Polski</option><option value="en">English</option></select>
+      </div>
+      <div class="settings-row">
         <div class="l"><div class="t">Waga</div><div class="s">kg</div></div>
         <input type="number" class="time-in" id="pfWeight" inputmode="decimal" style="width:90px">
       </div>
@@ -537,13 +541,7 @@
     <div style="display:flex;gap:8px;align-items:center;margin:0 0 6px"><button class="cq-chip" id="coachQuota" type="button" aria-label="Pytania do Trenera w tym miesiącu"></button><div class="md-hint" style="margin:0;flex:1;min-width:0">Trener to AI (Claude). Do odpowiedzi dostaje Twoje dane z aplikacji — tylko Twoje. Nie zastępuje lekarza.</div></div>
     <div id="coachSetup" class="note" style="display:none">Aby rozmawiać z Trenerem, włącz synchronizację w chmurze. <button class="btn" id="coachGoSync" style="font-size:12px;padding:7px 10px;margin-top:8px">Przejdź do ustawień</button></div>
     <div id="coachMsgs"></div>
-    <div id="coachChips">
-      <button>Jak mi idzie? Oceń moje postępy</button>
-      <button>Co poprawić w diecie?</button>
-      <button>Jakie suplementy mają sens w moim przypadku?</button>
-      <button>Czy zmienić coś w planie treningowym?</button>
-      <button>Jak dobrać ciężary na następny trening?</button>
-    </div>
+    <div id="coachChips"></div>
     <div class="coach-att" id="coachAtt" style="display:none"></div>
     <div class="md-voice" id="coachVoice" style="display:none"></div>
     <div id="coachLimit" role="status"></div>

@@ -9,6 +9,7 @@ import { MONTHS_PL } from '../screens/admin';
 import { coachVoice } from '../screens/coach';
 import { moreOpen } from '../screens/more';
 import { showInAppReminder } from './reminders';
+import { COACH_UI } from '../lib/lang';
 
 export let EA_SHORT, EA_LOCAL, PLAN, QUOTA, vqOk;
 
@@ -112,8 +113,8 @@ export function __init_18(){
    (cfg.enforce na serwerze — dziś USERS i Early Access). W pozostałych wersjach działa tylko wyłącznik awaryjny funkcji.
    Limity liczy serwer (tylko udane odpowiedzi AI); tutaj ostatni znany stan, żeby licznik był widoczny od razu i bez zasięgu.
    Krótkie „dzięki” / „ok” w trwającej rozmowie dostają odpowiedź bez AI. Szacowanie kalorii ma osobny limit dzienny. */
-EA_SHORT = /^\s*(dzięki|dziękuję|dziekuje|dzieki|thx|ok|okej|okay|super|spoko|jasne|git|👍|💪|🙏)[\s!.]*$/i;
-EA_LOCAL = ['Do usług 💪','Powodzenia na treningu!','Jasne — pisz, gdy coś będzie potrzebne.'];
+EA_SHORT = /^\s*(dzięki|dziękuję|dziekuje|dzieki|thx|thanks|thank you|ty|ok|okej|okay|super|spoko|jasne|git|cool|great|👍|💪|🙏)[\s!.]*$/i;
+EA_LOCAL = COACH_UI.pl.local;   // odpowiedź w języku konta wybiera Trener (coach.ts)
 PLAN = readJSON(KEYS.plan(appChannel()), null);
 QUOTA = readJSON(KEYS.QUOTA, null);
 document.getElementById('coachQuota').onclick=()=>{

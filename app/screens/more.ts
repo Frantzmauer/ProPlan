@@ -92,6 +92,7 @@ export function loadProfileUI(){
   document.getElementById('pfHeight').value=p.height;
   document.getElementById('pfAge').value=p.age;
   document.getElementById('pfSex').value=p.sex||'m';
+  document.getElementById('pfLang').value=p.lang==='en'?'en':'pl';
   document.getElementById('pfAct').value=String(p.activity||1.465);
   updateTdee();
 }
@@ -103,6 +104,7 @@ export function updateTdee(){
 // zapis pojedynczego pola profilu — nie rusza pozostałych, nie wywołuje wrażenia zmiany kalorii
 export function saveProfileField(key){
   if(key==='name'){ S.profile.name=document.getElementById('pfName').value.trim(); S._settingsM=Date.now(); save(); applyName(); return; }
+  if(key==='lang'){ S.profile.lang=document.getElementById('pfLang').value==='en'?'en':'pl'; S._settingsM=Date.now(); save(); return; }
   if(key==='weight') S.profile.weight=parseFloat(document.getElementById('pfWeight').value)||S.profile.weight;
   if(key==='height') S.profile.height=parseFloat(document.getElementById('pfHeight').value)||S.profile.height;
   if(key==='age')    S.profile.age=parseInt(document.getElementById('pfAge').value)||S.profile.age;
@@ -184,7 +186,7 @@ kcalSlider.addEventListener('input',updateKcalHint);
 kcalSlider.addEventListener('change',()=>{const prev=S.kcalGoal||DEFAULT_KCAL;S.kcalGoal=+kcalSlider.value;kcalRecord(S.kcalGoal,prev);S._settingsM=Date.now();save();renderToday();if(document.getElementById('v-progress').classList.contains('on'))renderWeight()});
 
 // settings: profil
-pf = {name:'pfName',weight:'pfWeight',height:'pfHeight',age:'pfAge',sex:'pfSex',activity:'pfAct'};
+pf = {name:'pfName',lang:'pfLang',weight:'pfWeight',height:'pfHeight',age:'pfAge',sex:'pfSex',activity:'pfAct'};
 Object.keys(pf).forEach(key=>{
   const el=document.getElementById(pf[key]);
   el.addEventListener('change',()=>saveProfileField(key));

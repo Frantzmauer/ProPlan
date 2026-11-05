@@ -478,6 +478,12 @@ var COACH_SYSTEM = [
   '- Nie wywołuj narzędzia przy ogólnych radach ani gdy użytkownik tylko pyta o opinię — wtedy wystarczy tekst. W tekście krótko wyjaśnij, co proponujesz i dlaczego.'
 ].join('\n');
 var MEAL_SLOTS = ['Śniadanie', 'Przekąska', 'Obiad', 'Po treningu', 'Kolacja'];
+// język konta (Profil → Język) — aplikacja wysyła lang przy każdym zapytaniu; bez niego polski
+function langOf(req) { return req && req.lang === 'en' ? 'en' : 'pl'; }
+var COACH_LANG_EN = 'LANGUAGE: the user chose English. Always reply in natural, plain English, also when the user writes in Polish. ' +
+  'The app data above is in Polish — translate exercise names, meals and products into English when you mention them (twaróg = quark / cottage cheese, skyr stays skyr). ' +
+  'In the tool zaproponuj_zmiany keep the existing exercise names (nazwa, z, cwiczenie) exactly as in the data, because the app matches them; ' +
+  'write the new exercise name (na), technika, meal descriptions (opis) and podsumowanie in English. Meal slot names (posilek) stay as listed in the tool.';
 var OBW_NAMES = ['pas', 'klatka', 'ramie', 'udo', 'biodra'];   // jak OBW_KEY w app/screens/coach.ts
 var COACH_MAX_CONTEXT = 40000, COACH_MAX_TURNS = 16, COACH_MAX_MSG = 4000;
 
@@ -599,7 +605,8 @@ function coachReply(req, acc) {
     ].concat(imgs.length ? [{ type: 'text', text: 'Do pytania dołączono klatki z nagrania techniki i wstępną automatyczną ocenę. ' +
       'Oceń technikę ponownie, znając cały kontekst użytkownika (plan, ciężary i historia serii, dieta, regeneracja, a z rozmowy — bóle, kontuzje, ograniczenia sprzętowe). ' +
       'Potwierdź albo skoryguj wstępną ocenę i wyjaśnij dlaczego. Pomiary kątów z obrazu 2D są przybliżone — opieraj się na tym, co widać. ' +
-      'Jeśli technika lub ograniczenia tego wymagają, możesz zaproponować zmiany narzędziem (lżejszy ciężar, mniej powtórzeń, wymiana ćwiczenia).' }] : []),
+      'Jeśli technika lub ograniczenia tego wymagają, możesz zaproponować zmiany narzędziem (lżejszy ciężar, mniej powtórzeń, wymiana ćwiczenia).' }] : [])
+      .concat(langOf(req) === 'en' ? [{ type: 'text', text: COACH_LANG_EN }] : []),
     messages: messages
   };
   var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -729,7 +736,9 @@ function formCheck(req, acc) {
       } }
   };
   var payload = {
-    model: COACH_MODEL, max_tokens: 2000, system: FORM_SYSTEM, tools: [tool],
+    model: COACH_MODEL, max_tokens: 2000, tools: [tool],
+    system: FORM_SYSTEM + (langOf(req) === 'en' ? '\n\nLANGUAGE: write every text field (podsumowanie, mocne_strony, poprawki, bezpieczenstwo, nagranie) in plain English. ' +
+      'Keep the enum values (ocena, waga) exactly as listed in Polish — the app translates them.' : ''),
     tool_choice: { type: 'tool', name: 'ocena_techniki' }, fallbacks: 'default',
     messages: [{ role: 'user', content: content }]
   };
@@ -765,13 +774,14 @@ function estimatePhoto(req, acc) {
   var img = String(req.image || '');
   if (!/^[A-Za-z0-9+/=]+$/.test(img) || img.length < 1000 || img.length > 900000) return { ok: false, error: 'Nieprawidłowe zdjęcie — zrób je jeszcze raz.' };
   var note = String(req.note || '').slice(0, 300);
+  var LNG = langOf(req) === 'en' ? 'in English' : 'po polsku';   // nazwy i uwaga w języku konta; klucze JSON bez zmian
   var prompt =
     'Na zdjęciu jest posiłek. Rozpoznaj składniki i oszacuj ich ilości oraz wartości odżywcze. ' +
     'Szacuj porcje po wielkości talerza i sztućców; uwzględnij tłuszcz do smażenia i sosy, których może nie być dobrze widać. ' +
     (note ? 'Dopisek użytkownika: "' + note + '". ' : '') +
     'Zwróć WYŁĄCZNIE obiekt JSON bez komentarzy: ' +
-    '{"opis":"krótka nazwa posiłku po polsku","pewnosc":"wysoka|srednia|niska","uwaga":"jedno zdanie, czego nie widać dobrze (albo pusty tekst)",' +
-    '"skladniki":[{"nazwa":"po polsku","gramy":liczba,"kcal":liczba,"b":liczba,"w":liczba,"t":liczba}]} ' +
+    '{"opis":"krótka nazwa posiłku ' + LNG + '","pewnosc":"wysoka|srednia|niska","uwaga":"jedno zdanie ' + LNG + ', czego nie widać dobrze (albo pusty tekst)",' +
+    '"skladniki":[{"nazwa":"' + LNG + '","gramy":liczba,"kcal":liczba,"b":liczba,"w":liczba,"t":liczba}]} ' +
     'gdzie b=białko, w=węglowodany, t=tłuszcz w gramach, liczby całkowite, wartości dla podanej ilości. ' +
     'Jeśli na zdjęciu nie ma jedzenia, zwróć {"opis":"","pewnosc":"niska","uwaga":"Nie widzę posiłku na zdjęciu.","skladniki":[]}.';
   var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
