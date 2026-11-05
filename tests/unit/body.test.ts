@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { applyBody, bodyTimeline, fitBody, parseBody, predictBody } from '../../app/lib/body';
+import { applyBody, bodyTimeline, bodyWeightStart, fitBody, measureRings, parseBody, predictBody, weightOn } from '../../app/lib/body';
 
 // prawdziwe pliki modelu z repozytorium (tools/body_model.py)
 const load = (sex: string) => { const b = gunzipSync(readFileSync(`models/body-${sex}.zbm`)); return parseBody(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)); };
@@ -38,6 +38,18 @@ describe('sylwetka 3D: dopasowanie do pomiarów', () => {
     for (const k of ['waist', 'chest', 'hips', 'thigh', 'arm'] as const) expect(Math.abs(p[k] - t[k])).toBeLessThan(6);
   });
 
+  it('gotowa siatka (pomiar pierścieniami) ma obwody użytkownika — także przy dużym pasie', () => {
+    for (const t of [{ height: 186, waist: 105, chest: 115.5, hips: 104, thigh: 63, arm: 38.5 }, { height: 186, waist: 98, chest: 115, hips: 104, thigh: 63, arm: 38.5 }]) {
+      const out = applyBody(male, fitBody(male.header, t), new Float32Array(male.positions.length));
+      const r = measureRings(male.header, out);
+      for (const k of ['waist', 'chest', 'hips', 'thigh'] as const) expect(Math.abs((r[k] as number) - t[k])).toBeLessThan(1.5);
+    }
+  });
+
+  it('dopasowanie nie używa „brzucha” (wypycha brzuch do przodu) — pas rośnie dookoła', () => {
+    expect(fitBody(male.header, { height: 186, waist: 112, chest: 112 }).stomach ?? 0).toBe(0);
+  });
+
   it('mniejszy pas → mniejszy obwód talii modelu (kierunek zmian się zgadza)', () => {
     const a = predictBody(male.header, fitBody(male.header, { height: 180, waist: 108, chest: 112 }));
     const b = predictBody(male.header, fitBody(male.header, { height: 180, waist: 100, chest: 112 }));
@@ -58,5 +70,29 @@ describe('sylwetka 3D: oś czasu pomiarów', () => {
     const tl = bodyTimeline([{ d: '2026-11-03', waist: 101 }, { d: '2026-10-07', waist: 110, chest: 112 }, { d: '2026-10-10' }], 180);
     expect(tl.map(x => x.d)).toEqual(['2026-10-07', '2026-11-03']);
     expect(tl[1].m).toEqual({ height: 180, waist: 101, chest: 112 });
+  });
+});
+
+describe('sylwetka 3D: szacunek ze startu planu (z wagi)', () => {
+  const tl = bodyTimeline([{ d: '2026-10-28', waist: 105, chest: 115, hips: 104, thigh: 63, arm: 38.5 }], 186);
+  const ws = [{ d: '2026-08-21', w: 104.4 }, { d: '2026-10-15', w: 99.8 }, { d: '2026-10-27', w: 100 }];
+
+  it('4,4 kg więcej na starcie → większe obwody (mężczyzna: pas ~1 cm/kg)', () => {
+    const s = bodyWeightStart(tl, ws, 'male')!;   // pierwsze ważenie w ogóle (także sprzed startu planu)
+    expect(s).toMatchObject({ d: '2026-08-21', est: true, kg: 4.4 });
+    expect(s.m.waist).toBe(109.4);
+    expect(s.m.hips).toBeCloseTo(106.6, 1);
+    expect(s.m.height).toBe(186);
+  });
+
+  it('bez wcześniejszego ważenia, przy małej różnicy albo zbyt blisko — brak szacunku', () => {
+    expect(bodyWeightStart(tl, [{ d: '2026-10-27', w: 100 }], 'male')).toBeNull();
+    expect(bodyWeightStart(tl, [{ d: '2026-08-21', w: 100.5 }, { d: '2026-10-27', w: 100 }], 'male')).toBeNull();
+    expect(bodyWeightStart(tl, [{ d: '2026-10-25', w: 104 }, { d: '2026-10-27', w: 100 }], 'male')).toBeNull();
+  });
+
+  it('waga z dnia: ostatni wpis do tego dnia', () => {
+    expect(weightOn(ws, '2026-10-20')).toBe(99.8);
+    expect(weightOn(ws, '2026-01-01')).toBe(104.4);
   });
 });

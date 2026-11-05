@@ -16,13 +16,19 @@ Co robi:
      ramienia i uda, brzuch — każdy w dwie strony (+ i −).
   3. Mierzy na siatce (jak taśmą: obwód przekroju po wypukłej otoczce) wzrost i obwody dla sylwetki bazowej
      i dla każdego kształtu. Aplikacja z tych liczb dobiera kształty do pomiarów użytkownika (app/lib/body.ts).
+  5. Pierścienie pomiarowe (jak w MakeHuman): wierzchołki na linii pasa (pępek), klatki, bioder i uda sylwetki bazowej.
+     Pas, klatkę, biodra i udo mierzymy na nich (otoczka w rzucie z góry) — pierścień przesuwa się z ciałem jak taśma
+     przyłożona zawsze w tym samym miejscu; „najwęższe miejsce tułowia” uciekało w górę przy dużym brzuchu.
+  4. Kształty nie sumują się dokładnie (np. waga, brzuch i talia powiększają ten sam obszar, a taśma obejmuje mniej
+     niż suma). Na kilkunastu losowych kombinacjach mierzy rzeczywistą siatkę i wylicza dla każdego obwodu
+     współczynnik (gain): rzeczywista zmiana ≈ gain × suma zmian z pojedynczych kształtów.
 
 Format pliku .zbm (zawartość w gzip, ale bez końcówki .gz — GitHub Pages nie publikował plików .gz; aplikacja rozpakowuje DecompressionStream) — wewnątrz little-endian: 'ZBM1', uint32 długość nagłówka JSON, JSON (dopełniony spacjami do 4 bajtów),
 potem: Float32 pozycje (nv×3), Uint16 trójkąty (nt×3, dopełnione do 4 bajtów; najpierw skóra, potem legginsy —
 header.groups), Int16 przesunięcia każdego kształtu (nv×3; wartość × scale = przesunięcie w jednostkach siatki),
 Uint8 znacznik topu dla każdego wierzchołka (nv, dopełnione do 4 bajtów). Jednostka siatki = 10 cm.
 """
-import gzip, json, math, os, struct, sys
+import gzip, json, math, os, random, struct, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UNIT_CM = 10.0   # MakeHuman liczy w decymetrach
@@ -183,6 +189,7 @@ def measure(pos, tris, vg):
     leg = j['l-upper-leg'][1]
     hips = torso_perims(pos, tris, leg - 1.2, s4, 12, xmax)
     m['hips'] = max(hips)[0] * UNIT_CM
+    m['_hips_y'] = max(hips)[1]
     # udo: tuż pod kroczem, na pierwszej wysokości, na której noga jest osobną pętlą (u kobiet uda często się stykają)
     crotch = min(y for _, y in hips)   # najniższy przekrój, w którym tułów jest jeszcze jedną pętlą
     knee = j['l-knee'][1]
@@ -192,6 +199,7 @@ def measure(pos, tris, vg):
         legs = [lp for lp in slice_loops(pos, tris, (0, ty, 0), (0, 1, 0)) if min(p[0] for p in lp) > 0]
         if legs:
             m['thigh'] = max(perim(lp, (0, 1, 0)) for lp in legs) * UNIT_CM
+            m['_thigh_y'] = ty
             break
     m['_crotch'], m['_knee'], m['_xmax'] = crotch, knee, xmax
     m['_chest_y'] = max(chest)[1]
@@ -234,6 +242,71 @@ def female_top(base, body_tris, vg, chest_y):
 
 # ---------- zapis ----------
 
+# zakresy kombinacji do kalibracji: typowe sylwetki dorosłych (wartości kształtów −1…1)
+# (brzuch = 0: aplikacja nie dobiera go z obwodów; talia do 1,5 jak MAX_PLUS w app/lib/body.ts)
+CAL_RANGE = {'weight': (-0.6, 1), 'muscle': (-0.3, 0.4), 'height': (-0.4, 0.5), 'waist': (-0.8, 1.5), 'chest': (-0.8, 1),
+             'hips': (-0.7, 1), 'arm': (-0.8, 1), 'thigh': (-0.8, 1), 'stomach': (0, 0)}
+
+
+def calibrate(base, full, jac, m0, mr, n_combo=12):
+    """gain obwodu = Σ(rzeczywista·przewidziana) / Σ(przewidziana²) na losowych kombinacjach (stałe ziarno = powtarzalnie)."""
+    rnd = random.Random(7)
+    sx = {k: 0.0 for k in MEASURES}; sxx = {k: 0.0 for k in MEASURES}; err0 = {k: [] for k in MEASURES}
+    combos = []
+    for _ in range(n_combo):
+        x = {name: rnd.uniform(*CAL_RANGE[name]) for name in TARGETS}
+        pos = base[:]
+        for name, v in x.items():
+            if abs(v) > 1e-6: pos = add(pos, full[name + ('+' if v > 0 else '-')], abs(v))
+        act = mr(pos)
+        pred = {k: sum(jac[name + ('+' if v > 0 else '-')][k] * abs(v) for name, v in x.items()) for k in MEASURES}
+        combos.append((act, pred))
+        for k in MEASURES:
+            a = act[k] - m0[k]; sx[k] += a * pred[k]; sxx[k] += pred[k] ** 2; err0[k].append(a - pred[k])
+    gain = {k: round(sx[k] / sxx[k], 4) if sxx[k] else 1.0 for k in MEASURES}
+    for k in MEASURES:
+        rms0 = math.sqrt(sum(e * e for e in err0[k]) / len(err0[k]))
+        rms1 = math.sqrt(sum(((a[k] - m0[k]) - gain[k] * p[k]) ** 2 for a, p in combos) / len(combos))
+        print('   kalibracja %-6s gain %.3f  błąd %.1f → %.1f cm' % (k, gain[k], rms0, rms1))
+    return gain
+
+
+def ring_hull(pos, ring):
+    return hull_perimeter([(round(pos[i * 3], 5), round(pos[i * 3 + 2], 5)) for i in ring])
+
+
+def rings(pos, m0, body_tris, vg):
+    """Pierścienie pomiarowe: wierzchołki ciała przy wysokości pomiaru, na tułowiu (pas, klatka, biodra) albo lewym udzie.
+    r = obwód z przekroju / obwód otoczki pierścienia (w rzucie z góry), żeby pierścień dawał te same cm co taśma."""
+    out = {}
+    for k in ('waist', 'chest', 'hips', 'thigh'):
+        y = m0['_%s_y' % k]
+        loops = slice_loops(pos, body_tris, (0, y, 0), (0, 1, 0))
+        if k == 'thigh':
+            lp = max((l for l in loops if min(p[0] for p in l) > 0), key=lambda l: perim(l, (0, 1, 0)))
+        else:
+            lp = max((l for l in loops if min(p[0] for p in l) < 0 < max(p[0] for p in l)), key=lambda l: perim(l, (0, 1, 0)))
+        x0, x1 = min(p[0] for p in lp) - 0.05, max(p[0] for p in lp) + 0.05
+        z0, z1 = min(p[2] for p in lp) - 0.05, max(p[2] for p in lp) + 0.05
+        ring = [i for i in range(13380) if abs(pos[i * 3 + 1] - y) < 0.08 and x0 <= pos[i * 3] <= x1 and z0 <= pos[i * 3 + 2] <= z1]
+        out[k] = (ring, m0[k] / UNIT_CM / ring_hull(pos, ring))
+    return out
+
+
+def measure_rings(pos, tris, vg, rg):
+    """Wzrost i ramię jak w measure(); pas, klatka, biodra, udo z pierścieni (cm)."""
+    ys = [pos[i * 3 + 1] for i in range(13380)]
+    m = {'height': (max(ys) - min(ys)) * UNIT_CM}
+    a, b = joint(pos, vg, 'joint-l-shoulder'), joint(pos, vg, 'joint-l-elbow')
+    mid = [(a[k] + b[k]) / 2 for k in range(3)]
+    ax = [b[k] - a[k] for k in range(3)]; l = math.sqrt(sum(x * x for x in ax)); ax = [x / l for x in ax]
+    best = min(slice_loops(pos, tris, mid, ax, near=1.6), key=lambda lp: math.dist([sum(p[k] for p in lp) / len(lp) for k in range(3)], mid))
+    m['arm'] = perim(best, ax) * UNIT_CM
+    for k, (ring, r) in rg.items():
+        m[k] = ring_hull(pos, ring) * r * UNIT_CM
+    return {k: round(v, 2) for k, v in m.items()}
+
+
 def write_bin(path, header, pos, tris, morphs, top):
     hj = json.dumps(header, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
     hj += b' ' * ((4 - len(hj) % 4) % 4)
@@ -272,20 +345,25 @@ def main(data):
         remap = {old: new for new, old in enumerate(used)}
         out_tris = [tuple(remap[i] for i in t) for t in tris_all]
         groups = {'skin': [0, len(skin_tris)], 'cloth': [len(skin_tris), len(cloth_tris)]}
-        morphs, meta, jac = [], [], {}
+        rg = rings(base, m0, body_tris, vg)
+        mr = lambda p: measure_rings(p, body_tris, vg, rg)
+        m0 = mr(base)
+        morphs, meta, jac, full = [], [], {}, {}
         for name, (plus, minus) in TARGETS.items():
             for sign, rel in (('+', plus), ('-', minus)):
-                d = load_target(data, rel.format(s=sex), n)
-                m1 = measure(add(base, d), body_tris, vg)
+                d = full[name + sign] = load_target(data, rel.format(s=sex), n)
+                m1 = mr(add(base, d))
                 jac[name + sign] = {k: round(m1[k] - m0[k], 2) for k in MEASURES}
                 sub = [d[i * 3 + k] for i in used for k in range(3)]
                 scale = max(1e-6, max(abs(x) for x in sub) / 32767)
                 morphs.append((sub, scale)); meta.append({'n': name + sign, 's': scale})
+        gain = calibrate(base, full, jac, m0, mr)
         pos = [base[i * 3 + k] for i in used for k in range(3)]
         m0 = {k: v for k, v in m0.items() if not k.startswith('_')}
         header = {'v': 1, 'sex': sex, 'nv': len(used), 'nt': len(out_tris), 'unit_cm': UNIT_CM,
                   'source': 'MakeHuman / MPFB2 (CC0 1.0) via naver/anny 8f35dc2',
-                  'groups': groups, 'morphs': meta, 'base': m0, 'jac': jac}
+                  'groups': groups, 'morphs': meta, 'base': m0, 'jac': jac, 'gain': gain,
+                  'rings': {k: {'v': [remap[i] for i in ring], 'r': round(r, 5)} for k, (ring, r) in rg.items()}}
         path = os.path.join(ROOT, 'models', 'body-%s.zbm' % sex)
         write_bin(path, header, pos, out_tris, morphs, [1 if i in top else 0 for i in used])
         print('zapisano', os.path.relpath(path, ROOT), '%d KB' % (os.path.getsize(path) // 1024), '— baza:', m0)

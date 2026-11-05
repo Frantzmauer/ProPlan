@@ -285,7 +285,9 @@ test('Postęp: sylwetka 3D z obwodów, porównanie ze startem', async ({ page })
   await page.locator('#ms_waist').fill('101'); await page.locator('#ms_chest').fill('114'); await page.locator('#msSave').click();
   await page.evaluate(() => {
     const k = 'zelazo_v1', S = JSON.parse(localStorage.getItem(k) || '{}');
-    S.measures.unshift({ d: '2026-10-01', waist: 110, chest: 112, _t: 1 }); localStorage.setItem(k, JSON.stringify(S));
+    S.measures.unshift({ d: '2026-10-01', waist: 110, chest: 112, _t: 1 });
+    S.weights = [{ d: '2026-09-01', w: 96 }, { d: '2026-09-30', w: 92 }];   // 4 kg więcej przed pierwszym pomiarem → szacowany start
+    localStorage.setItem(k, JSON.stringify(S));
   });
   await page.reload();
   await page.locator('.nav button[data-v="progress"]').click();
@@ -293,7 +295,8 @@ test('Postęp: sylwetka 3D z obwodów, porównanie ze startem', async ({ page })
   await expect(page.locator('#b3Stage canvas')).toBeVisible();
   await expect(page.locator('#b3Msg')).toBeHidden({ timeout: 15000 });
   await expect(page.locator('#b3Chg')).toContainText('Pas');
-  await expect(page.locator('#b3Chg')).toContainText('-9');
+  await expect(page.locator('#b3Chg')).toContainText('-13');   // 101 teraz vs 114 na szacowanym starcie (110 + 4 kg × 1 cm)
+  await expect(page.locator('#b3Est')).toContainText('szacunek z wagi');
   await page.locator('#b3Mode [data-m="cmp"]').click();
   await expect(page.locator('#b3Leg')).toContainText('start');
   expect(errors).toEqual([]);

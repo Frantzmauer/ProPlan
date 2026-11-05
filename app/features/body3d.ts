@@ -3,7 +3,7 @@
 // three.js i plik modelu ładują się dopiero po „Pokaż sylwetkę” (osobny kawałek pakietu, ok. 0,5 MB modelu).
 import { APP_VER } from '../core/shell';
 import { S } from '../core/state';
-import { applyBody, bodyTimeline, fitBody, parseBody, type BodyModel } from '../lib/body';
+import { applyBody, bodyTimeline, bodyWeightStart, fitBody, parseBody, weightOn, type BodyModel } from '../lib/body';
 
 export let B3;
 
@@ -20,10 +20,14 @@ async function loadModel(sex): Promise<BodyModel>{
   return B3.models[sex]=parseBody(buf);
 }
 
-// dane do pokazania: oś czasu pomiarów (brakujące = poprzednia wartość) i płeć z profilu
+// dane do pokazania: oś czasu pomiarów (brakujące = poprzednia wartość) i płeć z profilu;
+// na początku szacowany start z wagi, gdy pierwsze ważenie (także sprzed startu planu) jest wcześniej niż pierwszy pomiar obwodów
 function bodyData(){
-  const p=S.profile||{};
-  return {sex:p.sex==='f'?'female':'male', tl:bodyTimeline(S.measures||[], +p.height||undefined), height:+p.height||0};
+  const p=S.profile||{}, sex=p.sex==='f'?'female':'male', ws=S.weights||[];
+  const tl:any[]=bodyTimeline(S.measures||[], +p.height||undefined);
+  const est=bodyWeightStart(tl, ws, sex);
+  if(est) tl.unshift(Object.assign(est, {w0:weightOn(ws, est.d), w1:weightOn(ws, tl[0].d)}));
+  return {sex, tl, height:+p.height||0};
 }
 
 export async function bodyOpen(){
@@ -59,7 +63,7 @@ function bodySetup(){
   const up=()=>{ drag=null; }; r.domElement.addEventListener('pointerup', up); r.domElement.addEventListener('pointercancel', up);
 }
 
-// siatka sylwetki i „duch” startu (przezroczysta siatka) — dla płci z profilu
+// siatka sylwetki i „duch” startu (przezroczysta powłoka) — dla płci z profilu
 function bodyMeshes(){
   const THREE=B3.THREE, m=B3.model;
   if(B3.mesh){ B3.scene.remove(B3.mesh); B3.scene.remove(B3.ghost); B3.mesh.geometry.dispose(); B3.ghost.geometry.dispose(); }
@@ -72,7 +76,12 @@ function bodyMeshes(){
   g.addGroup(G.skin[0]*3, G.skin[1]*3, 0); g.addGroup(G.cloth[0]*3, G.cloth[1]*3, 1);
   B3.mesh=new THREE.Mesh(g, [new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.55, metalness:0.1}),
     new THREE.MeshStandardMaterial({color:0x23292f, roughness:0.8, metalness:0, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2})]);
-  B3.ghost=new THREE.Mesh(geo(), new THREE.MeshBasicMaterial({color:0x5fa8d3, wireframe:true, transparent:true, opacity:0.22, depthWrite:false}));
+  // start: niebieska powłoka odsunięta w głąb (polygonOffset) — tam, gdzie pokrywa się z obecnym ciałem, wygrywa ciało;
+  // widać ją tylko tam, gdzie sylwetka ze startu wystaje poza obecną (czyli gdzie ubyło centymetrów)
+  B3.ghost=new THREE.Mesh(geo(), new THREE.MeshBasicMaterial({color:0x5fa8d3, transparent:true, opacity:0.5, depthWrite:false,
+    polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:8}));
+  B3.ghost.renderOrder=1;
+  B3.ghost.geometry.setDrawRange(G.skin[0]*3, G.skin[1]*3);   // tylko ciało, bez spodenek
   B3.scene.add(B3.mesh); B3.scene.add(B3.ghost);
   B3.sex=m.header.sex;
 }
@@ -100,8 +109,12 @@ export async function bodyRefresh(){
   B3.ghost.visible=B3.mode==='cmp' && n>1 && B3.idx>0;
   if(B3.ghost.visible) shape(B3.ghost, st.m);
   const fmt=d=>d?d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4):'—', n1=v=>(Math.round(v*10)/10).toString().replace('.',',');
-  document.getElementById('b3Date').textContent=fmt((B3.mode==='start'?st:cur).d);
-  document.getElementById('b3Leg').innerHTML=B3.ghost.visible?`<span><i style="background:#c9cdd2"></i>${fmt(cur.d).slice(0,5)}</span><span><i style="background:var(--steel)"></i>start ${fmt(st.d).slice(0,5)}</span>`:'';
+  const shown=B3.mode==='start'?st:cur;
+  document.getElementById('b3Date').textContent=fmt(shown.d)+(shown.est?' · szacunek':'');
+  document.getElementById('b3Leg').innerHTML=B3.ghost.visible?`<span><i style="background:#c9cdd2"></i>${fmt(cur.d).slice(0,5)}</span><span><i style="background:var(--steel)"></i>start ${fmt(st.d).slice(0,5)}${st.est?' (szac.)':''}</span>`:'';
+  const kg=v=>String(v).replace('.',',');
+  document.getElementById('b3Est').innerHTML=st.est&&n>1?`Start ${fmt(st.d)} to <b>szacunek z wagi</b>: ${kg(st.w0)} kg wtedy, ${kg(st.w1)} kg przy pierwszym pomiarze obwodów (${fmt(tl[1].d)}). Obwody liczone z typowego ubytku na kilogram — zmierz się, żeby mieć prawdziwe dane.`:'';
+  document.getElementById('b3Est').style.display=st.est&&n>1?'':'none';
   document.querySelectorAll('#b3Mode button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-m')===B3.mode));
   document.getElementById('b3Chg').innerHTML=n?Object.keys(LABEL).filter(k=>cur.m[k]).map(k=>{
     const dv=(cur.m[k]||0)-(st.m[k]||0), cls=!dv||NEUTRAL[k]?'same':((DOWN[k]?dv<0:dv>0)?'good':'bad');
