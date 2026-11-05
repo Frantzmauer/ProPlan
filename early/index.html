@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="ŻELAZO EA">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-BmixlgyU.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-0xQ3_u_Y.css">
+  <script type="module" crossorigin src="./assets/index-CcqAQNh3.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DVaZ43Y1.css">
 </head>
 <body>
 
@@ -126,6 +126,28 @@
       <div class="td" id="tdeeCard"></div>
     </div>
   </div>
+  <div class="section" id="b3Section">
+    <div class="eyebrow">Sylwetka 3D · z Twoich obwodów</div>
+    <div class="panel b3-panel">
+      <div id="b3Intro" class="b3-intro">
+        <div>Zobacz swoją sylwetkę zbudowaną z obwodów i wzrostu — i jak zmienia się od startu.</div>
+        <button class="btn" id="b3Open" type="button">Pokaż sylwetkę 3D</button>
+        <div class="b3-foot">Pobiera model ok. 0,5 MB (raz).</div>
+      </div>
+      <div id="b3View" style="display:none">
+        <div class="b3-stage" id="b3Stage"><div class="b3-msg" id="b3Msg" role="status"></div><div class="b3-leg" id="b3Leg"></div><div class="b3-hint">przeciągnij, żeby obrócić</div></div>
+        <div class="b3-empty" id="b3Empty" style="display:none">Zapisz pierwszy pomiar obwodów niżej — sylwetka dopasuje się do Twoich wymiarów.</div>
+        <div id="b3Ctl">
+          <div class="b3-seg" id="b3Mode"><button type="button" data-m="now" class="on">Teraz</button><button type="button" data-m="start">Start</button><button type="button" data-m="cmp">Porównaj</button></div>
+          <div class="b3-tl"><label for="b3Tl"><span>Pomiar</span><b id="b3Date">—</b></label><input type="range" id="b3Tl" min="0" max="0" step="1" value="0"></div>
+          <div class="b3-chg" id="b3Chg"></div>
+          <div class="b3-est" id="b3Est" style="display:none"></div>
+        </div>
+        <div class="b3-row"><button type="button" id="b3Rot">▶ Obracaj</button><button type="button" id="b3Front">Przód</button><button type="button" id="b3Side">Bok</button></div>
+        <div class="b3-foot">Kształt jest przybliżony — pokazuje kierunek zmian, nie dokładną sylwetkę. Brakujące obwody biorą wartość z poprzedniego pomiaru, wzrost i płeć z profilu. Model: MakeHuman (CC0) · three.js (MIT).</div>
+      </div>
+    </div>
+  </div>
   <div class="section">
     <div class="eyebrow">Obwody (cm) · raz w tygodniu, rano, na czczo</div>
     <div class="panel panel-pad">
@@ -228,7 +250,7 @@
   <div class="section" style="margin-top:14px" data-grp="ver">
     <div class="eyebrow">Wersja aplikacji</div>
     <div class="ver-row">
-      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.4</b><span>sprawdzona wersja</span></a>
+      <a class="ver-btn" id="verStable" href="../"><b>Stabilna · v1.5</b><span>sprawdzona wersja</span></a>
       <a class="ver-btn" id="verBeta" href="../beta/"><b>Beta</b><span>nowości przed wydaniem · do testów</span></a>
       <a class="ver-btn" id="verEarly" href="../early/" style="display:none"><b>Early Access</b><span>nowości przed stabilną · dla Premium</span></a>
       <a class="ver-btn" id="verUsers" href="../users/" style="display:none"><b>USERS</b><span>konta, plany i limity · wersja robocza</span></a>
@@ -390,6 +412,10 @@
         <input type="text" class="time-in" id="pfName" placeholder="np. Marek" style="width:130px">
       </div>
       <div class="settings-row">
+        <div class="l"><div class="t">Język · Language</div><div class="s">Trener i AI · Coach &amp; AI</div></div>
+        <select class="time-in" id="pfLang" aria-label="Język · Language"><option value="pl">Polski</option><option value="en">English</option></select>
+      </div>
+      <div class="settings-row">
         <div class="l"><div class="t">Waga</div><div class="s">kg</div></div>
         <input type="number" class="time-in" id="pfWeight" inputmode="decimal" style="width:90px">
       </div>
@@ -537,13 +563,7 @@
     <div style="display:flex;gap:8px;align-items:center;margin:0 0 6px"><button class="cq-chip" id="coachQuota" type="button" aria-label="Pytania do Trenera w tym miesiącu"></button><div class="md-hint" style="margin:0;flex:1;min-width:0">Trener to AI (Claude). Do odpowiedzi dostaje Twoje dane z aplikacji — tylko Twoje. Nie zastępuje lekarza.</div></div>
     <div id="coachSetup" class="note" style="display:none">Aby rozmawiać z Trenerem, włącz synchronizację w chmurze. <button class="btn" id="coachGoSync" style="font-size:12px;padding:7px 10px;margin-top:8px">Przejdź do ustawień</button></div>
     <div id="coachMsgs"></div>
-    <div id="coachChips">
-      <button>Jak mi idzie? Oceń moje postępy</button>
-      <button>Co poprawić w diecie?</button>
-      <button>Jakie suplementy mają sens w moim przypadku?</button>
-      <button>Czy zmienić coś w planie treningowym?</button>
-      <button>Jak dobrać ciężary na następny trening?</button>
-    </div>
+    <div id="coachChips"></div>
     <div class="coach-att" id="coachAtt" style="display:none"></div>
     <div class="md-voice" id="coachVoice" style="display:none"></div>
     <div id="coachLimit" role="status"></div>

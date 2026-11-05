@@ -70,12 +70,12 @@ try{
     localStorage.setItem('zelazo_seen_ea','1');
   }
 }catch(e){}
-// jednorazowo po aktualizacji do 1.4: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
-APP_REL = '1.4';
+// jednorazowo po aktualizacji do 1.5: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
+APP_REL = '1.5';
 try{
   if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
-    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.4 — co nowego',
-      'Nowa zasada dnia diety: liczą się kalorie (85–110% celu) i białko (min. 80%) — bez względu na to, czy posiłki są z planu. Serie przeliczone według niej. „Zamień” przy posiłku z planu i wybór „Zastępuje” w „Dodaj posiłek”: wpisz, co było zamiast. Karta „Dzień diety” podpowiada, czego brakuje. Obwody poprawisz w Postęp → Historia pomiarów. Trener widzi cały dziennik jedzenia.'), 1200);
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.5 — co nowego',
+      'Sylwetka 3D w zakładce Postęp: model zbudowany z obwodów i wzrostu, porównanie ze startem (także szacunek z wagi). Język Trenera: Więcej → Profil i plan → Język · Language (Polski / English). Trener odpowiada szybciej i taniej, a proste pytania obsługuje lżejszy model.'), 1200);
     localStorage.setItem('zelazo_seen_rel', APP_REL);
   }
 }catch(e){}
