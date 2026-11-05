@@ -423,7 +423,7 @@ function out(obj) {
 // ============================================================
 var PRICES = {   // $ za 1 mln tokenów: [wejście, wyjście]
   'claude-opus-5': [5, 25], 'claude-opus-5-5': [4, 20], 'claude-opus-4-8': [5, 25], 'claude-opus-4-7': [5, 25],
-  'claude-sonnet-5': [2, 10], 'claude-sonnet-4-6': [3, 15], 'claude-haiku-4-5': [1, 5]
+  'claude-sonnet-5-5': [2, 10], 'claude-sonnet-5': [2, 10], 'claude-sonnet-4-6': [3, 15], 'claude-haiku-4-5': [1, 5]
 };
 function costUSD(model, u) {
   var p = PRICES[String(model || '').replace(/-\d{8}$/, '')] || [5, 25];   // nieznany model → stawka Opus (ostrożnie)
@@ -464,6 +464,15 @@ function usageView(acc) {
 // Aplikacja wysyła zwięzłe podsumowanie danych użytkownika (tylko jego własnych) + historię rozmowy.
 // ============================================================
 var COACH_MODEL = 'claude-opus-5-5';   // następca Opus 5: ta sama jakość, o 20% tańszy (4 $ / 20 $ za 1 mln tokenów)
+// proste pytania (krótkie, bez analizy, planu, zmian, bólu, klatek z nagrania) → Sonnet 5.5, 2 razy taniej (2 $ / 10 $).
+// Pamięć podręczna jest osobna dla każdego modelu — przy przeplataniu pytań każdy model raz zapisuje swoją kopię.
+var COACH_MODEL_LIGHT = 'claude-sonnet-5-5';
+var COACH_HEAVY = /plan|zmie[nń]|zmian|propo|tydzie|tygodn|ci[eę][zż]a|seri|powt[oó]rz|przesu|zast[aą]p|zamie[nń]|analiz|oce[nń]|post[eę]p|idzie|dlaczego|czemu|technik|nagran|przerw|obw[oó]d|suplement|kontuzj|b[oó]l|bol[ią]|redukc|trend|wydatek|change|swap|move|weight|progress|why|technique|analy|review|injur|pain|hurt|goal|supplement/i;
+var COACH_LIGHT_MAX = 120;   // dłuższe pytanie = zwykle coś do przemyślenia
+function coachModelFor(text, hasImages) {
+  var t = String(text || '').trim();
+  return !hasImages && t.length <= COACH_LIGHT_MAX && !COACH_HEAVY.test(t) ? COACH_MODEL_LIGHT : COACH_MODEL;
+}
 var COACH_SYSTEM = [
   'Jesteś Trenerem w aplikacji ŻELAZO — doświadczonym trenerem personalnym i dietetykiem sportowym.',
   'Rozmawiasz po polsku, bezpośrednio, ciepło i konkretnie, jak dobry trener na siłowni. Mów do użytkownika po imieniu, jeśli je znasz.',
@@ -531,6 +540,7 @@ function coachReply(req, acc) {
   if (!messages.length || messages[messages.length - 1].role !== 'user') return { ok: false, error: 'Brak pytania' };
 
   // klatki z nagrania techniki (beta): dołączone do ostatniego pytania jako obrazy, tylko gdy aplikacja je wysłała
+  var lastQuestion = messages[messages.length - 1].content;   // tekst pytania (przed dołączeniem klatek) — do wyboru modelu
   var imgs = (Array.isArray(req.images) ? req.images : []).filter(function (f) {
     return typeof f === 'string' && /^[A-Za-z0-9+/=]+$/.test(f) && f.length < 600000;
   }).slice(0, 8);
@@ -619,10 +629,11 @@ function coachReply(req, acc) {
     input_schema: { type: 'object', additionalProperties: false, required: required, properties: props }
   };
 
+  var model = coachModelFor(lastQuestion, imgs.length > 0);
   var payload = {
-    model: COACH_MODEL,
+    model: model,
     tools: [tool],
-    max_tokens: 8000,
+    max_tokens: 4000,   // odpowiedź ~200 słów + myślenie; ucina tylko rzadkie, bardzo długie odpowiedzi
     output_config: { effort: 'low' },   // rozmowa: niski effort = szybciej i taniej, jakość wystarcza
     fallbacks: 'default',               // odmowa klasyfikatora → serwer sam ponawia na zalecanym modelu
     system: [
@@ -645,7 +656,7 @@ function coachReply(req, acc) {
   if (code === 429 || code === 529) return { ok: false, error: 'Trener jest teraz przeciążony — spróbuj za chwilę' };
   if (code !== 200) return { ok: false, error: 'API ' + code + ': ' + res.getContentText().slice(0, 200) };
   var data = JSON.parse(res.getContentText());
-  recordUsage(acc, 'coach', data.model || COACH_MODEL, data.usage);
+  recordUsage(acc, 'coach', data.model || model, data.usage);
   if (data.stop_reason === 'refusal') return { ok: false, error: 'Trener nie może odpowiedzieć na to pytanie. Spróbuj sformułować je inaczej.' };
   var text = '', proposal = null;
   (data.content || []).forEach(function (b) {
