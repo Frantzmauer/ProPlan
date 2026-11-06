@@ -76,10 +76,9 @@ function bodyMeshes(){
   g.addGroup(G.skin[0]*3, G.skin[1]*3, 0); g.addGroup(G.cloth[0]*3, G.cloth[1]*3, 1);
   B3.mesh=new THREE.Mesh(g, [new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.55, metalness:0.1}),
     new THREE.MeshStandardMaterial({color:0x23292f, roughness:0.8, metalness:0, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2})]);
-  // start: niebieska powłoka odsunięta w głąb (polygonOffset) — tam, gdzie pokrywa się z obecnym ciałem, wygrywa ciało;
-  // widać ją tylko tam, gdzie sylwetka ze startu wystaje poza obecną (czyli gdzie ubyło centymetrów)
-  B3.ghost=new THREE.Mesh(geo(), new THREE.MeshBasicMaterial({color:0x5fa8d3, transparent:true, opacity:0.5, depthWrite:false,
-    polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:8}));
+  // start: przezroczysta niebieska siatka na całej sylwetce (same linie). Wypełniona powłoka „przepychała się” z ciałem
+  // tam, gdzie powierzchnie prawie się pokrywają, i na telefonach dawała nieregularne plamy (z-fighting).
+  B3.ghost=new THREE.Mesh(geo(), new THREE.MeshBasicMaterial({color:0x5fa8d3, wireframe:true, transparent:true, opacity:0.22, depthWrite:false}));
   B3.ghost.renderOrder=1;
   B3.ghost.geometry.setDrawRange(G.skin[0]*3, G.skin[1]*3);   // tylko ciało, bez spodenek
   B3.scene.add(B3.mesh); B3.scene.add(B3.ghost);
