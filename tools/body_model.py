@@ -9,7 +9,7 @@ Użycie:
   python3 tools/body_model.py <katalog z danymi mpfb2>      # zapisuje models/body-male.zbm i models/body-female.zbm
 
 Co robi:
-  1. Bierze ciało, oczy i spodenki (helper-tights przycięte od pasa do połowy uda; bez włosów, zębów, spódnicy) i składa sylwetkę kobiecą i męską
+  1. Bierze ciało, oczy i krótkie spodenki (helper-tights przycięte od linii bioder do kilku cm pod kroczem; bez włosów, zębów, spódnicy) i składa sylwetkę kobiecą i męską
      (średnia z kształtów płci MakeHuman, jak przy płci 100% w samym MakeHuman). Kobieca: wygładzone sutki
      i znacznik wierzchołków sportowego topu — model w aplikacji jest „ubrany” (zasady sklepów, aplikacja fitness).
   2. Dokłada kształty, które aplikacja może mieszać: waga, mięśnie, wzrost, obwody talii, klatki, bioder,
@@ -337,8 +337,9 @@ def main(data):
         m0 = measure(base, body_tris, vg)
         top = female_top(base, body_tris, vg, m0['_chest_y']) if sex == 'female' else set()
         m0 = measure(base, body_tris, vg)   # po wygładzeniu klatki
-        # spodenki: z kombinezonu helper-tights tylko trójkąty od pasa do połowy uda, bez rąk
-        y0 = m0['_crotch'] - 0.45 * (m0['_crotch'] - m0['_knee']); y1 = m0['_waist_y'] - 0.15
+        # spodenki: z kombinezonu helper-tights tylko krótkie spodenki sportowe — od nieco nad linią bioder
+        # (brzuch zostaje widoczny) do kilku cm pod kroczem (uda widoczne); bez rąk
+        y0 = m0['_crotch'] - 0.28 * (m0['_crotch'] - m0['_knee']); y1 = m0['_hips_y'] + 0.45 * (m0['_waist_y'] - m0['_hips_y'])
         cloth_tris = [t for t in tights_tris if all(y0 <= base[i * 3 + 1] <= y1 and abs(base[i * 3]) <= m0['_xmax'] for i in t)]
         tris_all = skin_tris + cloth_tris   # najpierw skóra, potem spodenki (dwie grupy materiałów w aplikacji)
         used = sorted({i for t in tris_all for i in t})   # tylko wierzchołki ciała, oczu i spodenek, w nowej kolejności

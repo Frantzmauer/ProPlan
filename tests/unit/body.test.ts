@@ -14,7 +14,7 @@ describe('sylwetka 3D: plik modelu', () => {
       expect(m.indices.length).toBe(m.header.nt * 3);
       expect(Math.max(...m.indices)).toBeLessThan(m.header.nv);
       expect(m.header.groups.skin[1] + m.header.groups.cloth[1]).toBe(m.header.nt);   // skóra + spodenki
-      expect(m.header.groups.cloth[1]).toBeGreaterThan(500);
+      expect(m.header.groups.cloth[1]).toBeGreaterThan(200);   // krótkie spodenki
       expect(m.top.length).toBe(m.header.nv);
       for (const n of ['weight', 'muscle', 'height', 'waist', 'chest', 'hips', 'arm', 'thigh', 'stomach'])
         for (const s of ['+', '-']) expect(m.morphs.get(n + s)?.d.length).toBe(m.header.nv * 3);
