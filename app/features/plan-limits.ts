@@ -5,11 +5,11 @@ import { todayISO } from '../lib/dates';
 import { currentQuota, featureOn, planEnforcedFor, planFromServer, quotaLeftOf, resetLabel } from '../lib/plan';
 import { KEYS, readJSON, writeJSON } from '../lib/storage';
 import { esc } from '../screens/accounts';
-import { MONTHS_PL } from '../screens/admin';
 import { coachVoice } from '../screens/coach';
 import { moreOpen } from '../screens/more';
 import { showInAppReminder } from './reminders';
 import { COACH_UI } from '../lib/lang';
+import { monthNames, t } from '../lib/i18n';
 
 export let EA_SHORT, EA_LOCAL, PLAN, QUOTA, vqOk;
 
@@ -58,11 +58,11 @@ export function quotaUi(){
   if(sec==='plan') renderPlanQuota();
   if(!q){ chip.style.display='none'; lim.style.display='none'; return; }
   const left=quotaLeft('coach'), out=left===0;
-  chip.style.display='inline-flex'; chip.textContent='💬 '+left+' z '+q.coach.max;
+  chip.style.display='inline-flex'; chip.textContent='💬 '+t('{a} z {b}', {a:left, b:q.coach.max});
   chip.classList.toggle('low', left>0 && left<=3); chip.classList.toggle('out', out);
   lim.style.display=out?'block':'none';
   if(out){
-    lim.innerHTML=`<b>Limit ${q.coach.max} pytań na ${MONTHS_PL[+q.m.slice(5,7)-1]} wykorzystany.</b> Nowe pytania od ${quotaReset()}. Plan, tryb treningu, check-in i przerwy działają dalej bez limitu.${limitOffer('coach')}`;
+    lim.innerHTML=t('<b>Limit {n} pytań na {m} wykorzystany.</b> Nowe pytania od {d}. Plan, tryb treningu, check-in i przerwy działają dalej bez limitu.', {n:q.coach.max, m:monthNames()[+q.m.slice(5,7)-1], d:quotaReset()})+limitOffer('coach');
     bindOffer(lim);
   }
   ['coachIn','coachSend','coachMic'].forEach(id=>{ document.getElementById(id).disabled=out; });
@@ -72,33 +72,33 @@ export function quotaUi(){
 
 /* ---- po wyczerpaniu limitu: oferta Premium (gdy plan jej nie ma) i pakietu pytań do Trenera ----
    Płatności jeszcze nie działają — przyciski mówią, kiedy będą. Ceny w jednym miejscu (zgodne ze stroną startową). */
-export const OFFER = { premium: '29 zł / mies.', pack: { n: 50, price: '24,99 zł' } };
+export const OFFER = { premium: '29 zł / mies.', pack: { n: 50, price: '24,99 zł' } };   // na ekranie przez t()
 export function isPremium(){ return !!PLAN && (PLAN.plan==='premium' || PLAN.plan==='tester'); }
 export function limitOffer(kind){
   const btn=(id,main,sub,cls='')=>`<button class="btn lim-offer ${cls}" type="button" data-offer="${id}"><b>${main}</b>${sub?`<small>${sub}</small>`:''}</button>`;
-  return (isPremium()?'':btn('premium','Przejdź na Premium · '+OFFER.premium,'30 rozmów z Trenerem (też głosem), posiłki ze zdjęcia i kodu kreskowego, 300 szacowań kalorii'))
-    +(kind==='coach'?btn('pack','Dokup pakiet '+OFFER.pack.n+' pytań · '+OFFER.pack.price,'pytania z pakietu nie wygasają z końcem miesiąca', isPremium()?'':'ghost'):'');
+  return (isPremium()?'':btn('premium',t('Przejdź na Premium · {p}', {p:t(OFFER.premium)}),t('30 rozmów z Trenerem (też głosem), posiłki ze zdjęcia i kodu kreskowego, 300 szacowań kalorii')))
+    +(kind==='coach'?btn('pack',t('Dokup pakiet {n} pytań · {p}', {n:OFFER.pack.n, p:t(OFFER.pack.price)}),t('pytania z pakietu nie wygasają z końcem miesiąca'), isPremium()?'':'ghost'):'');
 }
 export function bindOffer(root){
   (root||document).querySelectorAll('[data-offer]').forEach(b=>b.onclick=()=>showInAppReminder(
-    b.dataset.offer==='pack'?'Pakiet pytań — wkrótce':'Premium — wkrótce',
-    'Płatności uruchomimy razem z nowymi kontami. Do tego czasu limit odnowi się '+quotaReset()+'.'));
+    b.dataset.offer==='pack'?t('Pakiet pytań — wkrótce'):t('Premium — wkrótce'),
+    t('Płatności uruchomimy razem z nowymi kontami. Do tego czasu limit odnowi się {d}.', {d:quotaReset()})));
 }
 
 export function renderPlanQuota(){
   const box=document.getElementById('planBox'); if(!box) return;
   if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
-    box.innerHTML='<div class="md-hint" style="margin:0">Limity Trenera liczy serwer — włącz synchronizację (Więcej → Synchronizacja i konta), żeby je zobaczyć.</div>'; return;
+    box.innerHTML='<div class="md-hint" style="margin:0">'+t('Limity Trenera liczy serwer — włącz synchronizację (Więcej → Synchronizacja i konta), żeby je zobaczyć.')+'</div>'; return;
   }
   const q=quotaCur();
-  if(!q){ box.innerHTML='<div class="md-hint" style="margin:0">Wczytuję limity…</div>'; return; }
-  const meter=(label,n,max)=>!max?`<div class="pq-m"><div class="t"><span>${label}</span><b>w Premium</b></div></div>`:`<div class="pq-m"><div class="t"><span>${label}</span><b>${n} / ${max}</b></div><div class="pq-bar"><span class="${n>=max?'full':''}" style="width:${Math.min(100,Math.round(n/max*100))}%"></span></div></div>`;
-  box.innerHTML=`<div class="pq-top"><div><b>${esc((PLAN&&PLAN.planName)||'Twój plan')}</b><small>Limity odnawiają się ${quotaReset()}</small></div><span class="pq-badge">${MONTHS_PL[+q.m.slice(5,7)-1]}</span></div>
-    ${meter('Pytania do Trenera', q.coach.n, q.coach.max)}
-    ${meter('Oceny techniki z nagrania', q.form.n, q.form.max)}
-    ${meter('Szacowanie kalorii posiłków', q.est.n, q.est.max)}
-    <div class="md-hint" style="margin:-8px 0 0">Tekstem albo głosem — tak samo. Najwyżej ${q.est.day} dziennie. Nie zjada pytań do Trenera.</div>
-    <div class="md-hint" style="margin:0">Bez limitu: plan treningu i diety, ręczne wpisywanie kalorii, tryb treningu, rekordy, przerwy, check-in, cykl, praca offline. Krótkie „dzięki” i „ok” do Trenera nie liczą się do limitu.</div>`;
+  if(!q){ box.innerHTML='<div class="md-hint" style="margin:0">'+t('Wczytuję limity…')+'</div>'; return; }
+  const meter=(label,n,max)=>!max?`<div class="pq-m"><div class="t"><span>${label}</span><b>${t('w Premium')}</b></div></div>`:`<div class="pq-m"><div class="t"><span>${label}</span><b>${n} / ${max}</b></div><div class="pq-bar"><span class="${n>=max?'full':''}" style="width:${Math.min(100,Math.round(n/max*100))}%"></span></div></div>`;
+  box.innerHTML=`<div class="pq-top"><div><b>${esc(PLAN&&PLAN.planName?t(PLAN.planName):t('Twój plan'))}</b><small>${t('Limity odnawiają się {d}', {d:quotaReset()})}</small></div><span class="pq-badge">${monthNames()[+q.m.slice(5,7)-1]}</span></div>
+    ${meter(t('Pytania do Trenera'), q.coach.n, q.coach.max)}
+    ${meter(t('Oceny techniki z nagrania'), q.form.n, q.form.max)}
+    ${meter(t('Szacowanie kalorii posiłków'), q.est.n, q.est.max)}
+    <div class="md-hint" style="margin:-8px 0 0">${t('Tekstem albo głosem — tak samo. Najwyżej {n} dziennie. Nie zjada pytań do Trenera.', {n:q.est.day})}</div>
+    <div class="md-hint" style="margin:0">${t('Bez limitu: plan treningu i diety, ręczne wpisywanie kalorii, tryb treningu, rekordy, przerwy, check-in, cykl, praca offline. Krótkie „dzięki” i „ok” do Trenera nie liczą się do limitu.')}</div>`;
 }
 
 export function vqMuted(){ try{ return localStorage.getItem('zelazo_voice_note')==='off'; }catch(e){ return false; } }
@@ -106,12 +106,12 @@ export function vqMuted(){ try{ return localStorage.getItem('zelazo_voice_note')
 export function openVoiceQuota(){
   const q=quotaCur(), left=quotaLeft('coach');
   document.getElementById('vqPanel').innerHTML=`<div class="eh-grab"></div>
-    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Twój plan</div><h2 id="vqTitle">Rozmowa głosowa</h2></div><button class="eh-x" data-vqclose aria-label="Zamknij">✕</button></div>
-    <p>Każda Twoja wypowiedź to <b>1 pytanie</b> z limitu.${q?` Zostało Ci <b>${left} z ${q.coach.max}</b>.`:''}</p>
-    <p style="color:var(--ink-dim);font-size:14px">Wskazówka: powiedz całe pytanie naraz, np. „Bolą mnie kolana przy przysiadzie, co zmienić w treningu i ile ciężaru?”.</p>
-    <button class="btn" id="vqGo" type="button">MÓW</button>
-    <button class="btn ghost" data-vqclose type="button">Wolę napisać</button>
-    <label><input type="checkbox" id="vqMute"> Nie pokazuj więcej</label>`;
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${t('Twój plan')}</div><h2 id="vqTitle">${t('Rozmowa głosowa')}</h2></div><button class="eh-x" data-vqclose aria-label="${t('Zamknij')}">✕</button></div>
+    <p>${t('Każda Twoja wypowiedź to <b>1 pytanie</b> z limitu.')}${q?' '+t('Zostało Ci <b>{a} z {b}</b>.', {a:left, b:q.coach.max}):''}</p>
+    <p style="color:var(--ink-dim);font-size:14px">${t('Wskazówka: powiedz całe pytanie naraz, np. „Bolą mnie kolana przy przysiadzie, co zmienić w treningu i ile ciężaru?”.')}</p>
+    <button class="btn" id="vqGo" type="button">${t('MÓW')}</button>
+    <button class="btn ghost" data-vqclose type="button">${t('Wolę napisać')}</button>
+    <label><input type="checkbox" id="vqMute"> ${t('Nie pokazuj więcej')}</label>`;
   const sh=document.getElementById('vqSheet'); sh.style.display='flex';
   const close=()=>{
     if(document.getElementById('vqMute').checked){ try{ localStorage.setItem('zelazo_voice_note','off'); }catch(e){} }

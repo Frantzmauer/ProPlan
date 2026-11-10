@@ -12,6 +12,7 @@ import { openMealDialog } from '../screens/guide';
 import { MT, mtAskHtml, mtAteNow, mtBind, mtCloseHtml, mtOnCheck, mtStampCustom, mtStampHtml } from '../screens/meals';
 import { dayMeals, renderToday } from '../screens/train';
 import { renderMacros } from '../ui/dictation';
+import { t } from '../lib/i18n';
 
 
 /* ============================================================
@@ -62,18 +63,18 @@ export function renderMeals(iso, dow, L, wk){
     const isAuto = !(L.var && L.var[i]!==undefined);
     // zastąpiony własnym posiłkiem („Zamień” albo „Inaczej” w domknięciu dnia)
     const rep=!on && (L.custom||[]).find(c=>c.rep===key && !c._del);
-    const dots=madj?'<span class="vman">od Trenera</span>':slot.v.map((_,vx)=>`<button class="vdot ${vx===vi?'on':''}" data-vpick="${i}" data-vx="${vx}" title="Wariant ${vx+1}">${vx+1}</button>`).join('');
-    const swap=(on||rep)?'':`<button class="mrep" data-mrep="${key}" aria-label="Zamień: ${slot.tag} — wpisz, co było zamiast">Zamień</button>`;
+    const dots=madj?'<span class="vman">'+t('od Trenera')+'</span>':slot.v.map((_,vx)=>`<button class="vdot ${vx===vi?'on':''}" data-vpick="${i}" data-vx="${vx}" title="${t('Wariant {n}', {n:vx+1})}">${vx+1}</button>`).join('');
+    const swap=(on||rep)?'':`<button class="mrep" data-mrep="${key}" aria-label="${t('Zamień: {m} — wpisz, co było zamiast', {m:t(slot.tag)})}">${t('Zamień')}</button>`;
     html+=`<div class="meal ${on?'done':''}">
       <div class="check ${on?'on':''}" data-meal="${key}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
       <div class="body">
         <div class="meal-head">
-          <span class="tag">${slot.tag}</span>
+          <span class="tag">${t(slot.tag)}</span>
           <span class="vdots">${swap}${dots}</span>
         </div>
         <div class="txt" data-meal="${key}">${mc.txt}</div>
-        <div class="kcal">${mc.kcal} kcal · B ${mc.p} / W ${mc.c} / T ${mc.f}${(isAuto||madj)?'':' · <span class="vman">ręczny wariant</span>'}</div>
-        ${rep?`<span class="mt-st skip">zastąpiony: ${esc(rep.txt||'własny posiłek')}</span>`:mtStampHtml(iso, L, key, on)}${mtAskHtml(iso, key, slot.tag)}
+        <div class="kcal">${mc.kcal} kcal · ${t('B {p} / W {c} / T {f}', {p:mc.p, c:mc.c, f:mc.f})}${(isAuto||madj)?'':' · <span class="vman">'+t('ręczny wariant')+'</span>'}</div>
+        ${rep?`<span class="mt-st skip">${t('zastąpiony:')} ${esc(rep.txt||t('własny posiłek'))}</span>`:mtStampHtml(iso, L, key, on)}${mtAskHtml(iso, key, slot.tag)}
       </div>
     </div>`;
   });
@@ -87,21 +88,21 @@ export function renderMeals(iso, dow, L, wk){
       <div class="check ${on?'on':''}" data-custom="${ci}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
       <div class="body">
         <div class="meal-head">
-          <span class="tag" style="color:var(--steel)">${cm.rep&&diet.meals[+cm.rep.slice(1)]?'Zamiast: '+diet.meals[+cm.rep.slice(1)].tag:'Własny'}</span>
-          <button class="vdot" data-cdel="${ci}" title="Usuń" style="color:var(--red);border-color:rgba(226,84,58,.35)">✕</button>
+          <span class="tag" style="color:var(--steel)">${cm.rep&&diet.meals[+cm.rep.slice(1)]?t('Zamiast: ')+t(diet.meals[+cm.rep.slice(1)].tag):t('Własny')}</span>
+          <button class="vdot" data-cdel="${ci}" title="${t('Usuń')}" style="color:var(--red);border-color:rgba(226,84,58,.35)">✕</button>
         </div>
-        <div class="txt" data-custom="${ci}">${cm.txt||'Posiłek'}</div>
-        <div class="kcal">${cm.kcal||0} kcal${(cm.p||cm.c||cm.f)?` · B ${cm.p||0} / W ${cm.c||0} / T ${cm.f||0}`:''}</div>
+        <div class="txt" data-custom="${ci}">${cm.txt||t('Posiłek')}</div>
+        <div class="kcal">${cm.kcal||0} kcal${(cm.p||cm.c||cm.f)?' · '+t('B {p} / W {c} / T {f}', {p:cm.p||0, c:cm.c||0, f:cm.f||0}):''}</div>
         ${on?mtStampCustom(iso, cm):''}
       </div>
     </div>`;
   });
   // --- przycisk dodania ---
   html+=`<div class="add-row">
-    <button class="add-btn" id="addMealBtn"><span>＋</span> Dodaj posiłek</button>
+    <button class="add-btn" id="addMealBtn"><span>＋</span> ${t('Dodaj posiłek')}</button>
     <div class="add-kcal">
       <input type="number" inputmode="numeric" id="quickKcal" placeholder="kcal">
-      <button class="add-btn alt" id="addKcalBtn">Dodaj kalorie</button>
+      <button class="add-btn alt" id="addKcalBtn">${t('Dodaj kalorie')}</button>
     </div>
   </div>`;
 
@@ -139,7 +140,7 @@ export function renderMeals(iso, dow, L, wk){
   qk.addEventListener('keydown',e=>{if(e.key==='Enter')addKcal()});
 
   const totalMeals=diet.meals.length+customs.length;
-  document.getElementById('mealsProgress').textContent=`${done}/${totalMeals} posiłków`;
+  document.getElementById('mealsProgress').textContent=t('{a}/{b} posiłków', {a:done, b:totalMeals});
   renderMacros(tot, goal);
   renderDietScore(iso, tot, goal);
 }
@@ -150,11 +151,11 @@ export function renderDietScore(iso, tot, goal){
   if(!box) return;
   if(iso>today || dayIndexFor(iso)<1){ box.style.display='none'; return; }   // przyszłość i dni przed startem planu się nie liczą
   const s=dietScore(tot, macroGoalFor(goal)), tip=iso===today?dietTip(tot, s):'';
-  const pill=s.ok?'<span class="ds-pill ok">✓ zaliczony</span>':iso===today?'<span class="ds-pill wip">w toku · do północy</span>':'<span class="ds-pill no">niezaliczony</span>';
+  const pill=s.ok?'<span class="ds-pill ok">'+t('✓ zaliczony')+'</span>':iso===today?'<span class="ds-pill wip">'+t('w toku · do północy')+'</span>':'<span class="ds-pill no">'+t('niezaliczony')+'</span>';
   box.style.display='';
-  box.innerHTML=`<div class="ds-h"><b>Dzień diety</b>${pill}</div>
+  box.innerHTML=`<div class="ds-h"><b>${t('Dzień diety')}</b>${pill}</div>
     <div class="ds-crit"><span><b class="${s.kcalOk?'ok':'no'}">${s.kcalOk?'✓':'✗'}</b> kcal ${s.kcalPct}% <small>(${s.lo}–${s.hi})</small></span>
-    <span><b class="${s.pOk?'ok':'no'}">${s.pOk?'✓':'✗'}</b> białko ${s.pPct}% <small>(min. ${s.pMin} g)</small></span></div>
+    <span><b class="${s.pOk?'ok':'no'}">${s.pOk?'✓':'✗'}</b> ${t('białko')} ${s.pPct}% <small>(${t('min. {g} g', {g:s.pMin})})</small></span></div>
     ${tip?`<div class="ds-tip">${tip}</div>`:''}`;
 }
 

@@ -1,3 +1,4 @@
+import { isEn } from './i18n';
 // Plan konta, funkcje i miesięczne limity — tak, jak je opisuje serwer (planView w Apps Script).
 // Limity planu obowiązują tylko w wersjach z cfg.enforce; w pozostałych działa wyłącznie wyłącznik awaryjny.
 
@@ -34,8 +35,9 @@ export function quotaLeftOf(q: Quota | null, k: QuotaKind): number | null {
   return q ? Math.max(0, q[k].max - q[k].n) : null;
 }
 
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const MONTHS_GEN = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
 /** „1 grudnia” — kiedy limity się odnowią (pierwszy dzień następnego miesiąca). */
 export function resetLabel(now: Date = new Date()): string {
-  return '1 ' + MONTHS_GEN[(now.getMonth() + 1) % 12];
+  return isEn() ? '1 ' + MONTHS_EN[(now.getMonth() + 1) % 12] : '1 ' + MONTHS_GEN[(now.getMonth() + 1) % 12];
 }

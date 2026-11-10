@@ -9,6 +9,7 @@ import { workoutOn } from '../plan/data';
 import { exAny, log, openMove, renderToday } from '../screens/train';
 import { WO, hasSession, woBuild, woCurSet, woNext, woRender, woSave, woStart, woStep } from '../screens/workout';
 import { CY_PH, CY_SYM, CY_SYM_MENO, cyGet, cyInfo, cyPhaseNote, cySave, cySetSym, cySym, cyTracking, openCycle } from './cycle';
+import { t } from '../lib/i18n';
 
 export let CI_Q, CI;
 
@@ -23,8 +24,8 @@ export function ciIcons(c){ return CI_Q.map(q=>c[q.k]!=null?q.o[c[q.k]][0]:'').j
 
 export function ciChip(L, iso){
   const c=L.checkin; if(!c || c.plan==='skip') return '';
-  const what=(c.plan==='light2'?'lżejszy dzień (−10%, seria mniej)':c.plan==='light'?'lżejszy dzień (−10%)':c.plan==='moved'?'trening przesunięty':c.plan==='move'?'lekki ruch zamiast treningu':'wg planu')+(c.restPlus?', przerwy +30 s':'');
-  return `<div class="ci-chip">Samopoczucie: <b>${ciIcons(c)}</b> · <span class="${ciLight(L)?'lt':''}">${what}</span>${iso===todayISO()?' <button data-ci-edit>zmień</button>':''}</div>`;
+  const what=t(c.plan==='light2'?'lżejszy dzień (−10%, seria mniej)':c.plan==='light'?'lżejszy dzień (−10%)':c.plan==='moved'?'trening przesunięty':c.plan==='move'?'lekki ruch zamiast treningu':'wg planu')+(c.restPlus?t(', przerwy +30 s'):'');
+  return `<div class="ci-chip">${t('Samopoczucie:')} <b>${ciIcons(c)}</b> · <span class="${ciLight(L)?'lt':''}">${what}</span>${iso===todayISO()?' <button data-ci-edit>'+t('zmień')+'</button>':''}</div>`;
 }
 
 // START TRENINGU: przy pierwszym starcie dnia najpierw check-in; WZNÓW / DOKOŃCZ startuje od razu
@@ -46,18 +47,17 @@ export function renderCheckin(){
   const v=ciVerdict(CI.a, CI.iso, [...CI.sym]), hard=CI.a.sore===0, start=CI.mode==='start';
   const inf=cyInfo(CI.iso), symList=inf && inf.sit==='meno' ? CY_SYM_MENO : CY_SYM;
   const ask=!cyGet().on && !cyGet().asked && S.profile && S.profile.sex==='f';
-  const go=t=>start?'▶ '+t:t;
-  document.getElementById('ciPanel').innerHTML=`<div class="eh-grab"></div>
-    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${start?'Zanim zaczniesz · 3 stuknięcia':'Samopoczucie dziś'}</div><h2 id="ciTitle">Jak się dziś czujesz?</h2></div><button class="eh-x" data-ciclose aria-label="Zamknij">✕</button></div>
-    ${inf && inf.day && (inf.sit==='natural' || inf.inPeriod) ? `<div class="ci-ctx">${inf.sit==='natural'?'Dzień '+inf.day+' cyklu · ':''}${CY_PH[inf.phase]||'okres'}</div>`:''}
-    ${CI_Q.map(q=>`<div class="ci-q"><span class="l">${q.l}</span><div class="ci-seg">${q.o.map(([ic,l],j)=>`<button data-cia="${q.k}:${j}" class="${CI.a[q.k]===j?'on '+(j===0?'lo':j===2?'hi':''):''}" aria-pressed="${CI.a[q.k]===j}"><i>${ic}</i>${l}</button>`).join('')}</div></div>`).join('')}
-    ${inf && inf.sit!=='preg' ? `<div class="ci-q"><span class="l">Coś jeszcze? <span style="color:var(--ink-faint);font-weight:500">(opcjonalnie)</span></span><div class="ci-sym">${symList.map(x=>`<button data-cisym="${x}" class="${CI.sym.has(x)?'on':''}" aria-pressed="${CI.sym.has(x)}">${x}</button>`).join('')}</div></div>`:''}
-    ${v?`<div class="ci-verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${hard?'<small>Mocne zakwasy: dłuższa rozgrzewka (5–8 min) i pierwsza seria lżej.</small>':''}${CI.sym.has('Obfite krwawienie')?'<small>Przy obfitym krwawieniu warto dziś zjeść coś z żelazem: wołowina, soczewica, szpinak z cytrusami.</small>':''}</div>`:''}
-    ${!v?`<button class="wo-save" disabled style="opacity:.35">ODPOWIEDZ NA 3 PYTANIA</button>`
-      : v.c==='ok'?`<button class="wo-save" data-ciplan="normal">${go('START TRENINGU').replace('START TRENINGU',start?'START TRENINGU':'ZAPISZ')}</button>`
-      : `<button class="wo-save" data-ciplan="${v.plan}">${start?'▶ TRENUJ LŻEJ':'LŻEJSZY DZIEŃ'}</button>${v.move?'<button class="ci-alt" data-ciplan="move">Lekki ruch zamiast treningu</button>':''}<button class="ci-alt" data-ciplan="normal">${start?'Trenuj normalnie':'Według planu'}</button>${v.c==='low'&&!v.move?'<button class="ci-alt" data-cimove>Przesuń trening na inny dzień</button>':''}`}
-    ${start?'<button class="sw-ask" data-ciplan="skip">Pomiń — od razu start</button>':''}
-    ${ask?'<div class="ci-ask">Chcesz, żeby trening uwzględniał cykl? <button data-ciopency>Włącz śledzenie cyklu</button> · <button data-cinoask>Nie, dziękuję</button></div>':''}`;
+    document.getElementById('ciPanel').innerHTML=`<div class="eh-grab"></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${start?t('Zanim zaczniesz · 3 stuknięcia'):t('Samopoczucie dziś')}</div><h2 id="ciTitle">${t('Jak się dziś czujesz?')}</h2></div><button class="eh-x" data-ciclose aria-label="${t('Zamknij')}">✕</button></div>
+    ${inf && inf.day && (inf.sit==='natural' || inf.inPeriod) ? `<div class="ci-ctx">${inf.sit==='natural'?t('Dzień {n} cyklu · ', {n:inf.day}):''}${t(CY_PH[inf.phase]||'okres')}</div>`:''}
+    ${CI_Q.map(q=>`<div class="ci-q"><span class="l">${t(q.l)}</span><div class="ci-seg">${q.o.map(([ic,l],j)=>`<button data-cia="${q.k}:${j}" class="${CI.a[q.k]===j?'on '+(j===0?'lo':j===2?'hi':''):''}" aria-pressed="${CI.a[q.k]===j}"><i>${ic}</i>${t(l)}</button>`).join('')}</div></div>`).join('')}
+    ${inf && inf.sit!=='preg' ? `<div class="ci-q"><span class="l">${t('Coś jeszcze?')} <span style="color:var(--ink-faint);font-weight:500">${t('(opcjonalnie)')}</span></span><div class="ci-sym">${symList.map(x=>`<button data-cisym="${x}" class="${CI.sym.has(x)?'on':''}" aria-pressed="${CI.sym.has(x)}">${t(x)}</button>`).join('')}</div></div>`:''}
+    ${v?`<div class="ci-verdict ${v.c}"><b>${v.t}</b><span>${v.d}</span>${hard?'<small>'+t('Mocne zakwasy: dłuższa rozgrzewka (5–8 min) i pierwsza seria lżej.')+'</small>':''}${CI.sym.has('Obfite krwawienie')?'<small>'+t('Przy obfitym krwawieniu warto dziś zjeść coś z żelazem: wołowina, soczewica, szpinak z cytrusami.')+'</small>':''}</div>`:''}
+    ${!v?`<button class="wo-save" disabled style="opacity:.35">${t('ODPOWIEDZ NA 3 PYTANIA')}</button>`
+      : v.c==='ok'?`<button class="wo-save" data-ciplan="normal">${start?'▶ '+t('START TRENINGU'):t('ZAPISZ')}</button>`
+      : `<button class="wo-save" data-ciplan="${v.plan}">${start?t('▶ TRENUJ LŻEJ'):t('LŻEJSZY DZIEŃ')}</button>${v.move?'<button class="ci-alt" data-ciplan="move">'+t('Lekki ruch zamiast treningu')+'</button>':''}<button class="ci-alt" data-ciplan="normal">${start?t('Trenuj normalnie'):t('Według planu')}</button>${v.c==='low'&&!v.move?'<button class="ci-alt" data-cimove>'+t('Przesuń trening na inny dzień')+'</button>':''}`}
+    ${start?'<button class="sw-ask" data-ciplan="skip">'+t('Pomiń — od razu start')+'</button>':''}
+    ${ask?'<div class="ci-ask">'+t('Chcesz, żeby trening uwzględniał cykl?')+' <button data-ciopency>'+t('Włącz śledzenie cyklu')+'</button> · <button data-cinoask>'+t('Nie, dziękuję')+'</button></div>':''}`;
 }
 
 export function ciSave(plan){
@@ -86,7 +86,7 @@ export function woRefreshFromCard(){
 
 export function woLightBanner(){
   const L=log(WO.iso); if(!ciLight(L)) return '';
-  return `<div class="wo-light"><span><b>Lżejszy dzień</b> · ciężar −10%${L.checkin.plan==='light2'?', seria mniej':''}</span><button id="woLightOff">Wróć do planu</button></div>`;
+  return `<div class="wo-light"><span><b>${t('Lżejszy dzień')}</b> · ${t('ciężar −10%')}${L.checkin.plan==='light2'?t(', seria mniej'):''}</span><button id="woLightOff">${t('Wróć do planu')}</button></div>`;
 }
 
 export function __init_26(){

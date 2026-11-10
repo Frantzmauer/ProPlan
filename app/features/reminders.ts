@@ -2,6 +2,7 @@
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { S, save } from '../core/state';
 import { mtScheduleReminders } from '../screens/meals';
+import { t } from '../lib/i18n';
 
 export let notifTimers, NOTIF_SUPPORTED, REMINDER_ITEMS, btnTestNotif;
 
@@ -58,11 +59,11 @@ export function refreshNotifUI(){
   const on=S.reminders.on;
   tgl.classList.toggle('on',on);
   let msg;
-  if(!on) msg='Wyłączone — stuknij, aby włączyć';
-  else if(perm==='granted') msg='Włączone — powiadomienia systemowe';
-  else if(perm==='denied') msg='Włączone — baner w aplikacji (powiadomienia zablokowane w przeglądarce)';
-  else if(perm==='unsupported') msg='Włączone — baner w aplikacji (przeglądarka nie wspiera powiadomień)';
-  else msg='Włączone — baner w aplikacji';
+  if(!on) msg=t('Wyłączone — stuknij, aby włączyć');
+  else if(perm==='granted') msg=t('Włączone — powiadomienia systemowe');
+  else if(perm==='denied') msg=t('Włączone — baner w aplikacji (powiadomienia zablokowane w przeglądarce)');
+  else if(perm==='unsupported') msg=t('Włączone — baner w aplikacji (przeglądarka nie wspiera powiadomień)');
+  else msg=t('Włączone — baner w aplikacji');
   document.getElementById('notifState').textContent=msg;
 }
 
@@ -75,9 +76,9 @@ notifTimers = [];
 NOTIF_SUPPORTED = typeof Notification !== 'undefined';
 
 REMINDER_ITEMS = ()=>[
-  {key:'workout',t:S.reminders.workout,title:'🏋️ Czas na trening',body:'Sprawdź dzisiejszą sesję w SixMo.'},
-  {key:'water',t:S.reminders.water,title:'💧 Pij wodę',body:'Cel to 3 litry dziennie. Jak stoisz?'},
-  {key:'weight',t:S.reminders.weight,title:'⚖️ Zważ się',body:'Rano, na czczo. Zapisz wagę i śledź trend.'},
+  {key:'workout',t:S.reminders.workout,title:t('🏋️ Czas na trening'),body:t('Sprawdź dzisiejszą sesję w SixMo.')},
+  {key:'water',t:S.reminders.water,title:t('💧 Pij wodę'),body:t('Cel to 3 litry dziennie. Jak stoisz?')},
+  {key:'weight',t:S.reminders.weight,title:t('⚖️ Zważ się'),body:t('Rano, na czczo. Zapisz wagę i śledź trend.')},
 ];
 document.getElementById('notifToggle').onclick=async()=>{
   if(S.reminders.on){ // wyłącz
@@ -90,16 +91,16 @@ document.getElementById('notifToggle').onclick=async()=>{
     try{
       const p=await Notification.requestPermission();
       refreshNotifUI();
-      if(p==='granted'){ try{new Notification('✅ Przypomnienia włączone',{body:'Będę Cię pilnować.'})}catch(e){} return; }
+      if(p==='granted'){ try{new Notification(t('✅ Przypomnienia włączone'),{body:t('Będę Cię pilnować.')})}catch(e){} return; }
     }catch(e){ refreshNotifUI(); }
   }
   // potwierdzenie działania fallbacku
-  showInAppReminder('✅ Przypomnienia włączone', NOTIF_SUPPORTED && Notification.permission==='granted' ? 'Powiadomienia systemowe aktywne.' : 'Będą pokazywać się jako baner, gdy aplikacja jest otwarta.');
+  showInAppReminder(t('✅ Przypomnienia włączone'), NOTIF_SUPPORTED && Notification.permission==='granted' ? t('Powiadomienia systemowe aktywne.') : t('Będą pokazywać się jako baner, gdy aplikacja jest otwarta.'));
 };
 // przycisk testowy
 btnTestNotif = document.getElementById('btnTestNotif');
 if(btnTestNotif) btnTestNotif.onclick=()=>{
-  if(NOTIF_SUPPORTED && Notification.permission==='granted'){ try{new Notification('🔔 Test',{body:'Tak wygląda przypomnienie SixMo.'});return;}catch(e){} }
-  showInAppReminder('🔔 Test przypomnienia','Tak wygląda baner w aplikacji.');
+  if(NOTIF_SUPPORTED && Notification.permission==='granted'){ try{new Notification('🔔 Test',{body:t('Tak wygląda przypomnienie SixMo.')});return;}catch(e){} }
+  showInAppReminder(t('🔔 Test przypomnienia'),t('Tak wygląda baner w aplikacji.'));
 };
 }

@@ -23,10 +23,10 @@ export let MORE_TITLES, sd, kcalSlider, pf;
 
 export function moreOpen(sec, fromHistory?){
   const v=document.getElementById('v-set'); v.dataset.sec=sec||'';
-  const t=MORE_TITLES[sec];
-  document.getElementById('moreBack').style.display=t?'inline-flex':'none';
-  document.getElementById('moreTitle').textContent=t?t[0]:'Ustawienia';
-  document.getElementById('moreEyebrow').textContent=t?t[1]:'Konfiguracja';
+  const ti=MORE_TITLES[sec];
+  document.getElementById('moreBack').style.display=ti?'inline-flex':'none';
+  document.getElementById('moreTitle').textContent=ti?ti[0]:t('Ustawienia');
+  document.getElementById('moreEyebrow').textContent=ti?ti[1]:t('Konfiguracja');
   if(sec==='cw') renderExLib();
   if(sec==='plan'){ renderPlanQuota(); quotaLoad(); }
   if(sec==='adm') apLoad();

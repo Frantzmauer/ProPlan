@@ -4,18 +4,19 @@
 import { APP_VER } from '../core/shell';
 import { S } from '../core/state';
 import { applyBody, bodyTimeline, bodyWeightStart, fitBody, parseBody, weightOn, type BodyModel } from '../lib/body';
+import { dec, t } from '../lib/i18n';
 
 export let B3;
 
-const LABEL = {waist:'Pas', chest:'Klatka', arm:'Ramię', thigh:'Udo', hips:'Biodra'};
+const LABEL = {waist:'Pas', chest:'Klatka', arm:'Ramię', thigh:'Udo', hips:'Biodra'};   // na ekranie przez t()
 const DOWN = {waist:1, hips:1}, NEUTRAL = {chest:1, arm:1, thigh:1};   // spadek pasa i bioder = dobrze; reszta bez oceny (zależy od celu)
 
 function modelUrl(sex){ return new URL((APP_VER==='stable'?'':'../')+'models/body-'+sex+'.zbm', location.href).href; }
 
 async function loadModel(sex): Promise<BodyModel>{
   if(B3.models[sex]) return B3.models[sex];
-  if(typeof DecompressionStream==='undefined') throw new Error('Ta przeglądarka nie potrafi rozpakować modelu — zaktualizuj ją.');
-  const r=await fetch(modelUrl(sex)); if(!r.ok || !r.body) throw new Error('Nie udało się pobrać modelu sylwetki ('+r.status+').');
+  if(typeof DecompressionStream==='undefined') throw new Error(t('Ta przeglądarka nie potrafi rozpakować modelu — zaktualizuj ją.'));
+  const r=await fetch(modelUrl(sex)); if(!r.ok || !r.body) throw new Error(t('Nie udało się pobrać modelu sylwetki ({s}).', {s:r.status}));
   const buf=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   return B3.models[sex]=parseBody(buf);
 }
@@ -35,7 +36,7 @@ export async function bodyOpen(){
   B3.on=true; try{ localStorage.setItem('zelazo_body3d','1'); }catch(e){}
   document.getElementById('b3Intro').style.display='none';
   document.getElementById('b3View').style.display='';
-  const msg=document.getElementById('b3Msg'); msg.textContent='Ładowanie modelu…'; msg.style.display='';
+  const msg=document.getElementById('b3Msg'); msg.textContent=t('Ładowanie modelu…'); msg.style.display='';
   try{
     const [THREE, model]=await Promise.all([import('three'), loadModel(bodyData().sex)]);
     B3.THREE=THREE; B3.model=model;
@@ -105,8 +106,8 @@ export function bodyGhostToggle(){
 function bodyGhostUi(){
   const b=document.getElementById('b3Ghost'); if(!b) return;
   b.setAttribute('aria-pressed', B3.fill?'true':'false');
-  b.setAttribute('aria-label', B3.fill?'Start: wypełnienie — przełącz na siatkę':'Start: siatka — przełącz na wypełnienie');
-  b.title=B3.fill?'Wypełnienie':'Siatka';
+  b.setAttribute('aria-label', B3.fill?t('Start: wypełnienie — przełącz na siatkę'):t('Start: siatka — przełącz na wypełnienie'));
+  b.title=B3.fill?t('Wypełnienie'):t('Siatka');
 }
 
 // siatka sylwetki i „duch” startu (przezroczysta powłoka) — dla płci z profilu
@@ -153,17 +154,17 @@ export async function bodyRefresh(){
   B3.ghost.visible=B3.mode==='cmp' && n>1 && B3.idx>0;
   document.getElementById('b3Ghost').style.display=B3.ghost.visible?'':'none';
   if(B3.ghost.visible) shape(B3.ghost, st.m);
-  const fmt=d=>d?d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4):'—', n1=v=>(Math.round(v*10)/10).toString().replace('.',',');
+  const fmt=d=>d?d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4):'—', n1=v=>dec(Math.round(v*10)/10);
   const shown=B3.mode==='start'?st:cur;
-  document.getElementById('b3Date').textContent=fmt(shown.d)+(shown.est?' · szacunek':'');
-  document.getElementById('b3Leg').innerHTML=B3.ghost.visible?`<span><i style="background:#c9cdd2"></i>${fmt(cur.d).slice(0,5)}</span><span><i style="background:var(--steel)"></i>start ${fmt(st.d).slice(0,5)}${st.est?' (szac.)':''}</span>`:'';
-  const kg=v=>String(v).replace('.',',');
-  document.getElementById('b3Est').innerHTML=st.est&&n>1?`Start ${fmt(st.d)} to <b>szacunek z wagi</b>: ${kg(st.w0)} kg wtedy, ${kg(st.w1)} kg przy pierwszym pomiarze obwodów (${fmt(tl[1].d)}). Obwody liczone z typowego ubytku na kilogram — zmierz się, żeby mieć prawdziwe dane.`:'';
+  document.getElementById('b3Date').textContent=fmt(shown.d)+(shown.est?t(' · szacunek'):'');
+  document.getElementById('b3Leg').innerHTML=B3.ghost.visible?`<span><i style="background:#c9cdd2"></i>${fmt(cur.d).slice(0,5)}</span><span><i style="background:var(--steel)"></i>${t('start')} ${fmt(st.d).slice(0,5)}${st.est?t(' (szac.)'):''}</span>`:'';
+  const kg=v=>dec(v);
+  document.getElementById('b3Est').innerHTML=st.est&&n>1?t('Start {d} to <b>szacunek z wagi</b>: {a} kg wtedy, {b} kg przy pierwszym pomiarze obwodów ({d1}). Obwody liczone z typowego ubytku na kilogram — zmierz się, żeby mieć prawdziwe dane.', {d:fmt(st.d), a:kg(st.w0), b:kg(st.w1), d1:fmt(tl[1].d)}):'';
   document.getElementById('b3Est').style.display=st.est&&n>1?'':'none';
   document.querySelectorAll('#b3Mode button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-m')===B3.mode));
   document.getElementById('b3Chg').innerHTML=n?Object.keys(LABEL).filter(k=>cur.m[k]).map(k=>{
     const dv=(cur.m[k]||0)-(st.m[k]||0), cls=!dv||NEUTRAL[k]?'same':((DOWN[k]?dv<0:dv>0)?'good':'bad');
-    return `<div><span>${LABEL[k]}</span><b>${n1(cur.m[k])}${B3.idx>0?` <small class="${cls}">${dv>0?'+':''}${dv?n1(dv):'±0'}</small>`:''}</b></div>`; }).join(''):'';
+    return `<div><span>${t(LABEL[k])}</span><b>${n1(cur.m[k])}${B3.idx>0?` <small class="${cls}">${dv>0?'+':''}${dv?n1(dv):'±0'}</small>`:''}</b></div>`; }).join(''):'';
   bodyDraw();
 }
 

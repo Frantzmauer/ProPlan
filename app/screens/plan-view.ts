@@ -3,6 +3,7 @@
 import { dayIndexFor, weekOf } from '../core/backup';
 import { todayISO } from '../lib/dates';
 import { FBW_A, FBW_B, HOME, LOWER, UPPER } from '../plan/data';
+import { t } from '../lib/i18n';
 
 
 /* ============================================================
@@ -11,9 +12,9 @@ import { FBW_A, FBW_B, HOME, LOWER, UPPER } from '../plan/data';
 export function renderPlan(){
   const box=document.getElementById('planPhases');
   const phases=[
-    {n:1,name:"Faza 1 · Adaptacja i redukcja",wk:"Tygodnie 1–8",desc:"Budowa siły bazowej na wolnych ciężarach. FBW A/B trzy razy w tygodniu, bieganie dwa razy.",split:"Pn FBW · Wt bieg · Śr FBW · Cz rest · Pt FBW · Sb bieg · Nd regeneracja",days:[FBW_A,FBW_B]},
-    {n:2,name:"Faza 2 · Hipertrofia",wk:"Tygodnie 9–16",desc:"Układ nerwowy zaadaptowany. Siłownia 3× w tygodniu w podziale Góra/Dół (na zmianę U-L-U / L-U-L), sesja domowa z kettlem i brzuchem, jeden bieg.",split:"Pn siłownia · Wt dom · Śr siłownia · Cz rest · Pt siłownia · Sb bieg + rozciąganie · Nd mobilność",days:[UPPER,LOWER,HOME]},
-    {n:3,name:"Faza 3 · Rzeźba",wk:"Tygodnie 17–24",desc:"Ciężar −10%, +2–4 powtórzenia, cardio 20 min po każdej sesji siłowej. Ten sam rytm tygodnia, bieg dłuższy.",split:"Pn siłownia · Wt dom · Śr siłownia · Cz rest · Pt siłownia · Sb długi bieg 50–60 min · Nd mobilność",days:[UPPER,LOWER,HOME]},
+    {n:1,name:t("Faza 1 · Adaptacja i redukcja"),wk:t("Tygodnie 1–8"),desc:t("Budowa siły bazowej na wolnych ciężarach. FBW A/B trzy razy w tygodniu, bieganie dwa razy."),split:t("Pn FBW · Wt bieg · Śr FBW · Cz rest · Pt FBW · Sb bieg · Nd regeneracja"),days:[FBW_A,FBW_B]},
+    {n:2,name:t("Faza 2 · Hipertrofia"),wk:t("Tygodnie 9–16"),desc:t("Układ nerwowy zaadaptowany. Siłownia 3× w tygodniu w podziale Góra/Dół (na zmianę U-L-U / L-U-L), sesja domowa z kettlem i brzuchem, jeden bieg."),split:t("Pn siłownia · Wt dom · Śr siłownia · Cz rest · Pt siłownia · Sb bieg + rozciąganie · Nd mobilność"),days:[UPPER,LOWER,HOME]},
+    {n:3,name:t("Faza 3 · Rzeźba"),wk:t("Tygodnie 17–24"),desc:t("Ciężar −10%, +2–4 powtórzenia, cardio 20 min po każdej sesji siłowej. Ten sam rytm tygodnia, bieg dłuższy."),split:t("Pn siłownia · Wt dom · Śr siłownia · Cz rest · Pt siłownia · Sb długi bieg 50–60 min · Nd mobilność"),days:[UPPER,LOWER,HOME]},
   ];
   const curWk=(()=>{const di=dayIndexFor(todayISO());return di>=1&&di<=168?weekOf(di):0})();
   box.innerHTML=phases.map(p=>{
@@ -21,7 +22,7 @@ export function renderPlan(){
     return `<div class="section">
       <div class="panel">
         <div class="wk-head" style="border-bottom:1px solid var(--line)">
-          <span class="badge ${active?'':'rest'}">${active?'TERAZ':'FAZA '+p.n}</span>
+          <span class="badge ${active?'':'rest'}">${active?t('TERAZ'):t('FAZA {n}', {n:p.n})}</span>
           <span class="t">${p.name}</span>
         </div>
         <div class="panel-pad">
@@ -31,7 +32,7 @@ export function renderPlan(){
         </div>
       </div>
     </div>`;
-  }).join('') + `<div class="note">Faza 1 rotuje FBW A/B (tydzień nieparzysty: A/B/A, parzysty: B/A/B). Po 10–12 tygodniu, gdy waga stanie, utnij 50 g węgli w dni nietreningowe (−~200 kcal).</div>`;
+  }).join('') + `<div class="note">${t('Faza 1 rotuje FBW A/B (tydzień nieparzysty: A/B/A, parzysty: B/A/B). Po 10–12 tygodniu, gdy waga stanie, utnij 50 g węgli w dni nietreningowe (−~200 kcal).')}</div>`;
 }
 
 

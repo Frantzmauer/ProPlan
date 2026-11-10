@@ -1,3 +1,4 @@
+import { t } from './i18n';
 // Połączenie z serwerem (Google Apps Script) i wersja aplikacji z adresu.
 // Zapytania jako text/plain — bez wstępnego zapytania CORS, którego Apps Script nie obsługuje.
 
@@ -24,8 +25,8 @@ export async function apiCall(cfg: Pick<CloudConfig, 'url' | 'token' | 'account'
   const res = await fetchImpl(cfg.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
   const txt = await res.text();
   let j: any;
-  try { j = JSON.parse(txt); } catch { throw new Error('Zła odpowiedź serwera (sprawdź URL wdrożenia)'); }
-  if (!j || !j.ok) throw new ApiError((j && j.error) || 'Błąd serwera', j || {});
+  try { j = JSON.parse(txt); } catch { throw new Error(t('Zła odpowiedź serwera (sprawdź URL wdrożenia)')); }
+  if (!j || !j.ok) throw new ApiError((j && j.error) || t('Błąd serwera'), j || {});
   return j;
 }
 

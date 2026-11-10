@@ -1,3 +1,4 @@
+import { t } from './i18n';
 // Dzień diety zaliczony: kalorie blisko celu i dość białka — bez znaczenia, czy z posiłków z planu, czy własnych.
 // Ta sama reguła: Dieta (karta „Dzień diety”), serie i kalendarz, Trener (opis w kontekście).
 
@@ -23,8 +24,8 @@ export function dietScore(tot: { kcal: number; p: number }, goal: { kcal: number
 /** Krótka podpowiedź, czego brakuje do zaliczenia (pusty tekst, gdy dzień jest zaliczony). */
 export function dietTip(tot: { kcal: number; p: number }, s: DietScore): string {
   const kcal = Math.round(tot.kcal || 0), p = Math.round(tot.p || 0);
-  if (kcal > s.hi) return `Ponad ${s.hi} kcal — ten dzień nie będzie zaliczony.`;
-  if (!s.kcalOk) return `Do zaliczenia brakuje ${s.lo - kcal} kcal` + (s.pOk ? '.' : ` i ${s.pMin - p} g białka.`);
-  if (!s.pOk) return `Brakuje ${s.pMin - p} g białka — np. skyr 330 ml (~33 g) albo twaróg 200 g (~36 g).`;
+  if (kcal > s.hi) return t('Ponad {n} kcal — ten dzień nie będzie zaliczony.', { n: s.hi });
+  if (!s.kcalOk) return s.pOk ? t('Do zaliczenia brakuje {k} kcal.', { k: s.lo - kcal }) : t('Do zaliczenia brakuje {k} kcal i {p} g białka.', { k: s.lo - kcal, p: s.pMin - p });
+  if (!s.pOk) return t('Brakuje {p} g białka — np. skyr 330 ml (~33 g) albo twaróg 200 g (~36 g).', { p: s.pMin - p });
   return '';
 }
