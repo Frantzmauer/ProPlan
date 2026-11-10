@@ -1,0 +1,19 @@
+/* Dokumenty prawne SixMo (regulamin, polityka prywatności) — ten sam wygląd co aplikacja, czytelne na telefonie. */
+:root{--bg:#0e1114;--panel:#171b1f;--line:#2a3138;--ink:#f2f0ea;--dim:#9aa3ab;--amber:#ff7a1a;--steel:#5fa8d3;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;padding:0 16px 60px}
+nav.top{position:sticky;top:0;display:flex;justify-content:space-between;max-width:760px;margin:0 auto;padding:14px 0;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.top a{color:var(--steel);text-decoration:none;font-weight:600}
+main{max-width:760px;margin:0 auto}
+h1{font-family:"Barlow Condensed",Inter,sans-serif;text-transform:uppercase;font-size:34px;line-height:1.1;margin:26px 0 6px}
+h2{font-size:18px;margin:28px 0 8px;color:var(--amber)}
+.meta{color:var(--dim);font-size:13.5px;margin:0 0 18px}
+.lead{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+p,li{color:#d9d6d0}
+li{margin:6px 0}
+a{color:var(--steel)}
+b{color:var(--ink)}
+mark{background:#3a2410;color:var(--amber);padding:0 4px;border-radius:4px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:9px 8px}
+th{color:var(--dim);font-weight:600}

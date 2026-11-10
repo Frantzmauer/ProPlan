@@ -2,7 +2,7 @@
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { __set_viewOffset, viewDateISO, viewOffset } from '../core/backup';
 import { APP_VER } from '../core/shell';
-import { CLOUD, S, save } from '../core/state';
+import { CLOUD, S, appChannel, save } from '../core/state';
 import { CYC, CY_SIT, __set_CYC, cyGet, cyRenderBox, cyTracking, openCycle } from '../features/cycle';
 import { exLibrary, renderExLib } from '../features/formcheck';
 import { quotaCur, quotaLeft, quotaLoad, renderPlanQuota } from '../features/plan-limits';
@@ -17,7 +17,7 @@ import { renderShop } from './shop';
 import { updateStreak } from './streak';
 import { renderToday } from './train';
 import { bodyRefresh } from '../features/body3d';
-import { dec, plural, t } from '../lib/i18n';
+import { dec, isEn, plural, t } from '../lib/i18n';
 
 export let MORE_TITLES, sd, kcalSlider, pf;
 
@@ -135,7 +135,12 @@ export function __init_13(){
 /* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
 MORE_TITLES = {cw:[t('Ćwiczenia'),t('Nauka techniki')],prof:[t('Profil i plan'),t('Profil · kalorie · start')],sync:[t('Synchronizacja'),t('Chmura · zużycie AI · konta')],
   rem:[t('Przypomnienia'),t('Powiadomienia')],data:[t('Kopia i dane'),t('Eksport · import · plik')],ver:[t('Wersja aplikacji'),t('Stabilna, beta albo poprzednia')],
-  plan:[t('Pakiet i limity'),t('Twój plan · Trener AI')], adm:[t('Konta i plany'),t('Administrator · USERS')]};
+  plan:[t('Pakiet i limity'),t('Twój plan · Trener AI')], adm:[t('Konta i plany'),t('Administrator · USERS')],
+  legal:[t('Regulamin i prywatność'),t('Dokumenty')]};
+// dokumenty prawne w języku aplikacji (legal/ obok wersji stabilnej; w becie, Early Access i USERS piętro wyżej)
+{ const base=appChannel()==='stable'?'legal/':'../legal/', en=isEn();
+  document.getElementById('lgTerms').setAttribute('href', base+(en?'terms.html':'regulamin.html'));
+  document.getElementById('lgPrivacy').setAttribute('href', base+(en?'privacy.html':'polityka-prywatnosci.html')); }
 document.getElementById('moreBack').onclick=()=>{ if(history.state&&history.state.more) history.back(); else moreOpen(''); };
 document.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>moreOpen(b.dataset.more));
 document.querySelectorAll('#moreMenu [data-rest-list]').forEach(b=>b.onclick=()=>openRestList(todayISO()));

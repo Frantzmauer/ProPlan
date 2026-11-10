@@ -563,7 +563,9 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 #v-set [data-grp]{display:none}
 #v-set[data-sec="cw"] [data-grp="cw"],#v-set[data-sec="prof"] [data-grp="prof"],#v-set[data-sec="sync"] [data-grp="sync"],
 #v-set[data-sec="rem"] [data-grp="rem"],#v-set[data-sec="data"] [data-grp="data"],#v-set[data-sec="ver"] [data-grp="ver"],#v-set[data-sec="plan"] [data-grp="plan"]{display:block}
-#v-set[data-sec="adm"] [data-grp="adm"]{display:block}
+#v-set[data-sec="adm"] [data-grp="adm"],#v-set[data-sec="legal"] [data-grp="legal"]{display:block}
+.legal-link{text-decoration:none;color:inherit}
+.legal-link .go{color:var(--ink-faint);font-size:20px}
 /* panel administratora (USERS): konta z planami, plany, ustawienia */
 .ap{display:flex;flex-direction:column;gap:12px}
 .ap-tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}

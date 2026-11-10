@@ -396,3 +396,15 @@ test('Więcej: administrator widzi ustawienia techniczne', async ({ page }) => {
   await expect(page.locator('#cloudUrl')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('Więcej: regulamin i polityka prywatności otwierają się w języku aplikacji', async ({ page, request }) => {
+  await seed(page);
+  await page.goto('/beta/');
+  await page.locator('.nav button[data-v="set"]').click();
+  await page.locator('[data-more="legal"]').click();
+  await expect(page.locator('#lgTerms')).toHaveAttribute('href', '../legal/regulamin.html');
+  await expect(page.locator('#lgPrivacy')).toHaveAttribute('href', '../legal/polityka-prywatnosci.html');
+  for (const f of ['regulamin', 'polityka-prywatnosci', 'terms', 'privacy']) expect((await request.get('/legal/' + f + '.html')).status()).toBe(200);
+  await page.locator('#lgPrivacy').click();
+  await expect(page.locator('h1')).toContainText('Polityka prywatności');
+});

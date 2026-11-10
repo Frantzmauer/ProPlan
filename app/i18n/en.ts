@@ -1488,4 +1488,14 @@ export const EN: Dict = {
   "Czyści postęp zapisany na tym telefonie": "Clears the progress saved on this phone",
   "Dane są zapisywane na tym telefonie, a przy włączonej synchronizacji także na serwerze aplikacji — dzięki temu działają na innych urządzeniach. Do Trenera AI (Claude, Anthropic) trafiają tylko razem z Twoim pytaniem, zdjęciem albo nagraniem.": "Your data is saved on this phone and, with sync on, also on the app's server — so it works on your other devices. It goes to the AI Coach (Claude, Anthropic) only together with your question, photo or video.",
   "Pobierz dane · usuń dane z urządzenia": "Download data · delete data from device",
+  // ---- Więcej: dokumenty prawne ----
+  "Regulamin i polityka prywatności": "Terms and Privacy Policy",
+  "Zasady korzystania · Twoje dane": "Terms of use · your data",
+  "Regulamin": "Terms of Service",
+  "Zasady korzystania, plany i płatności, Trener AI, reklamacje": "Rules of use, plans and payments, AI Coach, complaints",
+  "Polityka prywatności": "Privacy Policy",
+  "Jakie dane, gdzie są przechowywane, Twoje prawa": "What data, where it's stored, your rights",
+  "Trener AI to program komputerowy, nie lekarz ani trener personalny. Aplikacja nie stawia diagnoz.": "The AI Coach is a computer program, not a doctor or personal trainer. The app doesn't diagnose.",
+  "Regulamin i prywatność": "Terms and privacy",
+  "Dokumenty": "Documents",
 };
