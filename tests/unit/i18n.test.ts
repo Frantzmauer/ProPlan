@@ -19,7 +19,7 @@ export function codeKeys(): string[] {
   const out = new Set<string>();
   for (const f of tsFiles(join(ROOT, 'app'))) {
     const s = readFileSync(f, 'utf-8');
-    for (const m of s.matchAll(/\bt\(\s*(?:'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\$]|\\.)*)`)/g)) {
+    for (const m of s.matchAll(/\b(?:t|tt)\(\s*(?:'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\$]|\\.)*)`)/g)) {
       const k = (m[1] ?? m[2] ?? m[3] ?? '').replace(/\\(['"`\\])/g, '$1').replace(/\\n/g, '\n');
       if (k) out.add(k);
     }

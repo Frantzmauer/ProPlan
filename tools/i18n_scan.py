@@ -7,7 +7,7 @@ import glob, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PL = re.compile(r'[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]|\b(i|w|z|na|do|nie|się|jest|dla|lub|albo|od|po|przy|bez|już|tylko|dziś|tydzień)\b', re.I)
 LIT = re.compile(r"'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"|`((?:[^`\\]|\\.)*)`", re.S)
-WRAP = re.compile(r'\b(t|tr|plural|textKey)\(\s*$')
+WRAP = re.compile(r'\b(t|tt|tr|plural|textKey)\(\s*$')
 
 def strip_comments(s):
     out, i, n = [], 0, len(s)
@@ -34,7 +34,7 @@ def scan(path):
     for m in LIT.finditer(s):
         txt = next(g for g in m.groups() if g is not None) if any(g is not None for g in m.groups()) else ''
         # tekst wewnątrz t('…')/plural(…) w szablonie jest już tłumaczony
-        bare = re.sub(r"\b(t|tr|plural)\(\s*('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")(\s*,\s*('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"))*", '', txt)
+        bare = re.sub(r"\b(t|tt|tr|plural)\(\s*('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")(\s*,\s*('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"))*", '', txt)
         if len(txt) < 2 or not PL.search(bare): continue
         before = s[max(0, m.start() - 12):m.start()]
         if WRAP.search(before): continue

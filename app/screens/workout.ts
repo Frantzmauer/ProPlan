@@ -16,6 +16,7 @@ import { openGuide } from './guide';
 import { IC_HIST, exIndex, openExHist, prDD, prE1, prFmt, prName, prNum, prSetsText, prTopText, prUnit } from './history';
 import { moreOpen, showView } from './more';
 import { __set_tmrAudio, dmy, dowOf, effEx, exAny, exRec, exTick, log, nextMoves, okCount, progStep, renderToday, setMoves, setOk, timedSpec, tmrAudio, tmrBeep, tmrBuzz } from './train';
+import { dec, plural, t as tt } from '../lib/i18n';
 
 export let fmtDur, WO_LS, WO, woTick, woWake, woCurSet, woDone, woTotal, prToastT, hasSession, woUndoSnap, woToastTimer;
 
@@ -53,9 +54,9 @@ export function woAgg(lg, exs){
 }
 
 export function woStartLabel(iso, w, L){
-  if(WO && WO.iso===iso) return 'WZNÓW TRENING';
-  if(hasSession(L)) return 'DOKOŃCZ TRENING · '+w.ex.filter((e0,i)=>{ const e=effEx(e0,iso); return okCount(L.ex[iso+'_e'+i], e.s)===e.s; }).length+'/'+w.ex.length;
-  return w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i])) ? 'WZNÓW TRENING' : 'START TRENINGU';
+  if(WO && WO.iso===iso) return tt('WZNÓW TRENING');
+  if(hasSession(L)) return tt('DOKOŃCZ TRENING · ')+w.ex.filter((e0,i)=>{ const e=effEx(e0,iso); return okCount(L.ex[iso+'_e'+i], e.s)===e.s; }).length+'/'+w.ex.length;
+  return w.ex.some((e0,i)=>exAny(L.ex[iso+'_e'+i])) ? tt('WZNÓW TRENING') : tt('START TRENINGU');
 }
 
 // „Dokończ trening”: ten sam pomiar co zakończona część — czas liczy się dalej, przerwa między częściami jak pauza
@@ -155,7 +156,7 @@ export function woSetDone(){
     woSave(); woRender();
   }
   if(prs.length) woPrShow(x, v, prs);
-  if(vol) setTimeout(()=>woPrToast('🏆 Rekord objętości: '+vol.now+' ('+x.n+')'), prs.length?2600:0);
+  if(vol) setTimeout(()=>woPrToast(tt('🏆 Rekord objętości: ')+vol.now+' ('+tt(x.n)+')'), prs.length?2600:0);
 }
 
 export function woStartSet(){ const t=Date.now(); WO.lastRest=(t-WO.restStart)/1000; WO.lastRestPlan=WO.restPlan; WO.lastTrans=!!WO.trans; WO.trans=false; WO.phase='work'; WO.phaseAt=t; WO.setStart=t; woSave(); woRender(); }
@@ -173,7 +174,7 @@ export function woPrCheck(x, kg, r){
   const pTop=mx(prior.map(y=>y.kg)), pE1=mx(prior.map(y=>e1rm(y.kg,y.r))), e=e1rm(kg,r);
   if(kg>pTop) out.push({t:'top', now:prFmt(kg)+' kg', was:prFmt(pTop)+' kg', kind});
   if(pE1>0 && e>pE1+0.01) out.push({t:'e1', now:'≈ '+prE1(e)+' kg', was:'≈ '+prE1(pE1)+' kg', kind});
-  if(kg<=pTop){ const p=mx(prior.filter(y=>y.kg>=kg).map(y=>y.r)); if(r>p) out.push({t:'reps', now:r+' powt. przy '+prFmt(kg)+' kg', was:p+' powt.', kind}); }
+  if(kg<=pTop){ const p=mx(prior.filter(y=>y.kg>=kg).map(y=>y.r)); if(r>p) out.push({t:'reps', now:tt('{r} powt. przy {kg} kg', {r, kg:prFmt(kg)}), was:tt('{r} powt.', {r:p}), kind}); }
   return out;
 }
 
@@ -242,7 +243,7 @@ export function woStep(){
     const over=left<0, box=document.getElementById('woRestBox'), C=2*Math.PI*90;
     el.textContent=(over?'+':'')+fmtDur(Math.abs(over?Math.floor(left):Math.ceil(left)));
     box.classList.toggle('over', over && !WO.trans); box.classList.toggle('ready', over && !!WO.trans);
-    document.getElementById('woRLab').textContent=WO.trans?(over?'Przejście · zaczynaj, kiedy będziesz gotowy':'Przejście do kolejnego ćwiczenia'):over?'Przerwa za długa — zaczynaj!':'Przerwa';
+    document.getElementById('woRLab').textContent=tt(WO.trans?(over?'Przejście · zaczynaj, kiedy będziesz gotowy':'Przejście do kolejnego ćwiczenia'):over?'Przerwa za długa — zaczynaj!':'Przerwa');
     document.getElementById('woFg').style.strokeDashoffset = String(over ? 0 : C*(1-left/WO.restPlan));
     if(left<=3 && left>0 && Math.ceil(left)!==WO.lastSec){ WO.lastSec=Math.ceil(left); tmrBeep(660,.12); }
     // koniec przerwy: sygnał, po chwili ekran sam przechodzi do serii — ale nie przy zmianie ćwiczenia
@@ -270,51 +271,51 @@ export function woStep(){
 export function woRender(){
   const b=document.getElementById('woBody');
   document.getElementById('woPBar').style.width=(woDone()/woTotal()*100)+'%';
-  document.getElementById('woPTxt').textContent=`${woDone()} z ${woTotal()} serii · ${WO.title}${navigator.onLine?'':' · offline'}`;
+  document.getElementById('woPTxt').textContent=`${tt('{a} z {b} serii', {a:woDone(), b:woTotal()})} · ${tt(WO.title)}${navigator.onLine?'':' · offline'}`;
   const eb=document.getElementById('woEnd');
-  eb.textContent=WO.phase==='summary'?'Zamknij':WO.pausedAt?'▶ Wznów':'⏸ Wstrzymaj'; eb.classList.toggle('paused', !!WO.pausedAt);
+  eb.textContent=WO.phase==='summary'?tt('Zamknij'):WO.pausedAt?tt('▶ Wznów'):tt('⏸ Wstrzymaj'); eb.classList.toggle('paused', !!WO.pausedAt);
   if(WO.phase==='summary'){ b.innerHTML=woSummaryHtml(); document.getElementById('woSave').onclick=woClose; return; }
   if(WO.pausedAt && WO.phase!=='confirm'){
-    b.innerHTML=`<div class="wo-pause"><span class="lab">Trening wstrzymany</span><b id="woPaused">0:00</b>
-      <small>Stoją wszystkie zegary: czas treningu, przerwa i seria. Wznów, kiedy będziesz gotowy.</small>
-      <div class="wo-note" id="woPauseLong" style="display:none"><b>Wstrzymane od ponad 30 min.</b> Jeśli to już koniec, zakończ trening — zapiszemy czas bez pauzy.</div>
-      <button class="wo-save" id="woUnpause">▶ WZNÓW</button>
-      <button class="wo-endnow" id="woEndNow">Zakończ trening</button></div>`;
+    b.innerHTML=`<div class="wo-pause"><span class="lab">${tt('Trening wstrzymany')}</span><b id="woPaused">0:00</b>
+      <small>${tt('Stoją wszystkie zegary: czas treningu, przerwa i seria. Wznów, kiedy będziesz gotowy.')}</small>
+      <div class="wo-note" id="woPauseLong" style="display:none">${tt('<b>Wstrzymane od ponad 30 min.</b> Jeśli to już koniec, zakończ trening — zapiszemy czas bez pauzy.')}</div>
+      <button class="wo-save" id="woUnpause">${tt('▶ WZNÓW')}</button>
+      <button class="wo-endnow" id="woEndNow">${tt('Zakończ trening')}</button></div>`;
     document.getElementById('woUnpause').onclick=woUnpause;
     document.getElementById('woEndNow').onclick=()=>{ WO.prevPhase=WO.phase; WO.phase='confirm'; woRender(); };
     woStep(); return;
   }
   if(WO.phase==='confirm'){
-    b.innerHTML=`<div class="wo-sum"><h2>Zakończyć trening?</h2></div><p class="wo-next">Zrobione ${woDone()} z ${woTotal()} serii. Niezrobione serie zostaną nieodhaczone.</p>
-      <div class="wo-confirm"><button id="woBack">Wróć do treningu</button><button class="yes" id="woYes">Zakończ</button></div>`;
+    b.innerHTML=`<div class="wo-sum"><h2>${tt('Zakończyć trening?')}</h2></div><p class="wo-next">${tt('Zrobione {a} z {b} serii. Niezrobione serie zostaną nieodhaczone.', {a:woDone(), b:woTotal()})}</p>
+      <div class="wo-confirm"><button id="woBack">${tt('Wróć do treningu')}</button><button class="yes" id="woYes">${tt('Zakończ')}</button></div>`;
     document.getElementById('woBack').onclick=()=>{ WO.phase=WO.prevPhase||'work'; woRender(); };
     document.getElementById('woYes').onclick=woFinish; return;
   }
   const i=WO.cur, x=WO.ex[i], k=woCurSet(i)<0?x.s-1:woCurSet(i), v=x.sets[k];
-  let h=`${woLightBanner()}<div class="wo-name"><span class="t">${esc(x.n)}</span><div class="nv"><button id="woPrev" aria-label="Poprzednie ćwiczenie" ${i===0?'disabled':''}>‹</button><button id="woNx" aria-label="Następne ćwiczenie" ${i===WO.ex.length-1?'disabled':''}>›</button></div></div>
-    <div class="wo-setno"><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Seria <b>${k+1}</b> z ${x.s} <button class="wo-restchip" id="woRestEdit">⏱ przerwa ${fmtDur(x.rest)}${restTag(x.n)}<i>zmień</i></button></span><span style="display:flex;gap:6px">${exIndex()[x.n.trim()]?`<button class="wo-hist" id="woHist" aria-label="Historia ćwiczenia">${IC_HIST}</button>`:''}${woCurSet(i)>=0 && swapAlts(x.n).length?'<button class="wo-show sw" id="woSwap">⇄ Zamień</button>':''}<button class="wo-show" id="woShow">Pokaż technikę</button></span></div>${woSwapLine(i)}
+  let h=`${woLightBanner()}<div class="wo-name"><span class="t">${esc(tt(x.n))}</span><div class="nv"><button id="woPrev" aria-label="${tt('Poprzednie ćwiczenie')}" ${i===0?'disabled':''}>‹</button><button id="woNx" aria-label="${tt('Następne ćwiczenie')}" ${i===WO.ex.length-1?'disabled':''}>›</button></div></div>
+    <div class="wo-setno"><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tt('Seria <b>{a}</b> z {b}', {a:k+1, b:x.s})} <button class="wo-restchip" id="woRestEdit">⏱ ${tt('przerwa')} ${fmtDur(x.rest)}${restTag(x.n)}<i>${tt('zmień')}</i></button></span><span style="display:flex;gap:6px">${exIndex()[x.n.trim()]?`<button class="wo-hist" id="woHist" aria-label="${tt('Historia ćwiczenia')}">${IC_HIST}</button>`:''}${woCurSet(i)>=0 && swapAlts(x.n).length?'<button class="wo-show sw" id="woSwap">⇄ '+tt('Zamień')+'</button>':''}<button class="wo-show" id="woShow">${tt('Pokaż technikę')}</button></span></div>${woSwapLine(i)}
     <div class="wo-dots">${x.ok.map((d,j)=>`<i class="${d?((x.prSet||[])[j]?'pr':'ok'):j===k?'cur':''}"></i>`).join('')}</div>`;
   if(WO.phase==='rest'){
     const nx=WO.ex[WO.cur], nk=woCurSet(WO.cur), nv=nx.sets[nk], C=2*Math.PI*90;
-    h+=`<div class="wo-rest" id="woRestBox"><span class="lab" id="woRLab">Przerwa</span>
+    h+=`<div class="wo-rest" id="woRestBox"><span class="lab" id="woRLab">${tt('Przerwa')}</span>
       <div class="wo-ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" id="woFg" cx="100" cy="100" r="90" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg>
-        <div class="c"><b id="woLeft">${fmtDur(WO.restPlan)}</b><small>z ${fmtDur(WO.restPlan)}</small></div></div>
-      <div class="wo-rbtns"><button id="woPlus">+15 s</button><button class="go" id="woGo">▶ ZACZYNAM</button></div>${woRestLearnHtml()}</div>
-      <div class="wo-next">Następnie: <b>${esc(nx.n)}</b> · seria ${nk+1} · ${nv.kg?String(nv.kg).replace('.',',')+' kg × ':''}${nv.r}${nx.timed?' s':''}</div>
-      ${WO.trans?'<div class="wo-hint">Maszyna zajęta? Stuknij ⏸ Wstrzymaj u góry albo wybierz inne ćwiczenie z listy niżej.</div>':''}`;
+        <div class="c"><b id="woLeft">${fmtDur(WO.restPlan)}</b><small>${tt('z {d}', {d:fmtDur(WO.restPlan)})}</small></div></div>
+      <div class="wo-rbtns"><button id="woPlus">+15 s</button><button class="go" id="woGo">${tt('▶ ZACZYNAM')}</button></div>${woRestLearnHtml()}</div>
+      <div class="wo-next">${tt('Następnie:')} <b>${esc(tt(nx.n))}</b> · ${tt('seria {n}', {n:nk+1})} · ${nv.kg?dec(nv.kg)+' kg × ':''}${nv.r}${nx.timed?' s':''}</div>
+      ${WO.trans?'<div class="wo-hint">'+tt('Maszyna zajęta? Stuknij ⏸ Wstrzymaj u góry albo wybierz inne ćwiczenie z listy niżej.')+'</div>':''}`;
   } else {
-    const unit=x.timed?'sekund':'powtórzeń';
+    const unit=x.timed?tt('sekund'):tt('powtórzeń');
     h+=`<div class="wo-big"><div class="wo-vals">
-      ${v.kg!==null?`<div class="wo-val"><span class="n">${String(v.kg).replace('.',',')}</span><span class="u">kg</span><div class="pm"><button data-wd="kg:-1" aria-label="Mniej kg">−</button><button data-wd="kg:1" aria-label="Więcej kg">+</button></div></div><span class="x">×</span>`:''}
-      <div class="wo-val"><span class="n">${x.timed&&WO.tStart?`<span id="woTimed">${fmtDur(x.up?0:v.r)}</span>`:v.r}</span><span class="u">${x.timed&&x.sides>1?(WO.tSide===1?'s · lewa strona':'s · prawa strona'):unit}</span>${x.timed&&WO.tStart?'':`<div class="pm"><button data-wd="r:-1" aria-label="Mniej">−</button><button data-wd="r:1" aria-label="Więcej">+</button></div>`}</div>
-    </div><span class="wo-work">Seria trwa <b id="woWork">0:00</b></span></div>${woRefHtml(x, v)}`;
-    if(x.timed && !WO.tStart) h+=`<button class="wo-done timer" id="woTimer"><svg viewBox="0 0 24 24" style="fill:#0e1114;stroke:none"><path d="M7 4.5v15l13-7.5z"/></svg>${x.up?'START STOPERA':'START ODLICZANIA'}</button>`;
-    else if(x.timed && x.up) h+=`<button class="wo-done" id="woStopUp"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>KONIEC SERII</button>`;
-    else if(!x.timed) h+=`<button class="wo-done" id="woDone"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>SERIA ZROBIONA</button>`;
-    h+=`<button class="wo-cam" id="woCam">📹 Sprawdź technikę tej serii</button>`;
-    h+=`<button class="wo-skip" id="woSkip">Pomiń tę serię</button>`;
+      ${v.kg!==null?`<div class="wo-val"><span class="n">${dec(v.kg)}</span><span class="u">kg</span><div class="pm"><button data-wd="kg:-1" aria-label="${tt('Mniej kg')}">−</button><button data-wd="kg:1" aria-label="${tt('Więcej kg')}">+</button></div></div><span class="x">×</span>`:''}
+      <div class="wo-val"><span class="n">${x.timed&&WO.tStart?`<span id="woTimed">${fmtDur(x.up?0:v.r)}</span>`:v.r}</span><span class="u">${x.timed&&x.sides>1?(WO.tSide===1?tt('s · lewa strona'):tt('s · prawa strona')):unit}</span>${x.timed&&WO.tStart?'':`<div class="pm"><button data-wd="r:-1" aria-label="${tt('Mniej')}">−</button><button data-wd="r:1" aria-label="${tt('Więcej')}">+</button></div>`}</div>
+    </div><span class="wo-work">${tt('Seria trwa')} <b id="woWork">0:00</b></span></div>${woRefHtml(x, v)}`;
+    if(x.timed && !WO.tStart) h+=`<button class="wo-done timer" id="woTimer"><svg viewBox="0 0 24 24" style="fill:#0e1114;stroke:none"><path d="M7 4.5v15l13-7.5z"/></svg>${x.up?tt('START STOPERA'):tt('START ODLICZANIA')}</button>`;
+    else if(x.timed && x.up) h+=`<button class="wo-done" id="woStopUp"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>${tt('KONIEC SERII')}</button>`;
+    else if(!x.timed) h+=`<button class="wo-done" id="woDone"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>${tt('SERIA ZROBIONA')}</button>`;
+    h+=`<button class="wo-cam" id="woCam">${tt('📹 Sprawdź technikę tej serii')}</button>`;
+    h+=`<button class="wo-skip" id="woSkip">${tt('Pomiń tę serię')}</button>`;
   }
-  h+=`<div class="wo-list"><h4>Ćwiczenia</h4>`+WO.ex.map((y,j)=>{ const d=y.ok.filter(Boolean).length; return `<button class="${d===y.s?'ok':''} ${j===i?'cur':''}" data-wgo="${j}"><span>${esc(y.n)}</span><span>${d}/${y.s}</span></button>`; }).join('')+`</div>`;
+  h+=`<div class="wo-list"><h4>${tt('Ćwiczenia')}</h4>`+WO.ex.map((y,j)=>{ const d=y.ok.filter(Boolean).length; return `<button class="${d===y.s?'ok':''} ${j===i?'cur':''}" data-wgo="${j}"><span>${esc(tt(y.n))}</span><span>${d}/${y.s}</span></button>`; }).join('')+`</div>`;
   b.innerHTML=h;
   const on=(id,f)=>{ const el=document.getElementById(id); if(el) el.onclick=f; };
   // po zmianie ekranu (seria ↔ przerwa) przez 0,6 s ignoruj przyciski zmieniające etap — podwójne stuknięcie nie pominie przerwy
@@ -326,12 +327,12 @@ export function woRender(){
   on('woHist', ()=>openExHist(x.n.trim()));
   on('woSwap', ()=>openSwap(WO.iso, WO.cur));
   on('woSwapUndo', ()=>swapUndo(WO.cur, WO.iso));   // opis techniki nad ekranem treningu
-  on('woCam', ()=>openFormCheck(x.n, (v.kg?String(v.kg).replace('.',',')+' kg × ':'')+v.r+(x.timed?' s':' powt.')));
+  on('woCam', ()=>openFormCheck(x.n, (v.kg?dec(v.kg)+' kg × ':'')+v.r+(x.timed?' s':' '+tt('powt.'))));
   on('woPlus', ()=>{ WO.restEnd+=15000; WO.restPlan+=15; WO.beeped=false; WO.plusCount=(WO.plusCount||0)+1; woSave(); if(WO.plusCount===2) woRender(); woStep(); });
   on('woRestEdit', ()=>openRestEdit(x.n, x.timed));
   on('woLightOff', ()=>{ const L=log(WO.iso); L.checkin=Object.assign({}, L.checkin, {plan:'normal', at:Date.now()}); touch(L); save(); woRefreshFromCard(); });
   on('woLearnNo', ()=>{ WO.ex[WO.cur].learnNo=true; woSave(); woRender(); woStep(); });
-  { const ly=document.getElementById('woLearnYes'); if(ly) ly.onclick=()=>{ restSet(WO.ex[WO.cur].n, +ly.dataset.sec, 'me'); restToast('Przerwa '+fmtDur(+ly.dataset.sec)+' zapamiętana przy tym ćwiczeniu'); }; }
+  { const ly=document.getElementById('woLearnYes'); if(ly) ly.onclick=()=>{ restSet(WO.ex[WO.cur].n, +ly.dataset.sec, 'me'); restToast(tt('Przerwa {d} zapamiętana przy tym ćwiczeniu', {d:fmtDur(+ly.dataset.sec)})); }; }
   on('woSkip', g(()=>{ const k2=woCurSet(WO.cur); WO.ex[WO.cur].ok[k2]=true; WO.ex[WO.cur].skipped=(WO.ex[WO.cur].skipped||0)+1; WO.skipped++; WO.tStart=0;
     if(woDone()===woTotal()) return woFinish(); if(woCurSet(WO.cur)<0) WO.cur=woNext(WO.cur); WO.setStart=Date.now(); woSave(); woRender(); }));
   on('woPrev', ()=>{ if(WO.cur>0){ WO.cur--; WO.tStart=0; woRender(); } }); on('woNx', ()=>{ if(WO.cur<WO.ex.length-1){ WO.cur++; WO.tStart=0; woRender(); } });
@@ -368,27 +369,27 @@ export function woSummaryHtml(){
   const cmp=s.ex.map(e=>{ const h=idx[e.n.trim()]; if(!h) return '';
     const cur=h.sess.find(q=>q.iso===WO.iso), prev=h.sess.filter(q=>q.iso<WO.iso).pop(); if(!cur||!prev) return '';
     if(h.kind==='kg' && cur.full){ vNow+=prMetrics('kg',cur).vol; vPrev+=prMetrics('kg',prev).vol; }   // tylko ćwiczenia zrobione w całości
-    return `<div><span>${esc(e.n)}<br><small style="color:var(--ink-faint)">${prDD(prev.iso)}: ${prSetsText(h.kind,prev.sets)}</small></span><span>${prSetsText(h.kind,cur.sets)}</span></div>`; }).join('');
+    return `<div><span>${esc(tt(e.n))}<br><small style="color:var(--ink-faint)">${prDD(prev.iso)}: ${prSetsText(h.kind,prev.sets)}</small></span><span>${prSetsText(h.kind,cur.sets)}</span></div>`; }).join('');
   const dv=vPrev?Math.round((vNow/vPrev-1)*100):null;
-  return `<div class="wo-sum"><h2>Trening zakończony 💪</h2></div>
+  return `<div class="wo-sum"><h2>${tt('Trening zakończony 💪')}</h2></div>
     <div class="wo-tiles">
-      <div class="wo-tile"><b>${fmtDur(s.dur)}</b><small>CAŁY TRENING${s.paused-(s.gap||0)>0?' · PAUZY '+fmtDur(s.paused-(s.gap||0)):''}</small></div>
-      <div class="wo-tile"><b>${s.done}/${s.total}</b><small>SERIE ZROBIONE</small></div>
-      <div class="wo-tile"><b>${fmtDur(s.work)}</b><small>PRACA (SERIE)</small></div>
-      <div class="wo-tile ${slowAvg?'warn':''}"><b>${fmtDur(s.avgRest)}</b><small>ŚREDNIA PRZERWA${s.avgRestPlan?' · PLAN '+fmtDur(s.avgRestPlan):''}</small></div>
+      <div class="wo-tile"><b>${fmtDur(s.dur)}</b><small>${tt('CAŁY TRENING')}${s.paused-(s.gap||0)>0?' · '+tt('PAUZY')+' '+fmtDur(s.paused-(s.gap||0)):''}</small></div>
+      <div class="wo-tile"><b>${s.done}/${s.total}</b><small>${tt('SERIE ZROBIONE')}</small></div>
+      <div class="wo-tile"><b>${fmtDur(s.work)}</b><small>${tt('PRACA (SERIE)')}</small></div>
+      <div class="wo-tile ${slowAvg?'warn':''}"><b>${fmtDur(s.avgRest)}</b><small>${tt('ŚREDNIA PRZERWA')}${s.avgRestPlan?' · '+tt('PLAN')+' '+fmtDur(s.avgRestPlan):''}</small></div>
     </div>
-    ${s.parts>1?`<div class="wo-note"><b>Trening dokończony po przerwie ${fmtDur(s.gap)}.</b> Ta przerwa nie wlicza się do czasu treningu.${s.rebuilt?' Czasy pierwszej części odtworzone z godzin odhaczenia serii (przybliżone).':''}</div>`:''}
-    ${(s.prs||[]).length?`<div class="wo-prs"><h4>🏆 Rekordy dziś · ${s.prs.length}</h4>${s.prs.map(p=>`<div><b>${esc(p.n)}</b><span>${prName(p.kind,p.t)}: ${esc(p.now)} <small>(poprzednio ${esc(p.was)})</small></span></div>`).join('')}</div>`:''}
-    ${cmp?`<div class="wo-list"><h4>W porównaniu z poprzednim razem${dv!=null?' · objętość '+(dv>=0?'+':'')+dv+'%':''}</h4></div><div class="wo-rows">${cmp}</div>`:''}
-    <div class="wo-rows">${s.ex.map(e=>`<div><span>${esc(e.n)} · ${e.sets}/${e.of}</span><span class="${e.avgRest>e.restPlan*1.2?'slow':''}">${e.avgRest?'przerwa '+fmtDur(e.avgRest)+' / plan '+fmtDur(e.restPlan):'—'}</span></div>`).join('')}</div>
-    <div class="wo-note"><b>Trener widzi te dane.</b> Zapytaj np.: „Jak mi poszedł dzisiejszy trening?” albo „Czy moje przerwy są OK?”.</div>
-    <button class="wo-save" id="woSave">ZAPISZ I ZAMKNIJ</button>`;
+    ${s.parts>1?`<div class="wo-note">${tt('<b>Trening dokończony po przerwie {d}.</b> Ta przerwa nie wlicza się do czasu treningu.', {d:fmtDur(s.gap)})}${s.rebuilt?tt(' Czasy pierwszej części odtworzone z godzin odhaczenia serii (przybliżone).'):''}</div>`:''}
+    ${(s.prs||[]).length?`<div class="wo-prs"><h4>${tt('🏆 Rekordy dziś')} · ${s.prs.length}</h4>${s.prs.map(p=>`<div><b>${esc(tt(p.n))}</b><span>${prName(p.kind,p.t)}: ${esc(p.now)} <small>(${tt('poprzednio')} ${esc(p.was)})</small></span></div>`).join('')}</div>`:''}
+    ${cmp?`<div class="wo-list"><h4>${tt('W porównaniu z poprzednim razem')}${dv!=null?' · '+tt('objętość')+' '+(dv>=0?'+':'')+dv+'%':''}</h4></div><div class="wo-rows">${cmp}</div>`:''}
+    <div class="wo-rows">${s.ex.map(e=>`<div><span>${esc(tt(e.n))} · ${e.sets}/${e.of}</span><span class="${e.avgRest>e.restPlan*1.2?'slow':''}">${e.avgRest?tt('przerwa {a} / plan {b}', {a:fmtDur(e.avgRest), b:fmtDur(e.restPlan)}):'—'}</span></div>`).join('')}</div>
+    <div class="wo-note">${tt('<b>Trener widzi te dane.</b> Zapytaj np.: „Jak mi poszedł dzisiejszy trening?” albo „Czy moje przerwy są OK?”.')}</div>
+    <button class="wo-save" id="woSave">${tt('ZAPISZ I ZAMKNIJ')}</button>`;
 }
 
 // „Zacznij dziś”: ten trening zamienia się z dzisiejszym dniem (jak „Przesuń”), potem tryb treningu
 export function startToday(iso){
   const t=todayISO();
-  setMoves(nextMoves({[t]:iso, [iso]:t}), `${iso<t?'Odrabiasz':'Zamieniono'}: ${dowOf(iso)} ${dmy(iso)} → dziś`);
+  setMoves(nextMoves({[t]:iso, [iso]:t}), `${iso<t?tt('Odrabiasz'):tt('Zamieniono')}: ${dowOf(iso)} ${dmy(iso)} → ${tt('dziś')}`);
   __set_viewOffset(0); showView('train'); renderToday();
   woStart(t);
 }
@@ -400,10 +401,10 @@ export function woCanReset(iso, w, L){
 export function woResetAsk(iso){
   const w=workoutOn(iso), L=log(iso);
   const n=w.ex.reduce((a,e0,i)=>a+okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s),0);
-  const bits=[]; if(n) bits.push(n+' odhaczon'+(n===1?'ą serię':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'e serie':'ych serii'));
-  if(hasSession(L)) bits.push('zmierzony czas ('+fmtDur(L.session.dur)+')');
-  if(WO && WO.iso===iso) bits.push('trwający tryb treningu');
-  document.getElementById('wrText').textContent=(bits.length?'Usunę '+bits.join(', ')+'. ':'')+'Ciężary i powtórzenia wpisane w pola zostają.';
+  const bits=[]; if(n) bits.push(plural(n,'{n} odhaczoną serię','{n} odhaczone serie','{n} odhaczonych serii','{n} ticked set','{n} ticked sets'));
+  if(hasSession(L)) bits.push(tt('zmierzony czas ({d})', {d:fmtDur(L.session.dur)}));
+  if(WO && WO.iso===iso) bits.push(tt('trwający tryb treningu'));
+  document.getElementById('wrText').textContent=(bits.length?tt('Usunę {x}. ', {x:bits.join(', ')}):'')+tt('Ciężary i powtórzenia wpisane w pola zostają.');
   document.getElementById('woResetDialog').style.display='flex';
   document.getElementById('wrYes').onclick=()=>{ document.getElementById('woResetDialog').style.display='none'; woReset(iso); };
 }
@@ -417,7 +418,7 @@ export function woReset(iso){
   if(L.session) L.session={cleared:true, end:Date.now()};
   if(WO && WO.iso===iso){ clearInterval(woTick); woTick=null; WO=null; woSave(); woWakeLock(false); document.getElementById('woFocus').style.display='none'; }
   touch(L); save(); renderToday();
-  const t=document.getElementById('woToast'); document.getElementById('woToastTxt').textContent='Trening zresetowany'; t.style.display='flex';
+  const t=document.getElementById('woToast'); document.getElementById('woToastTxt').textContent=tt('Trening zresetowany'); t.style.display='flex';
   clearTimeout(woToastTimer); woToastTimer=setTimeout(()=>{ t.style.display='none'; woUndoSnap=null; }, 6000);
 }
 
