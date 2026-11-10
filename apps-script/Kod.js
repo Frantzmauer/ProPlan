@@ -88,8 +88,8 @@ var DEFAULT_PLANS = {
 // wersja domyślnych planów: przy zmianie DEFAULT_PLANS podnieś — zapisane w ustawieniach plany Darmowy i Premium
 // zostaną raz nadpisane nowymi wartościami (pozostałe plany, np. Tester, zostają bez zmian)
 var PLANS_VER = 2;
-// konta bez przypisanego planu dostają Premium, żeby nikt z obecnych użytkowników niczego nie stracił
-var DEFAULT_CFG = { enforce: ['users', 'early'], defaultPlan: 'premium', adminPlan: 'premium', off: [] };
+// konta bez przypisanego planu dostają plan Darmowy (Premium tylko przypisany w panelu); administrator — Premium
+var DEFAULT_CFG = { enforce: ['users', 'early'], defaultPlan: 'free', adminPlan: 'premium', off: [] };
 function getPlans() {
   var p = getJSON('plans');
   if (p && +(PROPS.getProperty('plansVer') || 1) < PLANS_VER) {
@@ -100,6 +100,9 @@ function getPlans() {
 }
 function getCfg() {
   var c = getJSON('cfg') || {};
+  // jednorazowo (PLANS_VER 2): zapisany wcześniej domyślny plan „premium” → „free”
+  if (c.defaultPlan === 'premium' && +(PROPS.getProperty('cfgVer') || 1) < 2) { c.defaultPlan = 'free'; setJSON('cfg', c); }
+  if (+(PROPS.getProperty('cfgVer') || 1) < 2) PROPS.setProperty('cfgVer', '2');
   Object.keys(DEFAULT_CFG).forEach(function (k) { if (c[k] === undefined) c[k] = DEFAULT_CFG[k]; });
   return c;
 }
