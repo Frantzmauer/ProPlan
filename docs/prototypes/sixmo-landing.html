@@ -124,6 +124,21 @@ section .intro{color:var(--dim);max-width:620px;margin-bottom:30px;font-size:17p
 .pl .tagb{align-self:flex-start;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--amber);color:#0e1114;border-radius:999px;padding:3px 10px;margin-bottom:8px}
 .pnote{text-align:center;color:var(--faint);font-size:13px;margin-top:14px}
 
+.pl .pday{font-size:13px;color:var(--faint);margin:-4px 0 4px}
+.pl li b{color:var(--ink);font-weight:600}
+.pl li.no{color:var(--faint)}
+.cmp{max-width:774px;margin:26px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px}
+.cmp-h{font-size:30px;text-align:center;margin-bottom:16px}
+.cmp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
+@media(max-width:600px){.cmp-row{grid-template-columns:1fr}.cmp-vs{text-align:center}}
+.cmp-b{background:var(--panel2);border-radius:16px;padding:16px;text-align:center}
+.cmp-b.sx{box-shadow:0 0 0 1px var(--amber) inset}
+.cmp-b .k{font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em}
+.cmp-b .v{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.1;margin:4px 0}
+.cmp-b.sx .v{color:var(--amber)}
+.cmp-b .s{font-size:13.5px;color:var(--dim)}
+.cmp-vs{font-family:var(--disp);font-size:22px;color:var(--faint)}
+.cmp-note{font-size:14px;color:var(--dim);text-align:center;margin-top:16px;max-width:620px;margin-inline:auto}
 /* FAQ */
 details{border-bottom:1px solid var(--line);padding:16px 0}
 summary{cursor:pointer;font-weight:600;font-size:16.5px;list-style:none;display:flex;justify-content:space-between;gap:12px}
@@ -207,8 +222,21 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   <h2 class="disp" data-t="priceH" style="text-align:center"></h2>
   <p class="intro" data-t="priceP" style="text-align:center;margin-inline:auto"></p>
   <div class="price">
-    <div class="pl"><div class="nm" data-t="free"></div><div class="pr">0 zł</div><ul><li data-t="fr1"></li><li data-t="fr2"></li><li data-t="fr3"></li><li data-t="fr4"></li></ul><a class="btn sec" href="#" data-t="start"></a></div>
-    <div class="pl best"><span class="tagb" data-t="popular"></span><div class="nm">Premium</div><div class="pr">—<small data-t="perMo"></small></div><ul><li data-t="pr1"></li><li data-t="pr2"></li><li data-t="pr3"></li><li data-t="pr4"></li></ul><a class="btn pri" href="#" data-t="tryPrem"></a></div>
+    <div class="pl"><div class="nm" data-t="free"></div><div class="pr" data-t="free0"></div><ul>
+      <li data-t="fr1"></li><li data-t="fr2"></li><li data-t="fr3" data-html></li><li data-t="fr4" data-html></li><li data-t="fr5" data-html></li>
+    </ul><a class="btn sec" href="#" data-t="start"></a></div>
+    <div class="pl best"><span class="tagb" data-t="popular"></span><div class="nm">Premium</div><div class="pr"><span data-t="prem29"></span><small data-t="perMo"></small></div><div class="pday" data-t="perDay"></div><ul>
+      <li data-t="pr1"></li><li data-t="pr2" data-html></li><li data-t="pr3" data-html></li><li data-t="pr4" data-html></li><li data-t="pr5" data-html></li><li data-t="pr6" data-html></li><li data-t="pr7" data-html></li><li data-t="pr8"></li>
+    </ul><a class="btn pri" href="#" data-t="tryPrem"></a></div>
+  </div>
+  <div class="cmp">
+    <div class="cmp-h disp" data-t="cmpH"></div>
+    <div class="cmp-row">
+      <div class="cmp-b"><div class="k" data-t="cmpPT"></div><div class="v" data-t="cmpPTv"></div><div class="s" data-t="cmpPTs"></div></div>
+      <div class="cmp-vs">vs</div>
+      <div class="cmp-b sx"><div class="k">SixMo Premium</div><div class="v" data-t="cmpSXv"></div><div class="s" data-t="cmpSXs"></div></div>
+    </div>
+    <p class="cmp-note" data-t="cmpNote"></p>
   </div>
   <p class="pnote" data-t="priceNote"></p>
 </div></section>
@@ -279,12 +307,32 @@ const T = {
   s2h:{pl:'Podaj kilka danych',en:'Tell us a little'}, s2p:{pl:'Wzrost, waga, cel i dzień startu. Plan i kalorie ustawią się same.',en:'Height, weight, goal and start date. The plan and calories set themselves.'},
   s3h:{pl:'Rób swoje',en:'Do the work'}, s3p:{pl:'Odhaczaj posiłki i serie. Trener pilnuje reszty.',en:'Tick off meals and sets. The Coach handles the rest.'},
   priceH:{pl:'Cennik',en:'Pricing'},
-  priceP:{pl:'Zacznij za darmo. Premium, gdy chcesz więcej z Trenera AI.',en:'Start for free. Go Premium when you want more from the AI Coach.'},
-  free:{pl:'Darmowy',en:'Free'}, popular:{pl:'najczęściej wybierany',en:'most popular'}, perMo:{pl:' / mies.',en:' / mo'},
-  fr1:{pl:'Pełny plan 24 tygodni',en:'Full 24-week plan'}, fr2:{pl:'Jadłospis i lista zakupów',en:'Meal plan and shopping list'}, fr3:{pl:'Postęp, wykresy, rekordy',en:'Progress, charts, records'}, fr4:{pl:'Trener AI — kilka pytań miesięcznie',en:'AI Coach — a few questions a month'},
-  pr1:{pl:'Wszystko z planu Darmowego',en:'Everything in Free'}, pr2:{pl:'Trener AI bez codziennych limitów',en:'AI Coach without daily limits'}, pr3:{pl:'Zdjęcia posiłków i ocena techniki',en:'Meal photos and form check'}, pr4:{pl:'Nowości wcześniej (Early Access)',en:'New features first (Early Access)'},
+  priceP:{pl:'Zacznij za darmo. Premium, gdy chcesz mieć Trenera AI przy sobie na co dzień.',en:'Start for free. Go Premium when you want the AI Coach by your side every day.'},
+  free:{pl:'Darmowy',en:'Free'}, popular:{pl:'najczęściej wybierany',en:'most popular'},
+  free0:{pl:'0 zł',en:'PLN 0'}, prem29:{pl:'29 zł',en:'PLN 29'}, perMo:{pl:' / mies.',en:' / month'},
+  perDay:{pl:'mniej niż 1 zł dziennie',en:'less than PLN 1 a day'},
+  fr1:{pl:'Pełny plan 24 tygodni: trening i jadłospis',en:'The full 24-week plan: training and meals'},
+  fr2:{pl:'Lista zakupów, postęp, rekordy, sylwetka 3D',en:'Shopping list, progress, records, 3D body model'},
+  fr3:{pl:'<b>Trener AI</b> — 5 pytań tekstowych miesięcznie',en:'<b>AI Coach</b> — 5 text questions a month'},
+  fr4:{pl:'<b>Posiłki</b> — dodawanie ręczne, tekstem',en:'<b>Meals</b> — added manually, by text'},
+  fr5:{pl:'<b>Szacowanie kalorii posiłków</b> — 10 miesięcznie',en:'<b>Meal calorie estimates</b> — 10 a month'},
+  pr1:{pl:'Wszystko z planu Darmowego, a do tego:',en:'Everything in Free, plus:'},
+  pr2:{pl:'<b>Trener AI — 30 rozmów miesięcznie</b>, także głosem. Limit zwiększysz w każdej chwili dodatkowym pakietem',en:'<b>AI Coach — 30 conversations a month</b>, by voice too. Raise the limit any time with an extra pack'},
+  pr3:{pl:'<b>Trener zmienia plan za Ciebie</b> — ciężary, posiłki, przesunięte treningi. Zatwierdzasz jednym stuknięciem',en:'<b>The Coach adjusts your plan</b> — weights, meals, rescheduled workouts. Approve with one tap'},
+  pr4:{pl:'<b>Posiłki głosem, ze zdjęcia i z kodu kreskowego</b> — bez przepisywania',en:'<b>Log meals by voice, photo or barcode</b> — no typing'},
+  pr5:{pl:'<b>Szacowanie kalorii — aż 300 posiłków miesięcznie</b>',en:'<b>Calorie estimates — up to 300 meals a month</b>'},
+  pr6:{pl:'<b>Ocena techniki z nagrania</b> — 10 miesięcznie: nagraj serię, dostań konkretne poprawki',en:'<b>Form check from video</b> — 10 a month: record a set, get specific fixes'},
+  pr7:{pl:'<b>Trener zna całą Twoją historię</b> — treningi, wagę, obwody, posiłki i samopoczucie',en:'<b>The Coach knows your whole history</b> — workouts, weight, measurements, meals and wellbeing'},
+  pr8:{pl:'Nowości wcześniej (Early Access)',en:'New features first (Early Access)'},
   tryPrem:{pl:'Wypróbuj Premium',en:'Try Premium'},
-  priceNote:{pl:'Ceny w przygotowaniu — prototyp.',en:'Pricing coming soon — prototype.'},
+  cmpH:{pl:'Matematyka jest prosta',en:'The maths is simple'},
+  cmpPT:{pl:'Trener personalny',en:'Personal trainer'},
+  cmpPTv:{pl:'150–250 zł',en:'PLN 150–250'},
+  cmpPTs:{pl:'średni koszt 1 godziny treningu, zależnie od miasta — przy 1 treningu w tygodniu to 600–1000 zł miesięcznie',en:'average cost of 1 hour of training, depending on the city — at one session a week that’s PLN 600–1,000 a month'},
+  cmpSXv:{pl:'29 zł',en:'PLN 29'},
+  cmpSXs:{pl:'za cały miesiąc — plan, jadłospis i Trener AI dostępny o każdej porze, 7 dni w tygodniu',en:'for the whole month — plan, meals and an AI Coach available any time, 7 days a week'},
+  cmpNote:{pl:'SixMo nie zastępuje trenera personalnego — osoby, która widzi Cię na sali i poprawia ruch na żywo. Jest Twoim doradcą na co dzień: między treningami, przy posiłkach i wtedy, gdy trener nie odbiera telefonu.',en:'SixMo doesn’t replace a personal trainer — a person who sees you in the gym and corrects you live. It’s your everyday adviser: between sessions, at mealtimes and whenever your trainer isn’t picking up.'},
+  priceNote:{pl:'Prototyp — ceny i limity do potwierdzenia przed startem.',en:'Prototype — prices and limits to be confirmed before launch.'},
   faqH:{pl:'Pytania',en:'FAQ'},
   q1:{pl:'Dla kogo jest SixMo?',en:'Who is SixMo for?'}, a1:{pl:'Dla osób, które chcą w pół roku zmienić sylwetkę: schudnąć, nabrać siły i mięśni — na siłowni i w domu, bez zgadywania, co robić dalej.',en:'For anyone who wants to transform their body in six months: lose fat, build strength and muscle — at the gym and at home, without guessing what to do next.'},
   q2:{pl:'Czy muszę liczyć kalorie?',en:'Do I have to count calories?'}, a2:{pl:'Nie. Jadłospis ma gotowe porcje, a kalorie dopasowują się do trendu Twojej wagi. Własne posiłki dodasz zdjęciem albo opisem.',en:'No. The meal plan has ready portions and calories adjust to your weight trend. Add your own meals with a photo or a description.'},
