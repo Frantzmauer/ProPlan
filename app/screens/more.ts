@@ -47,7 +47,7 @@ export function moreStatus(){
   { const q=quotaCur(); set('mmPlan', q ? t('Zostało {a} z {am} pytań · {b} z {bm} nagrań · {c} z {cm} szacowań', {a:quotaLeft('coach'), am:q.coach.max, b:quotaLeft('form'), bm:q.form.max, c:quotaLeft('est'), cm:q.est.max}) : t('Limity Trenera AI'), q&&quotaLeft('coach')===0); }
   { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
     if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
-    set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?t(' · synchronizowane'):t(' · tylko na tym telefonie')) : t('Wyłączone · dobrowolne')); }
+    set('mmCycle', on ? t((CY_SIT.find(x=>x[0]===c.sit)||['',''])[1])+(c.sync?t(' · synchronizowane'):t(' · tylko na tym telefonie')) : t('Wyłączone · dobrowolne')); }
   { const r=Object.values((S.adj&&S.adj.rest)||{}); set('mmRest', r.length ? t('Zmienione: {n}', {n:r.length})+(r.some(x=>x.by==='tr')?t(' (także od Trenera)'):'') : t('Z planu · zmień przy ćwiczeniu')); }
   const n=exLibrary().reduce((a,g)=>a+g.ex.length,0), last=loadCoach().filter(m=>m.kind==='form').pop();
   set('mmCw', plural(n,'{n} ćwiczenie','{n} ćwiczenia','{n} ćwiczeń','{n} exercise','{n} exercises')+(last?t(' · ostatnio: ')+(last.ex||'')+' — '+(last.grade||''):t(' · nagraj serię i dostań ocenę')));

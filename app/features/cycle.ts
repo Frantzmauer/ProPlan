@@ -10,6 +10,7 @@ import { renderWeight } from '../screens/progress';
 import { renderToday } from '../screens/train';
 import { restToast } from './rest';
 import { swapToast } from './swap';
+import { dec, plural, t } from '../lib/i18n';
 
 export let CY_LS, CYC, CY_SIT, CY_SYM, CY_SYM_MENO, CY_PH, CYS, CY_PH_ORDER, CY_PH_SHORT, CY_PH_IN;
 export function __set_CYC(v){ CYC=v; return v; }
@@ -73,19 +74,19 @@ export function cyRenderBox(iso){
   // jedna linia: dzień cyklu + przycisk (początek albo koniec okresu)
   const PH={period:'okres', foll:'folikularna', ov:'owulacja', lut:'lutealna'};
   let row='';
-  const fc=today && !inf.inPeriod ? cyForecast() : null, soon=fc && !fc.late && fc.in>=1 && fc.in<=3 ? ' · okres za ~'+fc.in+' '+(fc.in===1?'dzień':'dni') : fc && fc.late ? ' · spóźnia się '+fc.late+' '+(fc.late===1?'dzień':'dni') : '';
-  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) row+=`<span class="cy-chip">● ${inf.sit==='natural'?'dzień '+inf.day+' · ':''}${PH[inf.phase]||(inf.inPeriod?'okres':'')}${soon}</span>`;
-  if(today && inf.inPeriod) row+= inf.p && inf.p.e ? `<span class="cy-endnote">koniec: ${inf.p.e===iso?'dziś':prDD(inf.p.e)}</span>` : `<button class="cy-end" data-cyend>Koniec okresu</button>`;
-  else if(today && inf.sit!=='meno') row+=`<button class="cy-start" data-cystart>＋ Okres się zaczął</button>`;
+  const fc=today && !inf.inPeriod ? cyForecast() : null, soon=fc && !fc.late && fc.in>=1 && fc.in<=3 ? t(' · okres za ~{d}', {d:plural(fc.in,'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')}) : fc && fc.late ? t(' · spóźnia się {d}', {d:plural(fc.late,'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')}) : '';
+  if(inf.day && (inf.sit==='natural' || inf.inPeriod)) row+=`<span class="cy-chip">● ${inf.sit==='natural'?t('dzień {n} · ', {n:inf.day}):''}${t(PH[inf.phase]||(inf.inPeriod?'okres':''))}${soon}</span>`;
+  if(today && inf.inPeriod) row+= inf.p && inf.p.e ? `<span class="cy-endnote">${t('koniec:')} ${inf.p.e===iso?t('dziś'):prDD(inf.p.e)}</span>` : `<button class="cy-end" data-cyend>${t('Koniec okresu')}</button>`;
+  else if(today && inf.sit!=='meno') row+=`<button class="cy-start" data-cystart>${t('＋ Okres się zaczął')}</button>`;
   let h=row?`<div class="cy-row1">${row}</div>`:'';
-  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>Krwawienie:</span>${[['light','Lekkie'],['medium','Średnie'],['heavy','Obfite']].map(([k,t])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${t}</button>`).join('')}</div>`;
-  if(askEnd) h+=`<div class="cy-confirm"><b>Okres już się skończył?</b><span>Dzień ${inf.day} okresu. Zapisana długość pomoże lepiej dopasować trening w kolejnych cyklach.</span>
-    <div class="row"><button class="yes" data-cyendt="0">Tak, dziś</button><button class="yes" data-cyendt="1">Tak, wczoraj</button><button data-cystill>Jeszcze trwa</button></div></div>`;
-  if(today && inf.inPeriod && inf.day>7 && !(inf.p.longNote)) h+=`<div class="cy-confirm"><b>Krwawienie trwa już ${inf.day} dni.</b><span>Okres dłuższy niż 7 dni warto skonsultować z lekarzem — zwłaszcza gdy jest obfity albo powtarza się co cykl.</span><div class="row"><button data-cylong>Rozumiem</button></div></div>`;
+  if(today && inf.inPeriod) h+=`<div class="cy-flow"><span>${t('Krwawienie:')}</span>${[['light',t('Lekkie')],['medium',t('Średnie')],['heavy',t('Obfite')]].map(([k,l])=>`<button data-cyflow="${k}" class="${fl===k?'on':''}">${l}</button>`).join('')}</div>`;
+  if(askEnd) h+=`<div class="cy-confirm"><b>${t('Okres już się skończył?')}</b><span>${t('Dzień {n} okresu. Zapisana długość pomoże lepiej dopasować trening w kolejnych cyklach.', {n:inf.day})}</span>
+    <div class="row"><button class="yes" data-cyendt="0">${t('Tak, dziś')}</button><button class="yes" data-cyendt="1">${t('Tak, wczoraj')}</button><button data-cystill>${t('Jeszcze trwa')}</button></div></div>`;
+  if(today && inf.inPeriod && inf.day>7 && !(inf.p.longNote)) h+=`<div class="cy-confirm"><b>${t('Krwawienie trwa już {n} dni.', {n:inf.day})}</b><span>${t('Okres dłuższy niż 7 dni warto skonsultować z lekarzem — zwłaszcza gdy jest obfity albo powtarza się co cykl.')}</span><div class="row"><button data-cylong>${t('Rozumiem')}</button></div></div>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-cyflow]').forEach(b=>b.onclick=()=>{ cyFlow(iso, b.dataset.cyflow); cyRenderBox(iso); });
-  const e=box.querySelector('[data-cyend]'); if(e) e.onclick=()=>{ cyPeriodEnd(iso); cyRenderBox(iso); restToast('Zapisano koniec okresu'); };
-  box.querySelectorAll('[data-cyendt]').forEach(b=>b.onclick=()=>{ const d=addDays(iso, -(+b.dataset.cyendt)); cyPeriodEnd(d); renderToday(); restToast('Zapisano koniec okresu · '+prDD(d)); });
+  const e=box.querySelector('[data-cyend]'); if(e) e.onclick=()=>{ cyPeriodEnd(iso); cyRenderBox(iso); restToast(t('Zapisano koniec okresu')); };
+  box.querySelectorAll('[data-cyendt]').forEach(b=>b.onclick=()=>{ const d=addDays(iso, -(+b.dataset.cyendt)); cyPeriodEnd(d); renderToday(); restToast(t('Zapisano koniec okresu')+' · '+prDD(d)); });
   const sl=box.querySelector('[data-cystill]'); if(sl) sl.onclick=()=>{ cyPatchPeriod(inf.p.s, {still:iso}); cyRenderBox(iso); };
   const ln=box.querySelector('[data-cylong]'); if(ln) ln.onclick=()=>{ cyPatchPeriod(inf.p.s, {longNote:true}); cyRenderBox(iso); };
   const st=box.querySelector('[data-cystart]'); if(st) st.onclick=()=>cyAskStart(iso);
@@ -96,20 +97,20 @@ export function cyAskStart(iso){
   const prev=cyPeriods().filter(p=>p.s<iso).pop(), gap=prev?cyDiff(prev.s, iso):99;
   if(gap>=15){ cyDoStart(iso); return; }
   const box=document.getElementById('cyBox');
-  box.innerHTML=`<div class="cy-confirm"><b>Poprzedni okres zaczął się ${prDD(prev.s)} — ${gap} ${gap===1?'dzień':'dni'} temu.</b>
-    <span>To nowy okres? Plamienie między miesiączkami możesz zaznaczyć w check-inie jako objaw.</span>
-    <div class="row"><button class="yes" data-cyyes>Tak, nowy okres</button><button data-cyno>Anuluj</button></div></div>`;
+  box.innerHTML=`<div class="cy-confirm"><b>${t('Poprzedni okres zaczął się {d} — {g} temu.', {d:prDD(prev.s), g:plural(gap,'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')})}</b>
+    <span>${t('To nowy okres? Plamienie między miesiączkami możesz zaznaczyć w check-inie jako objaw.')}</span>
+    <div class="row"><button class="yes" data-cyyes>${t('Tak, nowy okres')}</button><button data-cyno>${t('Anuluj')}</button></div></div>`;
   box.querySelector('[data-cyyes]').onclick=()=>cyDoStart(iso);
   box.querySelector('[data-cyno]').onclick=()=>cyRenderBox(iso);
 }
 
 export function cyDoStart(iso){
   cyPeriodStart(iso); cyRenderBox(iso);
-  swapToast('Zapisano: dzień 1 cyklu', ()=>{ const c=Object.assign({}, cyGet()); c.periods=cyPeriods().filter(p=>p.s!==iso); cySave(c); renderToday(); });
+  swapToast(t('Zapisano: dzień 1 cyklu'), ()=>{ const c=Object.assign({}, cyGet()); c.periods=cyPeriods().filter(p=>p.s!==iso); cySave(c); renderToday(); });
 }
 
 export function cyMoveHtml(){
-  return `<div class="cy-move"><b>Lekki ruch · ok. 25 min</b><span>Spacer 15 min · krążenia bioder i koci grzbiet 5 min · rozciąganie dolnej części pleców 5 min. Ruch często łagodzi skurcze.</span><button data-cytrain>Jednak trenuję</button></div>`;
+  return `<div class="cy-move"><b>${t('Lekki ruch · ok. 25 min')}</b><span>${t('Spacer 15 min · krążenia bioder i koci grzbiet 5 min · rozciąganie dolnej części pleców 5 min. Ruch często łagodzi skurcze.')}</span><button data-cytrain>${t('Jednak trenuję')}</button></div>`;
 }
 
 // dodatkowe 30 s przerwy w dni z objawami (check-in)
@@ -123,27 +124,27 @@ export function renderCycle(){
   const c=cyGet();
   const sw=(k,on,label)=>`<button class="cy-sw ${on?'on':''}" data-cyt="${k}" aria-pressed="${on}" aria-label="${label}"></button>`;
   document.getElementById('cyPanel').innerHTML=`<div class="eh-grab"></div>
-    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Dobrowolne</div><h2 id="cyTitle">Cykl i samopoczucie</h2></div><button class="eh-x" data-cyclose aria-label="Zamknij">✕</button></div>
-    <div class="cy-row"><div><b>Śledzenie cyklu</b><small>Dopasuje trening, check-in i komentarze do wagi do Twojego cyklu i samopoczucia.</small></div>${sw('on', !!c.on, 'Śledzenie cyklu')}</div>
-    ${c.on?`<div class="sw-lab">Twoja sytuacja</div>
-      <div class="cy-opts">${CY_SIT.map(([k,t,d])=>`<button class="${c.sit===k?'on':''}" data-cysit="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}<button class="${c.sit==='none'?'on':''}" data-cysit="none"><b>Wolę nie śledzić</b><small>zwykły check-in, nic się nie zmienia</small></button></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${t('Dobrowolne')}</div><h2 id="cyTitle">${t('Cykl i samopoczucie')}</h2></div><button class="eh-x" data-cyclose aria-label="${t('Zamknij')}">✕</button></div>
+    <div class="cy-row"><div><b>${t('Śledzenie cyklu')}</b><small>${t('Dopasuje trening, check-in i komentarze do wagi do Twojego cyklu i samopoczucia.')}</small></div>${sw('on', !!c.on, t('Śledzenie cyklu'))}</div>
+    ${c.on?`<div class="sw-lab">${t('Twoja sytuacja')}</div>
+      <div class="cy-opts">${CY_SIT.map(([k,n,d])=>`<button class="${c.sit===k?'on':''}" data-cysit="${k}"><b>${t(n)}</b><small>${t(d)}</small></button>`).join('')}<button class="${c.sit==='none'?'on':''}" data-cysit="none"><b>${t('Wolę nie śledzić')}</b><small>${t('zwykły check-in, nic się nie zmienia')}</small></button></div>
       ${cyStage2Html()}
-      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">Zapisane okresy</div>
+      ${c.sit && c.sit!=='none' && c.sit!=='meno' && c.sit!=='preg'?`<div class="sw-lab">${t('Zapisane okresy')}</div>
         <div class="cy-list">${cyPeriods().slice().reverse().map(p=>{ const pv=cyPeriods().filter(q=>q.s<p.s).pop(), g=pv?cyDiff(pv.s,p.s):null;
           // uwaga stoi przy podejrzanym (późniejszym) wpisie — to on jest zwykle pomyłką
           // początek i koniec do poprawienia; koniec może być pusty, póki okres trwa
           return `<div class="cy-pr2 ${g!=null&&g<15?'warn':''}">
-            <label>Początek<input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}"></label>
-            <label>Koniec<input type="date" class="md-in" data-cyend2="${p.s}" value="${p.e||''}" min="${p.s}" max="${todayISO()}"></label>
-            <button data-cyrm="${p.s}" aria-label="Usuń okres z ${prDD(p.s)}">✕</button>
-            <span class="g">${g==null?'pierwszy zapisany':g<15?'<b>tylko '+g+' dni po poprzednim?</b>':g+' dni po poprzednim'}${cyPeriodLen(p)?' · trwał '+cyPeriodLen(p)+' '+(cyPeriodLen(p)===1?'dzień':'dni')+(p.auto?' (przyjęte automatycznie — popraw, jeśli trzeba)':''):' · koniec niezapisany'}</span></div>`; }).join('')||'<div class="rs-hint">Brak zapisanych okresów.</div>'}</div>
-        <div class="cy-pr add"><input type="date" class="md-in" id="cyAdd" max="${todayISO()}" aria-label="Dodaj początek okresu"><span class="g">dodaj wcześniejszy okres</span></div>
-        <div class="rs-hint">Najnowszy okres jest na górze. ✕ usuwa tylko ten jeden wpis.</div>`:''}
+            <label>${t('Początek')}<input type="date" class="md-in" data-cyedit="${p.s}" value="${p.s}" max="${todayISO()}"></label>
+            <label>${t('Koniec')}<input type="date" class="md-in" data-cyend2="${p.s}" value="${p.e||''}" min="${p.s}" max="${todayISO()}"></label>
+            <button data-cyrm="${p.s}" aria-label="${t('Usuń okres z {d}', {d:prDD(p.s)})}">✕</button>
+            <span class="g">${g==null?t('pierwszy zapisany'):g<15?'<b>'+t('tylko {n} dni po poprzednim?', {n:g})+'</b>':t('{n} dni po poprzednim', {n:g})}${cyPeriodLen(p)?t(' · trwał {d}', {d:plural(cyPeriodLen(p),'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')})+(p.auto?t(' (przyjęte automatycznie — popraw, jeśli trzeba)'):''):t(' · koniec niezapisany')}</span></div>`; }).join('')||'<div class="rs-hint">'+t('Brak zapisanych okresów.')+'</div>'}</div>
+        <div class="cy-pr add"><input type="date" class="md-in" id="cyAdd" max="${todayISO()}" aria-label="${t('Dodaj początek okresu')}"><span class="g">${t('dodaj wcześniejszy okres')}</span></div>
+        <div class="rs-hint">${t('Najnowszy okres jest na górze. ✕ usuwa tylko ten jeden wpis.')}</div>`:''}
       <div class="sw-lab">Prywatność</div>
-      <div class="cy-row"><div><b>Tylko na tym telefonie</b><small>${c.sync?'Synchronizacja włączona — dane o cyklu trafiają na serwer aplikacji razem z resztą. Administrator aplikacji technicznie ma do nich dostęp.':'Dane o cyklu nie są wysyłane na serwer ani na inne urządzenia.'}</small></div>${sw('local', !c.sync, 'Tylko na tym telefonie')}</div>
-      <div class="cy-row"><div><b>Trener może z tego korzystać</b><small>Dzień cyklu i objawy idą do Trenera tylko razem z Twoim pytaniem.</small></div>${sw('coach', c.coach!==false, 'Trener może korzystać z danych o cyklu')}</div>
-      <button class="ci-alt" data-cydel style="color:var(--red)">${CYS.del?'Na pewno? Stuknij jeszcze raz, żeby usunąć':'Usuń historię cyklu'}</button>`:''}
-    <div class="rs-hint">Nigdy nie włącza się sama. Dopasowanie treningu zawsze jest propozycją — decyzja należy do Ciebie. Aplikacja nie stawia diagnoz.</div>`;
+      <div class="cy-row"><div><b>${t('Tylko na tym telefonie')}</b><small>${c.sync?t('Synchronizacja włączona — dane o cyklu trafiają na serwer aplikacji razem z resztą. Administrator aplikacji technicznie ma do nich dostęp.'):t('Dane o cyklu nie są wysyłane na serwer ani na inne urządzenia.')}</small></div>${sw('local', !c.sync, t('Tylko na tym telefonie'))}</div>
+      <div class="cy-row"><div><b>${t('Trener może z tego korzystać')}</b><small>${t('Dzień cyklu i objawy idą do Trenera tylko razem z Twoim pytaniem.')}</small></div>${sw('coach', c.coach!==false, t('Trener może korzystać z danych o cyklu'))}</div>
+      <button class="ci-alt" data-cydel style="color:var(--red)">${CYS.del?t('Na pewno? Stuknij jeszcze raz, żeby usunąć'):t('Usuń historię cyklu')}</button>`:''}
+    <div class="rs-hint">${t('Nigdy nie włącza się sama. Dopasowanie treningu zawsze jest propozycją — decyzja należy do Ciebie. Aplikacja nie stawia diagnoz.')}</div>`;
   const panel=document.getElementById('cyPanel');
   panel.querySelectorAll('[data-cyedit]').forEach(inp=>inp.onchange=()=>{ const old=inp.dataset.cyedit, v=inp.value; if(!v || v===old) return;
     const c2=Object.assign({}, cyGet()), ps=cyPeriods();
@@ -152,8 +153,8 @@ export function renderCycle(){
   panel.querySelectorAll('[data-cyend2]').forEach(inp=>inp.onchange=()=>{ const st=inp.dataset.cyend2, v=inp.value;
     if(v && (v<st || v>todayISO())){ renderCycle(); return; }   // koniec nie przed początkiem i nie w przyszłości
     const c2=Object.assign({}, cyGet()), ps=cyPeriods();
-    ps.forEach(p=>{ if(p.s===st){ p.e=v||null; delete p.auto; delete p.still; } }); c2.periods=ps; cySave(c2); renderToday(); renderCycle(); restToast(v?'Zapisano koniec okresu · '+prDD(v):'Usunięto datę końca'); });
-  panel.querySelectorAll('[data-cyrm]').forEach(b=>b.onclick=()=>{ const c2=Object.assign({}, cyGet()); c2.periods=cyPeriods().filter(p=>p.s!==b.dataset.cyrm); cySave(c2); renderToday(); renderCycle(); restToast('Usunięto wpis'); });
+    ps.forEach(p=>{ if(p.s===st){ p.e=v||null; delete p.auto; delete p.still; } }); c2.periods=ps; cySave(c2); renderToday(); renderCycle(); restToast(v?t('Zapisano koniec okresu')+' · '+prDD(v):t('Usunięto datę końca')); });
+  panel.querySelectorAll('[data-cyrm]').forEach(b=>b.onclick=()=>{ const c2=Object.assign({}, cyGet()); c2.periods=cyPeriods().filter(p=>p.s!==b.dataset.cyrm); cySave(c2); renderToday(); renderCycle(); restToast(t('Usunięto wpis')); });
   const ad=document.getElementById('cyAdd');
   if(ad) ad.onchange=()=>{ if(!ad.value) return; const c2=Object.assign({}, cyGet()), ps=cyPeriods(); if(!ps.some(p=>p.s===ad.value)){ ps.push({s:ad.value, e:addDays(ad.value,4), flow:{}}); c2.periods=ps; cySave(c2); } renderToday(); renderCycle(); };
 }
@@ -177,7 +178,7 @@ export function cyWeightNote(){
   if(!inf || inf.sit!=='natural' || ws.length<2) return;
   const lastW=ws[ws.length-1], wk=ws.filter(w=>w.d<=addDays(lastW.d,-6)).pop(); if(!wk) return;
   const dv=lastW.w-wk.w, late=inf.phase==='lut' || (inf.inPeriod && inf.day<=3);
-  if(dv>=0.5 && late){ el.innerHTML=`<b>+${dv.toFixed(1).replace('.',',')} kg w ostatnim tygodniu?</b> ${inf.inPeriod?'To początek okresu':'To dni przed okresem'} — zwykle woda, nie tłuszcz. Patrz na trend (niebieska linia); cel kalorii się nie zmienia.`; el.style.display='block'; }
+  if(dv>=0.5 && late){ el.innerHTML=t('<b>+{kg} kg w ostatnim tygodniu?</b>', {kg:dec(dv,1)})+' '+(inf.inPeriod?t('To początek okresu'):t('To dni przed okresem'))+t(' — zwykle woda, nie tłuszcz. Patrz na trend (niebieska linia); cel kalorii się nie zmienia.'); el.style.display='block'; }
 }
 
 /* ---- cykl, etap 2: prognoza, Twoje wzorce i dopasowanie z Twoich danych ----
@@ -204,31 +205,31 @@ export function cyPhaseNote(phase){ return phaseNote(cyPatterns(), phase); }
 export function cyInsights(P){
   const out=[], ok=Object.entries(P.by).filter(([,b])=>b.n>=3).sort((a,b)=>a[1].energy-b[1].energy);
   if(ok.length>=2){ const lo=ok[0], hi=ok[ok.length-1];
-    if(hi[1].energy-lo[1].energy>=0.4) out.push(`Energia jest u Ciebie najniższa <b>${CY_PH_IN[lo[0]]}</b>, a najwyższa <b>${CY_PH_IN[hi[0]]}</b>. Check-in uwzględnia to przy propozycji treningu.`);
-    else out.push('Twoja energia jest podobna we wszystkich fazach — trening idzie według planu i samopoczucia z danego dnia.'); }
-  const sl=ok.slice().sort((a,b)=>a[1].sleep-b[1].sleep); if(sl.length>=2 && sl[sl.length-1][1].sleep-sl[0][1].sleep>=0.5) out.push(`Najgorzej śpisz <b>${CY_PH_IN[sl[0][0]]}</b>.`);
+    if(hi[1].energy-lo[1].energy>=0.4) out.push(t('Energia jest u Ciebie najniższa <b>{a}</b>, a najwyższa <b>{b}</b>. Check-in uwzględnia to przy propozycji treningu.', {a:t(CY_PH_IN[lo[0]]), b:t(CY_PH_IN[hi[0]])}));
+    else out.push(t('Twoja energia jest podobna we wszystkich fazach — trening idzie według planu i samopoczucia z danego dnia.')); }
+  const sl=ok.slice().sort((a,b)=>a[1].sleep-b[1].sleep); if(sl.length>=2 && sl[sl.length-1][1].sleep-sl[0][1].sleep>=0.5) out.push(t('Najgorzej śpisz <b>{a}</b>.', {a:t(CY_PH_IN[sl[0][0]])}));
   Object.entries(P.sym).filter(([,o])=>o.n>=3).forEach(([k,o])=>{ const top=CY_PH_ORDER.filter(ph=>o[ph]).sort((a,b)=>o[b]-o[a])[0];
-    if(top && o[top]/o.n>=0.6) out.push(`${esc(k)}: głównie <b>${CY_PH_IN[top]}</b> (${o[top]} z ${o.n} razy).`); });
+    if(top && o[top]/o.n>=0.6) out.push(t('{s}: głównie <b>{a}</b> ({x} z {n} razy).', {s:esc(t(k)), a:t(CY_PH_IN[top]), x:o[top], n:o.n})); });
   return out;
 }
 
 export function cyStage2Html(){
   const f=cyForecast(); if(!f) return '';
   const d=x=>prDD(x);
-  let h=`<div class="sw-lab">Prognoza</div><div class="cy-fc">`;
-  if(f.late) h+=`<b class="late">Okres spóźnia się o ${f.late} ${f.late===1?'dzień':'dni'}</b><span>Prognoza: ${d(f.from)}–${d(f.to)}. Kilka dni spóźnienia zdarza się przy stresie, chorobie czy dużym deficycie kalorii. Zaznacz „Okres się zaczął”, gdy przyjdzie.</span>`;
-  else if(f.in<=0) h+=`<b>Następny okres: ok. ${d(addDays(f.next, f.L))}</b>`;
-  else h+=`<b>Następny okres: ok. ${d(f.next)}</b><span>między ${d(f.from)} a ${d(f.to)} · za ${f.in} ${f.in===1?'dzień':'dni'}</span>`;
-  h+=`<span>${f.n?`Średni cykl ${f.L} dni (z ${f.n} ${f.n===1?'cyklu':'cykli'}${f.n>=2?': '+f.min+'–'+f.max+' dni':''}).`:'Prognoza z jednego zapisanego okresu — przyjęto 28 dni. Z każdym kolejnym okresem będzie dokładniejsza.'}${f.sit==='natural'&&!f.late&&f.in>7?' Dni przed okresem od ok. '+d(f.pre)+'.':''}</span>
-    <span style="font-size:12px;color:var(--ink-faint)">To szacunek do planowania treningu — nie nadaje się do antykoncepcji ani planowania ciąży.</span></div>`;
+  let h=`<div class="sw-lab">${t('Prognoza')}</div><div class="cy-fc">`;
+  if(f.late) h+=`<b class="late">${t('Okres spóźnia się o {d}', {d:plural(f.late,'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')})}</b><span>${t('Prognoza: {a}–{b}. Kilka dni spóźnienia zdarza się przy stresie, chorobie czy dużym deficycie kalorii. Zaznacz „Okres się zaczął”, gdy przyjdzie.', {a:d(f.from), b:d(f.to)})}</span>`;
+  else if(f.in<=0) h+=`<b>${t('Następny okres: ok. {d}', {d:d(addDays(f.next, f.L))})}</b>`;
+  else h+=`<b>${t('Następny okres: ok. {d}', {d:d(f.next)})}</b><span>${t('między {a} a {b} · za {d}', {a:d(f.from), b:d(f.to), d:plural(f.in,'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')})}</span>`;
+  h+=`<span>${f.n?t('Średni cykl {L} dni (z {n}{r}).', {L:f.L, n:plural(f.n,'{n} cyklu','{n} cykli','{n} cykli','{n} cycle','{n} cycles'), r:f.n>=2?': '+f.min+'–'+f.max+' '+t('dni'):''}):t('Prognoza z jednego zapisanego okresu — przyjęto 28 dni. Z każdym kolejnym okresem będzie dokładniejsza.')}${f.sit==='natural'&&!f.late&&f.in>7?' '+t('Dni przed okresem od ok. {d}.', {d:d(f.pre)}):''}</span>
+    <span style="font-size:12px;color:var(--ink-faint)">${t('To szacunek do planowania treningu — nie nadaje się do antykoncepcji ani planowania ciąży.')}</span></div>`;
   const P=cyPatterns();
   if(P){
-    h+=`<div class="sw-lab">Twoje wzorce</div><div class="cy-pat">`;
-    if(!P.ready) h+=`<p>Wzorce pojawią się po kilku check-inach przed treningiem w różnych fazach cyklu (co najmniej 3 w dwóch fazach). Na razie: ${P.n} ${P.n===1?'check-in':P.n>=2&&P.n<=4?'check-iny':'check-inów'} w fazach cyklu.</p>`;
+    h+=`<div class="sw-lab">${t('Twoje wzorce')}</div><div class="cy-pat">`;
+    if(!P.ready) h+=`<p>${t('Wzorce pojawią się po kilku check-inach przed treningiem w różnych fazach cyklu (co najmniej 3 w dwóch fazach). Na razie: {n} w fazach cyklu.', {n:plural(P.n,'{n} check-in','{n} check-iny','{n} check-inów','{n} check-in','{n} check-ins')})}</p>`;
     else {
-      h+=`<p style="color:var(--ink-faint);font-size:12px">Energia z check-inu (0–2), średnio w fazie</p>`+CY_PH_ORDER.filter(ph=>P.by[ph]).map(ph=>{ const b=P.by[ph];
-        return `<div class="r"><span>${CY_PH_SHORT[ph]}</span><span class="bar"><i style="width:${Math.round(b.energy/2*100)}%"></i></span><small>${b.energy.toFixed(1).replace('.',',')} · ${b.n} ${b.n===1?'dzień':'dni'}</small></div>`; }).join('');
-      h+=cyInsights(P).map(t=>`<p>${t}</p>`).join('');
+      h+=`<p style="color:var(--ink-faint);font-size:12px">${t('Energia z check-inu (0–2), średnio w fazie')}</p>`+CY_PH_ORDER.filter(ph=>P.by[ph]).map(ph=>{ const b=P.by[ph];
+        return `<div class="r"><span>${t(CY_PH_SHORT[ph])}</span><span class="bar"><i style="width:${Math.round(b.energy/2*100)}%"></i></span><small>${dec(b.energy,1)} · plural(b.n,'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')</small></div>`; }).join('');
+      h+=cyInsights(P).map(x=>`<p>${x}</p>`).join('');
     }
     h+=`</div>`;
   }
@@ -279,14 +280,14 @@ CY_PH = {period:'okres', foll:'faza folikularna', ov:'okolice owulacji', lut:'fa
 // Więcej → Cykl i samopoczucie
 CYS = null;
 document.getElementById('cySheet').addEventListener('click', ev=>{
-  const t=ev.target.closest('[data-cyclose],[data-cyt],[data-cysit],[data-cydel]'); if(!t) return;
-  const d=t.dataset, c=Object.assign({}, cyGet());
+  const tg=ev.target.closest('[data-cyclose],[data-cyt],[data-cysit],[data-cydel]'); if(!tg) return;
+  const d=tg.dataset, c=Object.assign({}, cyGet());
   if('cyclose' in d){ closeCycle(); return; }
   if(d.cyt==='on'){ c.on=!c.on; if(c.on && !c.sit) c.sit='natural'; if(c.coach==null) c.coach=true; }
   else if(d.cyt==='local') c.sync=!c.sync;
   else if(d.cyt==='coach') c.coach=c.coach===false;
   else if(d.cysit) c.sit=d.cysit;
-  else if('cydel' in d){ if(!CYS.del){ CYS.del=true; renderCycle(); return; } c.periods=[]; c.sym={}; CYS.del=false; restToast('Usunięto historię cyklu'); }
+  else if('cydel' in d){ if(!CYS.del){ CYS.del=true; renderCycle(); return; } c.periods=[]; c.sym={}; CYS.del=false; restToast(t('Usunięto historię cyklu')); }
   cySave(c); renderCycle(); renderToday(); if(document.getElementById('v-progress').classList.contains('on')) renderWeight(); moreStatus();
 });
 CY_PH_ORDER = ['period','foll','ov','lut'];
