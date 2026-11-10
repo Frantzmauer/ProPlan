@@ -2,7 +2,7 @@
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SixMo v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
 /* Prototyp SixMo v2 — marka i ekrany na prawdziwej aplikacji (dawniej ŻELAZO). Telefon 375 px, przykładowe dane.
    Zasada koloru: Żar (#FF5A1F) = „tu jesteś teraz” (bieżący miesiąc, przycisk główny, aktywna zakładka). */
@@ -11,7 +11,7 @@
   --ink:#F2EFE9; --dim:#9AA3AB; --faint:#8A949C;
   --zar:#FF5A1F; --zar-deep:#C23A05; --zar-soft:#3A1E12;
   --adapt:#7FB2FF; --build:#B79CFF; --peak:#FFC24B; --ok:#4EC97E; --bad:#E2543A;
-  --disp:'Space Grotesk','Inter',sans-serif; --body:'Inter',system-ui,sans-serif;
+  --disp:'Barlow Condensed','Inter',sans-serif; --body:'Inter',system-ui,sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -25,7 +25,7 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
 .sec{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:20px}
 .sec h2{font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
 .hero{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
-.word{font-family:var(--disp);font-weight:700;letter-spacing:-.045em;line-height:.9}
+.word{font-family:var(--disp);font-weight:700;letter-spacing:0;line-height:.9}
 .word b{color:var(--zar);font-weight:700}
 .tag{font-size:20px;color:var(--dim);margin-top:10px}
 .why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}
@@ -40,8 +40,8 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
 @media(max-width:700px){.pal{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .sw{height:92px;border-radius:14px;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;font-size:12px;border:1px solid var(--line)}
 .sw b{font-size:14px}
-.type .t1{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;line-height:1}
-.type .t2{font-family:var(--disp);font-weight:500;font-size:30px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.type .t1{font-family:var(--disp);font-weight:700;font-size:48px;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+.type .t2{font-family:var(--disp);font-weight:600;font-size:32px;letter-spacing:0;font-variant-numeric:tabular-nums}
 .type .t3{font-size:15px;color:#C9CED3;max-width:520px}
 .type .lbl{font-size:12px;color:var(--faint);margin:14px 0 4px}
 .rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -54,7 +54,7 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
 .scr{flex:1;overflow-y:auto;padding:16px 16px 18px;scrollbar-width:none}
 .scr::-webkit-scrollbar{display:none}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.brand{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:21px;letter-spacing:-.03em}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:24px;letter-spacing:.01em}
 .brand b{color:var(--zar)}
 .streak{display:flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--dim)}
 .streak span{color:var(--ink)}
@@ -64,7 +64,7 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
 .day.on{background:var(--zar-soft);border-color:var(--zar)}
 .day.done b::after{content:'';display:block;width:5px;height:5px;border-radius:50%;background:var(--ok);margin:3px auto 0}
 .eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-.h{font-family:var(--disp);font-weight:700;font-size:28px;letter-spacing:-.025em;line-height:1.05;margin:4px 0 12px}
+.h{font-family:var(--disp);font-weight:700;font-size:32px;letter-spacing:.01em;text-transform:uppercase;line-height:1.05;margin:4px 0 12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
 .ci{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .pill{font-size:12.5px;font-weight:600;border-radius:999px;padding:5px 11px;border:1px solid var(--line);color:var(--dim)}
@@ -184,12 +184,12 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
 
   <section class="sec type" aria-labelledby="s4">
     <h2 id="s4">Typografia</h2>
-    <div class="lbl">Space Grotesk 700 · nagłówki, wordmark</div>
+    <div class="lbl">Barlow Condensed 700 · nagłówki, wordmark (jak dotąd w aplikacji)</div>
     <div class="t1">Trening A, góra ciała</div>
-    <div class="lbl">Space Grotesk 500 · liczby (równej szerokości)</div>
+    <div class="lbl">Barlow Condensed 600 · liczby (równej szerokości)</div>
     <div class="t2">1883 / 2100 kcal · 105 cm · dzień 74/168</div>
     <div class="lbl">Inter 400–600 · interfejs</div>
-    <div class="t3">Wieloczłonowe nagłówki piszemy zdaniem, nie WERSALIKAMI — Space Grotesk jest szerszy od dotychczasowej Barlow Condensed, więc długie nazwy ćwiczeń zawijają się zamiast ściskać.</div>
+    <div class="t3">Zostaje czcionka z ŻELAZO (SIL Open Font License 1.1 — wolno jej używać komercyjnie). Nagłówki ekranów WERSALIKAMI, jak dotąd; wąskie litery mieszczą długie nazwy ćwiczeń i duże liczby w jednej linii.</div>
   </section>
 
   <section class="sec" aria-labelledby="s5">
@@ -197,7 +197,7 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
     <div class="rules">
       <div><b>Jeden akcent.</b> Żar tylko tam, gdzie „teraz”: bieżący dzień i miesiąc, przycisk główny, aktywna zakładka. Fazy mają swoje kolory.</div>
       <div><b>Ton.</b> Konkretnie i spokojnie: tygodnie, kroki, liczby. Bez „cudów w 30 dni”. Teksty neutralne płciowo.</div>
-      <div><b>Liczby to bohater.</b> Kcal, kg, cm, serie — zawsze Space Grotesk, równa szerokość cyfr, żeby nie skakały.</div>
+      <div><b>Liczby to bohater.</b> Kcal, kg, cm, serie — zawsze Barlow Condensed, równa szerokość cyfr, żeby nie skakały.</div>
       <div><b>Dane zostają.</b> Zmiana nazwy jest tylko widoczna — zapisy w telefonie i na serwerze nie zmieniają się.</div>
     </div>
   </section>
@@ -316,8 +316,8 @@ function hex(el){
     if(mono) return {c: mono, o: n===cur?(+el.dataset.curop||1):1};
     return {c: n===cur?C.zar:C.ink, o:1}; };
   let txt='';
-  if(prog!=null) txt=`<text x="100" y="110" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="56" fill="${C.ink}">${el.dataset.label}</text><text x="100" y="136" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" fill="#8A949C">${el.dataset.sub}</text>`;
-  else if(s>=24 || el.hasAttribute('data-mark')) txt=`<text x="100" y="${s>=48?129:133}" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="${s>=48?84:92}" fill="${mono||C.ink}">6</text>`;
+  if(prog!=null) txt=`<text x="100" y="110" text-anchor="middle" font-family="Barlow Condensed,Inter,sans-serif" font-weight="700" font-size="56" fill="${C.ink}">${el.dataset.label}</text><text x="100" y="136" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" fill="#8A949C">${el.dataset.sub}</text>`;
+  else if(s>=24 || el.hasAttribute('data-mark')) txt=`<text x="100" y="${s>=48?129:133}" text-anchor="middle" font-family="Barlow Condensed,Inter,sans-serif" font-weight="700" font-size="${s>=48?84:92}" fill="${mono||C.ink}">6</text>`;
   el.innerHTML=`<svg viewBox="0 0 200 200" width="${s}" height="${s}" style="display:block"><g fill="none" stroke-width="${sw}" stroke-linecap="round">${EDGES.map((d,i)=>{const e=edge(i);return `<path d="${d}" stroke="${e.c}" stroke-opacity="${e.o}"/>`;}).join('')}</g>${txt}</svg>`;
   el.style.display='inline-block'; el.style.lineHeight='0';
 }
