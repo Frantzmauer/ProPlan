@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SixMo — porównanie czcionek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Archivo:wght@500;600;700&family=Sora:wght@500;600;700&display=swap">
+<style>
+/* Porównanie czcionek nagłówków i liczb — ten sam ekran SixMo, tekst zwykły zawsze Inter. */
+:root{
+  --bg:#0E1114; --panel:#161B20; --panel2:#1E2429; --line:#2A323A;
+  --ink:#F2EFE9; --dim:#9AA3AB; --faint:#8A949C;
+  --zar:#FF5A1F; --zar-soft:#3A1E12; --adapt:#7FB2FF; --ok:#4EC97E;
+  --body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#07090B;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding:24px 16px 60px}
+h1{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.lead{color:var(--dim);max-width:900px;margin-bottom:22px;font-size:14px}
+.grid{display:flex;flex-wrap:wrap;gap:24px;justify-content:center}
+.col{width:375px;max-width:100%}
+.lab{margin-bottom:10px}
+.lab b{font-size:17px}
+.lab .lic{display:inline-block;font-size:11.5px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--ok);margin-left:6px}
+.lab p{font-size:12.5px;color:var(--dim);margin-top:4px;min-height:54px}
+.phone{border-radius:36px;border:1px solid var(--line);background:var(--bg);padding:16px;overflow:hidden}
+.d{font-family:var(--disp)}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:21px;letter-spacing:var(--ls,-.03em)}
+.brand b{color:var(--zar)}
+.streak{display:flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--dim)}
+.streak span{color:var(--ink)}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:14px}
+.day{border-radius:12px;padding:7px 0;text-align:center;background:var(--panel);border:1px solid var(--line);font-size:11px;color:var(--faint)}
+.day b{display:block;font-family:var(--disp);font-size:17px;color:var(--ink);font-weight:600}
+.day.on{background:var(--zar-soft);border-color:var(--zar)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.h{font-family:var(--disp);font-weight:700;font-size:var(--hs,28px);letter-spacing:var(--ls,-.025em);line-height:1.05;margin:4px 0 12px;text-transform:var(--tt,none)}
+.pill{display:inline-block;font-size:12.5px;font-weight:600;border-radius:999px;padding:5px 11px;border:1px solid rgba(127,178,255,.45);color:var(--adapt);margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:12px}
+.ex{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ex:last-child{border-bottom:0}
+.ex .n{font-family:var(--disp);font-weight:700;color:var(--faint);width:16px}
+.ex .t{flex:1;font-weight:500}
+.ex .t small{display:block;color:var(--faint);font-weight:400;font-size:12.5px}
+.ex .kg{font-family:var(--disp);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.ex .kg small{font-size:12px;color:var(--faint);font-weight:500}
+.macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.mac{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px 4px;text-align:center}
+.mac .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.mac .num{font-family:var(--disp);font-weight:700;font-size:var(--ns,22px);line-height:1.15;font-variant-numeric:tabular-nums}
+.mac .g{font-size:11px;color:var(--faint)}
+.meal .tg{font-family:var(--disp);font-weight:600;color:var(--zar);font-size:16px;text-transform:var(--tt,none);letter-spacing:var(--tls,0)}
+.meal .tx{font-size:14px;margin-top:2px}
+.big{display:flex;align-items:baseline;gap:8px;margin:2px 0 12px}
+.big .w{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.big small{color:var(--ok);font-weight:600;font-size:13px}
+.cta{display:flex;align-items:center;justify-content:center;height:50px;border-radius:16px;background:var(--zar);color:#0E1114;font-weight:700;font-size:16px;width:100%;border:0;font-family:var(--body)}
+.pl{font-family:var(--disp);font-weight:600;font-size:15px;color:var(--dim);margin-top:12px;text-align:center}
+</style>
+</head><body>
+<h1>SixMo · porównanie czcionek nagłówków i liczb</h1>
+<p class="lead">Ten sam ekran w czterech wariantach. Zmienia się tylko czcionka nagłówków, liczb i nazwy; zwykły tekst (opisy ćwiczeń, posiłki, przyciski) to zawsze Inter. Na dole każdego telefonu: test polskich znaków. Wszystkie czcionki są na licencji SIL Open Font License 1.1 — darmowe, także w płatnej aplikacji i w sklepach.</p>
+
+<div class="grid" id="grid"></div>
+
+<template id="screen">
+  <div class="phone">
+    <div class="top"><div class="brand"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.2 7.25v9.5L12 21.5 3.8 16.75v-9.5Z" fill="none" stroke="#2A323A" stroke-width="2.4"/><path d="M3.8 7.25 12 2.5" fill="none" stroke="#FF5A1F" stroke-width="2.4" stroke-linecap="round"/><path d="M12 2.5 20.2 7.25v9.5L12 21.5 3.8 16.75" fill="none" stroke="#F2EFE9" stroke-width="2.4" stroke-linejoin="round"/></svg><span>Six<b>Mo</b></span></div><div class="streak"><span>6</span> dni</div></div>
+    <div class="days"><div class="day">Pn<b>9</b></div><div class="day on">Wt<b>10</b></div><div class="day">Śr<b>11</b></div><div class="day">Cz<b>12</b></div><div class="day">Pt<b>13</b></div><div class="day">Sb<b>14</b></div><div class="day">Nd<b>15</b></div></div>
+    <div class="eyebrow">Dziś · tydzień 11 z 24</div>
+    <div class="h">Trening B,<br>dół ciała</div>
+    <span class="pill">Faza 2 · Budowa</span>
+    <div class="card">
+      <div class="ex"><span class="n">1</span><span class="t">Hip thrust ze sztangą<small>4 × 10</small></span><span class="kg">65<small> kg</small></span></div>
+      <div class="ex"><span class="n">2</span><span class="t">Rumuński martwy ciąg<small>4 × 8</small></span><span class="kg">80<small> kg</small></span></div>
+      <div class="ex"><span class="n">3</span><span class="t">Suwnica<small>3 × 13</small></span><span class="kg">130<small> kg</small></span></div>
+    </div>
+    <div class="macros">
+      <div class="mac"><div class="l">kcal</div><div class="num" style="color:var(--zar)">1883</div><div class="g">z 2100</div></div>
+      <div class="mac"><div class="l">Białko</div><div class="num">137</div><div class="g">z 180 g</div></div>
+      <div class="mac"><div class="l">Węgle</div><div class="num">171</div><div class="g">z 200 g</div></div>
+      <div class="mac"><div class="l">Tłuszcz</div><div class="num">62</div><div class="g">z 75 g</div></div>
+    </div>
+    <div class="card meal"><div class="tg">Śniadanie</div><div class="tx">Płatki owsiane 80 g, WPC 40 g, jagody</div></div>
+    <div class="eyebrow">Waga · trend</div>
+    <div class="big"><span class="w">84,6</span><span class="d" style="font-weight:600;color:var(--dim)">kg</span><small>−3,4 kg od startu</small></div>
+    <button class="cta" type="button">Kontynuuj trening</button>
+    <div class="pl">Zażółć gęślą jaźń · ŻĄĘŚĆŃÓŁŹ 0123456789</div>
+  </div>
+</template>
+
+<script>
+// Warianty: nazwa, rodzina, opis, ewentualne korekty wyglądu
+const FONTS = [
+  {name:'Barlow Condensed', fam:"'Barlow Condensed'", tag:'obecna (ŻELAZO)', vars:{'--tt':'uppercase','--ls':'.01em','--tls':'.06em','--hs':'32px','--ns':'26px'},
+   desc:'Wąska, „siłowniana”, wielkie litery w nagłówkach. Mieści dużo w wąskim miejscu, ale kojarzy się z poprzednią marką i jest dość surowa.'},
+  {name:'Space Grotesk', fam:"'Space Grotesk'", tag:'prototyp SixMo', vars:{},
+   desc:'Nowoczesna, trochę techniczna, z charakterem (a, g, cyfry). Popularna w startupach — mniej unikalna.'},
+  {name:'Archivo', fam:"'Archivo'", tag:'propozycja', vars:{'--ls':'-.02em'},
+   desc:'Mocna, sportowa i bardzo czytelna, szczególnie cyfry. Spokojniejsza niż Space Grotesk, bardziej „poważna”.'},
+  {name:'Sora', fam:"'Sora'", tag:'propozycja', vars:{'--ls':'-.03em','--hs':'26px','--ns':'20px'},
+   desc:'Geometryczna, miękka i przyjazna. Szeroka — liczby zajmują więcej miejsca, nagłówki wyglądają lekko „premium”.'},
+];
+const grid = document.getElementById('grid'), tpl = document.getElementById('screen');
+FONTS.forEach((f,i) => {
+  const col = document.createElement('div'); col.className = 'col';
+  col.style.setProperty('--disp', f.fam + ",'Inter',sans-serif");
+  Object.entries(f.vars).forEach(([k,v]) => col.style.setProperty(k,v));
+  col.innerHTML = `<div class="lab"><b>${String.fromCharCode(65+i)}. ${f.name}</b> <span style="color:var(--faint);font-size:12.5px">· ${f.tag}</span><span class="lic">OFL 1.1</span><p>${f.desc}</p></div>`;
+  col.appendChild(tpl.content.cloneNode(true));
+  grid.appendChild(col);
+});
+</script>
+</body></html>
