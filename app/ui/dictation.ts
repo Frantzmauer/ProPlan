@@ -7,6 +7,7 @@ import { DEFAULT_KCAL, macroGoalFor } from '../plan/data';
 import { closeMealDialog } from '../screens/guide';
 import { MT, mtAteNow } from '../screens/meals';
 import { log, renderToday } from '../screens/train';
+import { t } from '../lib/i18n';
 
 export let SpeechRec, mealVoice;
 
@@ -21,7 +22,7 @@ export function makeDictation(o){
     if(rec) return;
     const base=o.input.value.trim();
     let r;
-    try{ r=new SpeechRec(); }catch(e){ say('Dyktowanie nie działa w tej przeglądarce — użyj mikrofonu na klawiaturze.','info'); return; }
+    try{ r=new SpeechRec(); }catch(e){ say(t('Dyktowanie nie działa w tej przeglądarce — użyj mikrofonu na klawiaturze.'),'info'); return; }
     r.lang=speechLocale(langOf(S.profile)); r.interimResults=true; r.continuous=false;
     let heard='';
     r.onresult=e=>{
@@ -37,13 +38,13 @@ export function makeDictation(o){
       heard=parts.join(' '); o.input.value=(base?base+' ':'')+heard;
     };
     r.onerror=e=>{
-      if(e.error==='not-allowed'||e.error==='service-not-allowed') say('Brak dostępu do mikrofonu. Zezwól na mikrofon dla tej strony w ustawieniach przeglądarki.');
-      else if(e.error==='no-speech'){ if(o.onSilence) o.onSilence(); else say('Nic nie usłyszałem — stuknij mikrofon i spróbuj jeszcze raz.'); }
-      else if(e.error!=='aborted') say('Dyktowanie przerwane ('+e.error+'). Możesz wpisać tekst ręcznie.');
+      if(e.error==='not-allowed'||e.error==='service-not-allowed') say(t('Brak dostępu do mikrofonu. Zezwól na mikrofon dla tej strony w ustawieniach przeglądarki.'));
+      else if(e.error==='no-speech'){ if(o.onSilence) o.onSilence(); else say(t('Nic nie dotarło — stuknij mikrofon i spróbuj jeszcze raz.')); }
+      else if(e.error!=='aborted') say(t('Dyktowanie przerwane ({e}). Możesz wpisać tekst ręcznie.', {e:e.error}));
     };
     r.onend=()=>{ if(rec===r) rec=null; ui(false); if(heard) o.onDone(heard); };
     rec=r; ui(true); say(o.listening);
-    try{ r.start(); }catch(e){ rec=null; ui(false); say('Nie udało się włączyć mikrofonu — stuknij 🎤, by mówić.'); }
+    try{ r.start(); }catch(e){ rec=null; ui(false); say(t('Nie udało się włączyć mikrofonu — stuknij 🎤, by mówić.')); }
   }
   if(!SpeechRec) o.mic.style.display='none';
   o.mic.onclick=()=>{ if(rec) stop(); else start(); };
@@ -52,7 +53,7 @@ export function makeDictation(o){
 
 export function voiceReset(){
   mealVoice.stop(); document.getElementById('mdEstimate').classList.remove('hi');
-  mealVoice.say(SpeechRec ? '' : 'Możesz dyktować mikrofonem na klawiaturze telefonu.', 'info');
+  mealVoice.say(SpeechRec ? '' : t('Możesz dyktować mikrofonem na klawiaturze telefonu.'), 'info');
 }
 
 export function voiceStop(){ mealVoice.stop(); }
@@ -67,7 +68,7 @@ export function saveMealDialog(){
   if(!L.custom)L.custom=[];
   const rep=MT.replace && MT.replace.iso===iso ? MT.replace.key : undefined;   // „Zamień” przy posiłku albo „Inaczej” w domknięciu dnia
   L.custom.push({
-    txt:txt||'Własny posiłek', kcal,
+    txt:txt||t('Własny posiłek'), kcal,
     p:parseInt(dlg.querySelector('#mdP').value)||0,
     c:parseInt(dlg.querySelector('#mdC').value)||0,
     f:parseInt(dlg.querySelector('#mdF').value)||0,
@@ -83,15 +84,15 @@ export function renderMacros(tot, kcalGoal?){
   const goal=macroGoalFor(kcalGoal||S.kcalGoal||DEFAULT_KCAL);
   const defs=[
     {lab:'kcal',cls:'kcal',v:tot.kcal,g:goal.kcal,u:''},
-    {lab:'Białko',cls:'',v:tot.p,g:goal.p,u:'g'},
-    {lab:'Węgle',cls:'',v:tot.c,g:goal.c,u:'g'},
-    {lab:'Tłuszcz',cls:'',v:tot.f,g:goal.f,u:'g'},
+    {lab:t('Białko'),cls:'',v:tot.p,g:goal.p,u:'g'},
+    {lab:t('Węgle'),cls:'',v:tot.c,g:goal.c,u:'g'},
+    {lab:t('Tłuszcz'),cls:'',v:tot.f,g:goal.f,u:'g'},
   ];
   box.innerHTML=defs.map(d=>`
     <div class="macro ${d.cls}">
       <div class="lab">${d.lab}</div>
       <div class="num">${Math.round(d.v)}</div>
-      <div class="goal">z ${d.g}${d.u}</div>
+      <div class="goal">${t('z {d}', {d:d.g+d.u})}</div>
       <div class="bar"><span style="width:${Math.min(100,d.g?d.v/d.g*100:0)}%"></span></div>
     </div>`).join('');
 }
@@ -106,7 +107,7 @@ SpeechRec = window.SpeechRecognition||window.webkitSpeechRecognition;
 // dyktowanie opisu posiłku
 mealVoice = makeDictation({
   input:document.getElementById('mdTxt'), mic:document.getElementById('mdMic'), msg:document.getElementById('mdVoice'),
-  listening:'● Słucham… powiedz, co zjadłeś. Skończę sam po chwili ciszy.',
-  onDone:()=>{ mealVoice.say('✓ Gotowe — popraw tekst, jeśli trzeba, i oszacuj kalorie.','done'); document.getElementById('mdEstimate').classList.add('hi'); }
+  listening:t('● Słucham… powiedz, co było do jedzenia. Skończę sam po chwili ciszy.'),
+  onDone:()=>{ mealVoice.say(t('✓ Gotowe — popraw tekst, jeśli trzeba, i oszacuj kalorie.'),'done'); document.getElementById('mdEstimate').classList.add('hi'); }
 });
 }
