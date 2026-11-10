@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   const weights = Array.from({ length: 13 }, (_, i) => ({ d: ago(24 - i * 2), w: +(72 - (i * 2) * 0.6 / 7).toFixed(2) }));
   const log: Record<string, unknown> = {};
   for (let i = 1; i <= 21; i++) log[ago(i)] = { meals: { m0: true, m1: true, m2: true, m3: true }, ex: {}, habits: {}, _m: 1 };
-  const state = { startDate: ago(30), kcalGoal: 1800, profile: { name: 'Ola', weight: 72, height: 168, age: 32, sex: 'f', activity: 1.55 },
+  const state = { startDate: ago(30), kcalGoal: 1800, profile: { name: 'Ola', weight: 72, height: 168, age: 32, sex: 'f', activity: 1.55 , consent: { v: '2026-11-10', terms: 1, health: 1 } },
     log, weights, measures: [], shop: {}, shopT: {}, reminders: { on: false }, _settingsM: 1 };
   const cycle = { on: true, sit: 'natural', coach: true, at: 1,
     periods: [{ s: ago(61), e: ago(57) }, { s: ago(32), e: ago(28) }, { s: ago(3), e: ago(0) }], sym: {} };

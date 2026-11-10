@@ -19,7 +19,7 @@ const ago = n => { const d = new Date(NOW); d.setHours(12, 0, 0, 0); d.setDate(d
 const ALL_ON = { coach: true, voice: true, form: true, estimate: true, photo: true, scanner: true, early: true };
 
 const state = { startDate: ago(74), kcalGoal: 2300, _settingsM: 1,
-  profile: { name: 'Tomek', weight: 92, height: 182, age: 34, sex: 'm', activity: 1.55, lang: LANG },
+  profile: { name: 'Tomek', weight: 92, height: 182, age: 34, sex: 'm', activity: 1.55, lang: LANG , consent: { v: '2026-11-10', terms: 1, health: 1 } },
   log: {}, weights: [], measures: [], custom: {}, shop: {}, shopT: {}, reminders: { on: false } };
 const cloud = { url: SERVER, token: 'demo', account: 'tomek', on: true, lastSync: Date.now(), lastError: '' };
 

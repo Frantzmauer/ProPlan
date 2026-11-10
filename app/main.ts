@@ -33,6 +33,7 @@ import { __init_26 } from './features/checkin';
 import { __init_27 } from './features/cycle';
 import { __init_29 } from './features/formcheck';
 import { __init_30 } from './features/body3d';
+import { initConsent } from './features/consent';
 
 // język przed pierwszym ekranem: z profilu na tym urządzeniu, a na nowym urządzeniu z języka telefonu (polski → pl, inny → en)
 const saved = (() => { try { return JSON.parse(localStorage.getItem(KEYS.STATE) || 'null'); } catch { return null; } })();
@@ -73,3 +74,4 @@ __init_27();
 __init_28();
 __init_29();
 __init_30();
+initConsent();   // zgody na końcu — okno nad wszystkim, gdy brak akceptacji aktualnych dokumentów

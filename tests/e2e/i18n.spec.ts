@@ -12,7 +12,7 @@ const OK = /^(Polski|Polski · .*|Język · Language|Language · Język|Coach & 
 
 async function seed(page: Page) {
   const state = { startDate: ago(30), kcalGoal: 2200, _settingsM: 1,
-    profile: { name: 'Sam', weight: 80, height: 180, age: 35, sex: 'f', activity: 1.55, lang: 'en' },
+    profile: { name: 'Sam', weight: 80, height: 180, age: 35, sex: 'f', activity: 1.55, lang: 'en' , consent: { v: '2026-11-10', terms: 1, health: 1 } },
     log: {}, weights: [{ d: ago(20), w: 82 }, { d: ago(10), w: 81 }, { d: ago(1), w: 80.4 }],
     measures: [{ d: ago(20), waist: 90, chest: 100, _t: 1 }, { d: ago(2), waist: 88, chest: 100, _t: 1 }],
     shop: {}, shopT: {}, reminders: { on: false } };

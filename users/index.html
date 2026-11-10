@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="SixMo U">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-C_Nzqmjc.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-oFSOWEwT.css">
+  <script type="module" crossorigin src="./assets/index-BfiTld-Z.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-COzCV5Gs.css">
 </head>
 <body>
 
@@ -255,6 +255,11 @@
       <a class="settings-row legal-link" id="lgTerms" href="../legal/regulamin.html"><div class="l"><div class="t">Regulamin</div><div class="s">Zasady korzystania, plany i płatności, Trener AI, reklamacje</div></div><span class="go">›</span></a>
       <a class="settings-row legal-link" id="lgPrivacy" href="../legal/polityka-prywatnosci.html"><div class="l"><div class="t">Polityka prywatności</div><div class="s">Jakie dane, gdzie są przechowywane, Twoje prawa</div></div><span class="go">›</span></a>
     </div>
+    <div class="panel" style="margin-top:10px">
+      <div class="settings-row"><div class="l"><div class="t">Zgoda na dane o zdrowiu</div><div class="s" id="csStatus">—</div></div>
+        <button class="btn ghost" id="csWithdraw" type="button" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Wycofaj zgodę</button></div>
+    </div>
+    <div class="note">Po wycofaniu zgody aplikacja poprosi o nią ponownie — bez niej nie może prowadzić planu. Możesz też usunąć konto (Więcej → Twoje dane).</div>
     <div class="note">Trener AI to program komputerowy, nie lekarz ani trener personalny. Aplikacja nie stawia diagnoz.</div>
   </div>
 
@@ -544,6 +549,17 @@
 </div>
 
 <!-- pierwszy start nowego konta: obowiązkowy profil -->
+<div id="consentDialog" role="dialog" aria-modal="true" aria-labelledby="csTitle">
+  <div class="md-card">
+    <div class="md-title" id="csTitle">Zanim zaczniesz</div>
+    <div class="cs-txt">SixMo prowadzi Twój plan na podstawie danych o zdrowiu: wagi, obwodów, posiłków, samopoczucia i — jeśli włączysz tę funkcję — cyklu. Potrzebujemy Twojej zgody.</div>
+    <label class="cs-opt"><input type="checkbox" id="csTerms"><span>Akceptuję <a id="csTermsLink" href="../legal/regulamin.html" target="_blank" rel="noopener">Regulamin</a> i <a id="csPrivacyLink" href="../legal/polityka-prywatnosci.html" target="_blank" rel="noopener">Politykę prywatności</a>.</span></label>
+    <label class="cs-opt"><input type="checkbox" id="csHealth"><span>Zgadzam się na przetwarzanie moich danych o zdrowiu przez aplikację i Trenera AI w celu prowadzenia mojego planu. Zgodę mogę wycofać w Więcej → Regulamin i polityka prywatności.</span></label>
+    <button class="btn" id="csOk" type="button" disabled>Akceptuję i przechodzę dalej</button>
+    <div class="cs-note">Obie zgody są potrzebne, bo każda funkcja aplikacji korzysta z tych danych. Trener AI to program komputerowy, nie lekarz.</div>
+  </div>
+</div>
+
 <div id="profileDialog">
   <div class="md-card">
     <div class="md-title">Twój profil</div>

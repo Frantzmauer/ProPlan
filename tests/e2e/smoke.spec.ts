@@ -3,6 +3,15 @@ import { expect, test, type Page } from '@playwright/test';
 // Przegląd ekranów po każdej zmianie: strona się ładuje bez błędów, zakładki działają,
 // podstawowe akcje (posiłek, waga, okna) robią to, co powinny. Bez serwera (synchronizacja wyłączona).
 
+// świeża aplikacja: najpierw okno zgód (Regulamin i Polityka + dane o zdrowiu)
+async function consent(page: Page) {
+  await expect(page.locator('#consentDialog')).toBeVisible();
+  await expect(page.locator('#csOk')).toBeDisabled();
+  await page.locator('#csTerms').check(); await page.locator('#csHealth').check();
+  await page.locator('#csOk').click();
+  await expect(page.locator('#consentDialog')).toBeHidden();
+}
+
 function watchErrors(page: Page) {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -13,7 +22,7 @@ for (const [ver, tag] of [['beta', 'BETA'], ['users', 'USERS']] as const) {
   test.describe(ver, () => {
     test('ładuje się i przechodzi przez wszystkie zakładki', async ({ page }) => {
       const errors = watchErrors(page);
-      await page.goto(`/${ver}/`);
+      await page.goto(`/${ver}/`); await consent(page);
       await expect(page.locator('.beta-tag')).toHaveText(tag);
       for (const v of ['train', 'diet', 'progress', 'shop', 'set']) {
         await page.locator(`.nav button[data-v="${v}"]`).click();
@@ -26,7 +35,7 @@ for (const [ver, tag] of [['beta', 'BETA'], ['users', 'USERS']] as const) {
 
     test('odhaczenie posiłku liczy się w dniu', async ({ page }) => {
       const errors = watchErrors(page);
-      await page.goto(`/${ver}/`);
+      await page.goto(`/${ver}/`); await consent(page);
       await page.locator('.nav button[data-v="diet"]').click();
       await expect(page.locator('#mealsProgress')).toContainText('0/');
       await page.locator('#mealsCard [data-meal="m0"]').first().click();
@@ -37,7 +46,7 @@ for (const [ver, tag] of [['beta', 'BETA'], ['users', 'USERS']] as const) {
 
     test('zapis wagi pokazuje się w Postępie', async ({ page }) => {
       const errors = watchErrors(page);
-      await page.goto(`/${ver}/`);
+      await page.goto(`/${ver}/`); await consent(page);
       await page.locator('.nav button[data-v="progress"]').click();
       await page.locator('#weightInput').fill('82.4');
       await page.locator('#weightSave').click();
@@ -48,7 +57,7 @@ for (const [ver, tag] of [['beta', 'BETA'], ['users', 'USERS']] as const) {
 
     test('okna: dodaj posiłek i Trener otwierają się', async ({ page }) => {
       const errors = watchErrors(page);
-      await page.goto(`/${ver}/`);
+      await page.goto(`/${ver}/`); await consent(page);
       await page.locator('.nav button[data-v="diet"]').click();
       await page.locator('#addMealBtn').click();
       await expect(page.locator('#mealDialog')).toHaveClass(/show/);

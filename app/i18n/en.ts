@@ -1506,4 +1506,18 @@ export const EN: Dict = {
   "Brak internetu — konto można usunąć tylko z połączeniem.": "No internet — you can only delete your account when online.",
   // ---- Usuwanie konta (uzup.) ----
   "Na pewno? Stuknij jeszcze raz": "Sure? Tap again",
+  // ---- Zgody ----
+  "Zanim zaczniesz": "Before you start",
+  "SixMo prowadzi Twój plan na podstawie danych o zdrowiu: wagi, obwodów, posiłków, samopoczucia i — jeśli włączysz tę funkcję — cyklu. Potrzebujemy Twojej zgody.": "SixMo runs your plan using health data: weight, body measurements, meals, wellbeing and — if you turn it on — your cycle. We need your consent.",
+  "Akceptuję": "I accept the",
+  "i": "and",
+  "Zgadzam się na przetwarzanie moich danych o zdrowiu przez aplikację i Trenera AI w celu prowadzenia mojego planu. Zgodę mogę wycofać w Więcej → Regulamin i polityka prywatności.": "I agree to the app and the AI Coach processing my health data to run my plan. I can withdraw consent in More → Terms and Privacy Policy.",
+  "Politykę prywatności": "Privacy Policy",
+  "Akceptuję i przechodzę dalej": "Accept and continue",
+  "Obie zgody są potrzebne, bo każda funkcja aplikacji korzysta z tych danych. Trener AI to program komputerowy, nie lekarz.": "Both are needed because every feature of the app uses this data. The AI Coach is a computer program, not a doctor.",
+  "Zgoda na dane o zdrowiu": "Health data consent",
+  "Wycofaj zgodę": "Withdraw consent",
+  "Po wycofaniu zgody aplikacja poprosi o nią ponownie — bez niej nie może prowadzić planu. Możesz też usunąć konto (Więcej → Twoje dane).": "After you withdraw consent, the app will ask for it again — it can't run your plan without it. You can also delete your account (More → Your data).",
+  "Udzielona {d} · dokumenty z {v}": "Given on {d} · documents of {v}",
+  "Nie udzielono": "Not given",
 };

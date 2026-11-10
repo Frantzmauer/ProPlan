@@ -9,7 +9,7 @@ const ago = (n: number) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.se
 const ALL_ON = { coach: true, voice: true, form: true, estimate: true, photo: true, scanner: true, early: true };
 
 async function seed(page: Page, { cloud = false, admin = false } = {}) {
-  const state = { startDate: ago(7), kcalGoal: 2200, profile: { name: 'Test', weight: 80, height: 180, age: 35, sex: 'm', activity: 1.55 },
+  const state = { startDate: ago(7), kcalGoal: 2200, profile: { name: 'Test', weight: 80, height: 180, age: 35, sex: 'm', activity: 1.55 , consent: { v: '2026-11-10', terms: 1, health: 1 } },
     log: {}, weights: [], measures: [], shop: {}, shopT: {}, reminders: { on: false }, _settingsM: 1 };
   const cfg = cloud ? { url: SERVER, token: 'tok', account: 'test', on: true, lastSync: 0, lastError: '' } : null;
   await page.addInitScript(([s, c]) => {
@@ -429,5 +429,26 @@ test('Więcej: usunięcie konta — dwa stuknięcia, serwer usuwa konto, telefon
   await page.locator('#delAcc').click();
   await expect.poll(() => deleted).toBe(true);
   await expect.poll(() => page.evaluate(() => localStorage.getItem('zelazo_cloud'))).toBe(null);
+  expect(errors).toEqual([]);
+});
+
+test('zgody: nowa wersja dokumentów pyta ponownie; wycofanie zgody na dane o zdrowiu wraca do okna zgód', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page);
+  await page.addInitScript(() => {
+    const k = 'zelazo_v1', S = JSON.parse(localStorage.getItem(k) || '{}');
+    if (S.profile && S.profile.consent && S.profile.consent.v === '2026-11-10' && !sessionStorage.getItem('old')) { S.profile.consent.v = '2025-01-01'; localStorage.setItem(k, JSON.stringify(S)); sessionStorage.setItem('old', '1'); }
+  });
+  await page.goto('/beta/');
+  await expect(page.locator('#consentDialog')).toBeVisible();
+  await page.locator('#csTerms').check(); await page.locator('#csHealth').check(); await page.locator('#csOk').click();
+  await expect(page.locator('#consentDialog')).toBeHidden();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('zelazo_v1') || '{}').profile.consent.v)).toBe('2026-11-10');
+  await page.locator('.nav button[data-v="set"]').click();
+  await page.locator('[data-more="legal"]').click();
+  await expect(page.locator('#csStatus')).toContainText('Udzielona');
+  await page.locator('#csWithdraw').click(); await page.locator('#csWithdraw').click();
+  await expect(page.locator('#consentDialog')).toBeVisible();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('zelazo_v1') || '{}').profile.consent.health)).toBe(null);
   expect(errors).toEqual([]);
 });

@@ -30,12 +30,22 @@ dane o zdrowiu — wyraźna zgoda (art. 9 ust. 2 lit. a). Cykl domyślnie zostaj
 Jednocześnie Regulamin §7 uczciwie mówi: bez synchronizacji dane są tylko na urządzeniu i mogą przepaść; nie odpowiadamy
 za utratę danych trzymanych wyłącznie lokalnie. To jest dopuszczalne, ale nie zwalnia z odpowiedzialności za serwer.
 
+## Zrobione (10 listopada 2026, beta i USERS)
+- Administrator: Marek Frankiewicz, kontakt contact@sixmo.app (adres skrzynki trzeba założyć — niżej).
+- **Zgody** (`app/features/consent.ts`): okno przy pierwszym uruchomieniu i po zmianie wersji dokumentów (`LEGAL_V`);
+  akceptacja Regulaminu i Polityki + osobna zgoda na dane o zdrowiu; zapis `profile.consent = {v, terms, health}`
+  synchronizowany z serwerem (dowód zgody); wycofanie w Więcej → Regulamin i polityka prywatności.
+- **Usuwanie konta** w aplikacji (Więcej → Twoje dane → Usuń konto; serwer: akcja `deleteAccount`) i strony
+  `legal/usun-konto.html`, `legal/delete-account.html` (adres do formularza Google Play).
+- **Bez zewnętrznych serwerów:** czcionki w paczce aplikacji, skaner i rozpoznawanie sylwetki w `vendor/`.
+
 ## Do zrobienia (w tej kolejności)
 
-1. **Dane administratora** w obu dokumentach (pola na pomarańczowo): imię i nazwisko albo firma, adres, NIP (jeśli
-   działalność), adres e-mail do spraw danych i reklamacji. Przy sprzedaży Premium potrzebna jest forma prowadzenia
+1. **Adres administratora** (ustawa o świadczeniu usług drogą elektroniczną, art. 5 — wymagany przed publicznym startem)
+   i NIP, jeśli będzie działalność; założyć skrzynkę contact@sixmo.app. Przy sprzedaży Premium potrzebna jest forma prowadzenia
    sprzedaży (działalność gospodarcza / działalność nierejestrowana do limitu przychodu) — do decyzji z księgową.
-2. **Zgody przy rejestracji** (prototyp `docs/prototypes/sixmo-konta.html`): akceptacja Regulaminu i Polityki +
+2. ~~Zgody~~ — zrobione (przy nowych kontach dodać zapis zgody także po stronie serwera kont).
+   Pierwotnie: **Zgody przy rejestracji** (prototyp `docs/prototypes/sixmo-konta.html`): akceptacja Regulaminu i Polityki +
    osobna wyraźna zgoda na dane o zdrowiu, z zapisem daty i wersji dokumentu; możliwość wycofania zgody w Koncie.
    Obecni użytkownicy z zaproszeń — poprosić o zgody przy najbliższym otwarciu aplikacji.
 3. **Umowy powierzenia z dostawcami (ważne).** Dziś serwer to Google Apps Script i Dysk na prywatnym koncie Gmail —
@@ -43,9 +53,9 @@ za utratę danych trzymanych wyłącznie lokalnie. To jest dopuszczalne, ale nie
    dane o zdrowiu. Rozwiązanie: przeprowadzka kont i danych do dostawcy z umową powierzenia i serwerami w UE (plan:
    Supabase, Frankfurt) — albo Google Workspace z podpisaną umową przetwarzania. Anthropic: warunki komercyjne API
    zawierają umowę przetwarzania danych (DPA) — sprawdzić i zaakceptować w panelu Anthropic.
-4. **Czcionki i biblioteki z zewnątrz** (Google Fonts, jsDelivr): przenieść pliki do aplikacji — mniej odbiorców danych
+4. ~~Czcionki i biblioteki z zewnątrz~~ — zrobione. Pierwotnie: **Czcionki i biblioteki z zewnątrz** (Google Fonts, jsDelivr): przenieść pliki do aplikacji — mniej odbiorców danych
    (adres IP) i działanie bez internetu. Potem usunąć te pozycje z Polityki.
-5. **Usuwanie konta w aplikacji** (Więcej → Konto → Usuń konto) i strona usuwania konta w sieci — wymóg Google Play;
+5. ~~Usuwanie konta~~ — zrobione (w nowych kontach — usuwanie także konta logowania). Pierwotnie: **Usuwanie konta w aplikacji** (Więcej → Konto → Usuń konto) i strona usuwania konta w sieci — wymóg Google Play;
    do zrobienia razem z nowymi kontami. Do tego czasu — na prośbę e-mailem.
 6. **Płatności:** uzupełnić Regulamin §5 (operator, odnowienie, rezygnacja, odstąpienie, faktury) i Politykę
    (operator płatności) — przed uruchomieniem Premium; przejrzeć z prawnikiem.

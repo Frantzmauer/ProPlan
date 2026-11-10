@@ -18,6 +18,7 @@ import { updateStreak } from './streak';
 import { renderToday } from './train';
 import { bodyRefresh } from '../features/body3d';
 import { dec, isEn, plural, t } from '../lib/i18n';
+import { legalUrl, renderConsentStatus } from '../features/consent';
 
 export let MORE_TITLES, sd, kcalSlider, pf;
 
@@ -30,6 +31,7 @@ export function moreOpen(sec, fromHistory?){
   if(sec==='cw') renderExLib();
   if(sec==='plan'){ renderPlanQuota(); quotaLoad(); }
   if(sec==='adm') apLoad();
+  if(sec==='legal') renderConsentStatus();
   if(!sec) moreStatus();
   // jeden wpis w historii na podsekcję: „wstecz” zawsze wraca do menu
   try{ if(sec && !fromHistory){ if(history.state&&history.state.more) history.replaceState({more:sec},''); else history.pushState({more:sec},''); }
@@ -138,9 +140,8 @@ MORE_TITLES = {cw:[t('Ćwiczenia'),t('Nauka techniki')],prof:[t('Profil i plan')
   plan:[t('Pakiet i limity'),t('Twój plan · Trener AI')], adm:[t('Konta i plany'),t('Administrator · USERS')],
   legal:[t('Regulamin i prywatność'),t('Dokumenty')]};
 // dokumenty prawne w języku aplikacji (legal/ obok wersji stabilnej; w becie, Early Access i USERS piętro wyżej)
-{ const base=appChannel()==='stable'?'legal/':'../legal/', en=isEn();
-  document.getElementById('lgTerms').setAttribute('href', base+(en?'terms.html':'regulamin.html'));
-  document.getElementById('lgPrivacy').setAttribute('href', base+(en?'privacy.html':'polityka-prywatnosci.html')); }
+document.getElementById('lgTerms').setAttribute('href', legalUrl('terms'));
+document.getElementById('lgPrivacy').setAttribute('href', legalUrl('privacy'));
 document.getElementById('moreBack').onclick=()=>{ if(history.state&&history.state.more) history.back(); else moreOpen(''); };
 document.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>moreOpen(b.dataset.more));
 document.querySelectorAll('#moreMenu [data-rest-list]').forEach(b=>b.onclick=()=>openRestList(todayISO()));

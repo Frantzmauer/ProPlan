@@ -24,6 +24,7 @@ test('pobranie przy starcie i wysyłka po zmianie', async ({ page }) => {
   }, JSON.stringify({ url: SERVER, token: 'tok', account: 'Ola', on: true, lastSync: 0, lastError: '' }));
 
   await page.goto('/beta/');
+  await page.locator('#csTerms').check(); await page.locator('#csHealth').check(); await page.locator('#csOk').click();
   // waga z serwera trafia do telefonu
   await page.locator('.nav button[data-v="progress"]').click();
   await expect(page.locator('#wNow')).toHaveText('77.7');

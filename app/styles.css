@@ -1061,3 +1061,16 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 
 /* ustawienia techniczne tylko dla administratora i testerów (features/plan-limits.ts → techUi) */
 body:not(.tech) [data-tech]{display:none!important}
+
+/* zgody (features/consent.ts) — nad wszystkimi oknami, nie da się zamknąć bez akceptacji */
+#consentDialog{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center}
+#consentDialog.show{display:flex}
+#consentDialog .md-card{max-height:92vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
+@media(min-width:620px){#consentDialog{align-items:center}#consentDialog .md-card{border-radius:18px}}
+.cs-txt{font-size:14px;line-height:1.55;color:var(--ink-dim);margin:6px 0 12px}
+.cs-opt{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.5}
+.cs-opt input{width:22px;height:22px;flex:none;accent-color:var(--amber);margin-top:1px}
+.cs-opt a{color:var(--steel)}
+#csOk{width:100%;margin-top:10px}
+#csOk:disabled{opacity:.4}
+.cs-note{font-size:12.5px;color:var(--ink-faint);margin-top:10px;line-height:1.5}
