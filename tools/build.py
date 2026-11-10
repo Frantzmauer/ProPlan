@@ -30,14 +30,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SLOT = 'https://zelazo.invalid/'   # to samo co SLOT w vite.config.js
 
 CHANNELS = {
-    'stable': {'dir': '.',     'icons': 'icons/',    'apple': 'ŻELAZO',    'tag': '',
-               'name': 'ŻELAZO — plan, trening, dieta', 'short': 'ŻELAZO',
+    'stable': {'dir': '.',     'icons': 'icons/sixmo/',    'apple': 'SixMo',    'tag': '',
+               'name': 'SixMo — plan, trening, dieta', 'short': 'SixMo',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.'},
     'beta':   {'dir': 'beta',  'icons': '../icons/sixmo/', 'apple': 'SixMo β',  'tag': 'BETA',
                'name': 'SixMo β — plan, trening, dieta', 'short': 'SixMo β',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI — wersja beta.'},
-    'early':  {'dir': 'early', 'icons': '../icons/', 'apple': 'ŻELAZO EA', 'tag': 'EARLY',
-               'name': 'ŻELAZO Early Access — plan, trening, dieta', 'short': 'ŻELAZO EA',
+    'early':  {'dir': 'early', 'icons': '../icons/sixmo/', 'apple': 'SixMo EA', 'tag': 'EARLY',
+               'name': 'SixMo Early Access — plan, trening, dieta', 'short': 'SixMo EA',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI — nowości wcześniej dla Premium.'},
     'users':  {'dir': 'users', 'icons': '../icons/sixmo/', 'apple': 'SixMo U',  'tag': 'USERS',
                'name': 'SixMo USERS — konta i plany', 'short': 'SixMo U',
@@ -47,8 +47,7 @@ CHANNELS = {
                'name': 'SixMo — plan, trening, dieta', 'short': 'SixMo',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.', 'copy': ['icons', 'models']},
 }
-# Nowa marka SixMo (ikony icons/sixmo/) jest w becie, USERS i native. Stabilna i Early Access zostają przy ŻELAZO,
-# dopóki nie zostaną wydane z commita z nową marką — wtedy przestawić je tak samo (nazwa i ikony).
+# Marka SixMo (od v1.6): ikony w icons/sixmo/. Stare icons/ zostają dla v1.0 i starszych skrótów na telefonach.
 SOURCES = ['app', 'vite.config.js', 'package.json', 'package-lock.json']
 
 
