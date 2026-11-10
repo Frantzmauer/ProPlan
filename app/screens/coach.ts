@@ -24,7 +24,7 @@ import { MEASURES, goalOn, kcalRecord, renderMeasures, tdFmt, tdeeEstimate } fro
 import { DEFAULT_STEPS, stepsAdj, tysKrokow } from './steps';
 import { dayMeals, dmy, dowOf, effEx, exAny, nextMoves, prevSession, renderToday, scaledStart, setOk, timedSpec, wIcon } from './train';
 import { WO, fmtDur, hasSession } from './workout';
-import { locale } from '../lib/i18n';
+import { dayShort, isEn, locale, t } from '../lib/i18n';
 
 export let coachKey, coachId, coachDecided, coachBusy, fmtKg, DAY_SHORT, daysTxt, coachAtt, coachOpen, coachVoice, TTS, coachSpeakSeq;
 export function __set_coachAtt(v){ coachAtt=v; return v; }
@@ -47,6 +47,17 @@ export const COACH_APP_GUIDE = `Jak działa aplikacja SixMo (gdy mówisz, co kli
 - Zakupy: lista na tydzień.
 - Więcej: Ćwiczenia (nauka techniki), Cykl i samopoczucie, Przerwy między seriami, Profil i plan (profil, cel kalorii suwakiem, start planu), Pakiet i limity AI, Synchronizacja i konta, Przypomnienia, Kopia i eksport, Wersja aplikacji.
 - Ty zmieniasz dane tylko kartą propozycji (narzędzie zaproponuj_zmiany) — zmiana wchodzi dopiero po kliknięciu „Zastosuj od dziś”, a „Cofnij” ją wycofuje. Wpisów treningów, wagi i posiłków nie edytujesz — wskaż, gdzie użytkownik zrobi to sam.`;
+
+// to samo po angielsku — nazwy przycisków takie, jakie widzi osoba z kontem po angielsku
+export const COACH_APP_GUIDE_EN = `How the SixMo app works (when you say what to tap, use only what is listed here, with these exact English labels; if something isn't here, say you don't know instead of guessing):
+- Bottom tab bar: Diet, Workout, Progress, Shopping, More. Above it a day switcher "‹ TODAY ›" (or swipe sideways); "↩ TODAY" goes back to today.
+- Workout: the day card with exercises and sets to tick (kg × reps). At each exercise: "Swap exercise" (reason: station taken, pain, no equipment; today only or permanently) and "Skip"; a workout can be moved to another day with "Move". Workout mode: start, pause, rest timers, summary and records. A check-in before the workout (sleep, soreness, energy). Form check from a video of a set.
+- Diet → "Today's meals": meals from the plan. The square on the left ticks a meal as eaten. Numbers 1–3 switch the meal variant. "from the Coach" = a meal replaced by your suggestion. "Swap" at an unticked planned meal: enter what was eaten instead — that planned meal stops counting and the entry counts. "＋ Add meal": description, dictation, photo (AI estimates calories), barcode scanner, "Estimate calories from description", and in "Replaces": "Extra" or the planned meal this entry replaces (like "Swap"); the "kcal" field + "Add calories" for just a number. Under the macros, the "Diet day" card (rule below, with a hint of what's missing). An own meal is deleted with the cross. In the evening, the "Close the day" card: As planned / Something else / Skipped. When a meal is ticked late, the app asks when it was eaten. Below: "Your habits · last 7 days", "Daily essentials" (sleep, steps, log, no alcohol, no sweets) and water.
+- A diet day counts (🍽️ streak, calendar, "Diet day" card): calories ${Math.round(KCAL_LO*100)}–${Math.round(KCAL_HI*100)}% of that day's goal AND protein at least ${Math.round(PROT_MIN*100)}% of the protein goal. It doesn't matter whether the food is from the plan or own meals. Today is "in progress" until midnight. When a day is close to the threshold, suggest a specific meal that will close it (usually protein).
+- Progress: where you are in the plan, records, weight and trend (energy use from the weight trend and a goal suggestion), body measurements (save a measurement, history with an "Edit" button), consistency, streaks, calendar.
+- Shopping: the list for the week.
+- More: Exercises (technique), Cycle and wellbeing, Rest between sets, Profile and plan (profile, calorie goal slider, plan start), Plan and AI limits, Sync and accounts, Reminders, Backup and data, App version.
+- You change data only through a suggestion card (tool zaproponuj_zmiany) — a change takes effect only after tapping "Apply from today", and "Undo" reverts it. You don't edit workout, weight or meal entries — tell the user where to do it themselves. Exercise and food names in the data are in Polish (internal names); in your reply use their English names, but in the tool use the exact Polish names from the data.`;
 
 // legenda zwięzłego dziennika (jeden wiersz na dzień, posiłki tylko dla ostatnich dni) — mniej tokenów niż proza
 export const FOOD_LEGEND = 'Dziennik jedzenia, ostatnie 14 dni (dni bez wpisów pominięte; „brak zapisu jedzenia” = dzień z innymi wpisami, ale bez posiłków — nie wiadomo, czy jedzenia nie było, czy nie zapisano). Wiersz dnia: data|kcal zjedzone/cel|B, W, T g zjedzone/cel|ocena dnia (ZAL = dzień diety zaliczony; inaczej w toku albo nie, z % celu kcal i białka i ✓/✗)|woda szkl.|nawyki. Sumy liczone jak w zakładce Dieta (posiłki z planu + własne) — są wiarygodne, nie licz dnia tylko z własnych. Posiłki pod wierszem dnia (tylko 4 ostatnie dni): ✓ zjedzony, → zastąpiony własnym, ✗ pominięty, · nie odhaczony; * = od Trenera; „ok.GG:MM” = kiedy zjedzono, „z GG:MM” = kiedy odhaczono; liczby = kcal/B/W/T; + = własny posiłek („→Obiad” = zamiast obiadu z planu).';
@@ -88,7 +99,7 @@ export function coachFoodDay(iso, today, detail=true){
 // live — data, realizacja tygodnia, dziennik jedzenia, check-in (zmienia się po każdym odhaczeniu posiłku czy wody)
 export function buildCoachContext(){
   const p=S.profile||{}, today=todayISO(), wkNow=weekOf(dayIndexFor(today));
-  const inPlan=wkNow>=1&&wkNow<=24, out=[COACH_APP_GUIDE], live=[];
+  const inPlan=wkNow>=1&&wkNow<=24, out=[isEn()?COACH_APP_GUIDE_EN:COACH_APP_GUIDE], live=[];
   const dd=iso=>iso.slice(8,10)+'.'+iso.slice(5,7);
   live.push(`Dzisiaj: ${today}. Start planu: ${S.startDate}. ${inPlan?'Tydzień '+wkNow+'/24 — '+phaseInfo(wkNow).name:'Poza 24-tygodniowym planem'}.`);
   out.push(`Profil: ${p.name||'bez imienia'}, ${p.sex==='f'?'kobieta':'mężczyzna'}, ${p.age||'?'} lat, ${p.height||'?'} cm, waga w profilu ${p.weight||'?'} kg, aktywność ×${p.activity||'?'}.`);
@@ -231,10 +242,10 @@ export function renderCoach(){
     chips.querySelectorAll('button').forEach(b=>b.onclick=()=>coachSend(b.textContent)); }
   document.getElementById('coachIn').placeholder=ui.placeholder;
   box.innerHTML=(h.length?'':`<div class="coach-b a">${esc(ui.hello(S.profile&&S.profile.name?S.profile.name:''))}</div>`)+
-    h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>')+(m.att?`<span class="att">📎 ${m.att.n} klatek: ${esc(m.att.ex)}</span>`:''):coachMd(m.content)+(m.local?'<span class="ea-note">bez AI · nie liczy się do limitu</span>':'')}${m.kind==='form'?`<button class="coach-ask-vid" data-att="${esc(m.id)}">📎 Zapytaj o to nagranie</button>`:''}</div>`+(m.proposal?propCard(m,i):'')).join('')+
+    h.map((m,i)=>`<div class="coach-b ${m.role==='user'?'u':'a'}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>')+(m.att?`<span class="att">📎 ${t('{n} klatek: {x}', {n:m.att.n, x:esc(t(m.att.ex))})}</span>`:''):coachMd(m.content)+(m.local?'<span class="ea-note">'+t('bez AI · nie liczy się do limitu')+'</span>':'')}${m.kind==='form'?`<button class="coach-ask-vid" data-att="${esc(m.id)}">${t('📎 Zapytaj o to nagranie')}</button>`:''}</div>`+(m.proposal?propCard(m,i):'')).join('')+
     (coachBusy?`<div class="coach-b a" style="color:var(--ink-dim)">${ui.thinking}</div>`:'');
   box.scrollTop=box.scrollHeight;
-  box.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{ const m=loadCoach().find(x=>x.id===b.dataset.att); if(m){ coachAtt={id:m.id, ex:m.ex||'nagranie', t:m.t}; renderCoachAtt(); document.getElementById('coachIn').focus(); } });
+  box.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{ const m=loadCoach().find(x=>x.id===b.dataset.att); if(m){ coachAtt={id:m.id, ex:m.ex||t('nagranie'), t:m.t}; renderCoachAtt(); document.getElementById('coachIn').focus(); } });
   renderCoachAtt();
   box.querySelectorAll('[data-prop-apply]').forEach(b=>b.onclick=()=>applyProposal(+b.dataset.propApply));
   box.querySelectorAll('[data-prop-undo]').forEach(b=>b.onclick=()=>undoProposal(+b.dataset.propUndo));
@@ -259,21 +270,22 @@ export function propText(P){
 
 export function propCard(m,i){
   const P=m.proposal;
-  const rows=(P.cwiczenia||[]).map(x=>`<div>• <b>${esc(x.nazwa)}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}</div>`).join('')+
-    (P.zamiany_cwiczen||[]).map(x=>`<div>• <b>${esc(x.z)}</b> → <b>${esc(x.na)}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}${x.technika?'<div style="color:var(--ink-dim);font-size:13px;padding-left:12px">'+esc(x.technika)+'</div>':''}</div>`).join('')+
-    (P.posilki||[]).map(x=>`<div>• <b>${esc(x.posilek)}</b> (${esc(daysTxt(x.dni))}): ${esc(x.opis)} <span style="color:var(--ink-dim)">— ${x.kcal} kcal · B ${x.bialko_g} / W ${x.wegle_g} / T ${x.tluszcz_g}</span></div>`).join('')+
-    (P.cel_kcal?`<div>• <b>Cel kalorii</b>: ${P.cel_kcal} kcal/dzień</div>`:'')+
-    (P.cel_krokow?`<div>• <b>Cel kroków</b>: ${tysKrokow(P.cel_krokow)} dziennie</div>`:'')+
+  const daysUi=d=>(!d||!d.length)?t('codziennie'):d.slice().sort((a,b)=>((a+6)%7)-((b+6)%7)).map(x=>dayShort()[x]).join(', ');
+  const rows=(P.cwiczenia||[]).map(x=>`<div>• <b>${esc(t(x.nazwa))}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}</div>`).join('')+
+    (P.zamiany_cwiczen||[]).map(x=>`<div>• <b>${esc(t(x.z))}</b> → <b>${esc(t(x.na))}</b>: ${x.ciezar_kg>0?fmtKg(x.ciezar_kg)+' kg · ':''}${x.serie}×${x.powtorzenia}${x.technika?'<div style="color:var(--ink-dim);font-size:13px;padding-left:12px">'+esc(x.technika)+'</div>':''}</div>`).join('')+
+    (P.posilki||[]).map(x=>`<div>• <b>${esc(t(x.posilek))}</b> (${esc(daysUi(x.dni))}): ${esc(x.opis)} <span style="color:var(--ink-dim)">— ${x.kcal} kcal · ${t('B {p} / W {c} / T {f}', {p:x.bialko_g, c:x.wegle_g, f:x.tluszcz_g})}</span></div>`).join('')+
+    (P.cel_kcal?`<div>• <b>${t('Cel kalorii')}</b>: ${t('{n} kcal/dzień', {n:P.cel_kcal})}</div>`:'')+
+    (P.cel_krokow?`<div>• <b>${t('Cel kroków')}</b>: ${t('{x} dziennie', {x:tysKrokow(P.cel_krokow)})}</div>`:'')+
     (P.przesuniecia||[]).map(x=>{ const now=workoutOn(x.dzien), nw=workoutOn(x.trening_z);
-      return `<div>• <b>${dowOf(x.dzien)} ${dmy(x.dzien)}</b>: ${wIcon(nw)} ${esc(nw.title)} <span style="color:var(--ink-dim)">(było: ${esc(now.title)})</span></div>`; }).join('')+
-    (P.przerwy||[]).map(x=>`<div>• <b>Przerwa · ${esc(x.cwiczenie)}</b>: ${fmtDur(restCurrent(x.cwiczenie))} → <b>${fmtDur(x.sekundy)}</b></div>`).join('')+
+      return `<div>• <b>${dowOf(x.dzien)} ${dmy(x.dzien)}</b>: ${wIcon(nw)} ${esc(t(nw.title))} <span style="color:var(--ink-dim)">(${t('było:')} ${esc(t(now.title))})</span></div>`; }).join('')+
+    (P.przerwy||[]).map(x=>`<div>• <b>${t('Przerwa')} · ${esc(t(x.cwiczenie))}</b>: ${fmtDur(restCurrent(x.cwiczenie))} → <b>${fmtDur(x.sekundy)}</b></div>`).join('')+
     (P.obwody||[]).map(x=>{ const was=m.applied?null:obwPrev(x);
-      return `<div>• <b>Obwód · ${esc(obwLabel(x))}</b> (${dmy(x.data)}): ${was?fmtKg(was)+' → ':''}<b>${fmtKg(x.cm)} cm</b></div>`; }).join('');
+      return `<div>• <b>${t('Obwód')} · ${esc(obwLabel(x))}</b> (${dmy(x.data)}): ${was?fmtKg(was)+' → ':''}<b>${fmtKg(x.cm)} cm</b></div>`; }).join('');
   const act=m.applied
-    ? `<div style="color:#5fbf7a;margin-top:8px">✅ Zastosowano od ${esc(m.appliedFrom||'')}</div><button class="btn ghost" data-prop-undo="${i}" style="font-size:12px;padding:7px 10px;margin-top:6px">Cofnij</button>`
-    : m.dismissed ? `<div style="color:var(--ink-faint);margin-top:8px">Odrzucono</div>`
-    : `<div style="display:flex;gap:6px;margin-top:10px"><button class="btn" data-prop-apply="${i}" style="flex:2;font-size:13px;padding:9px">Zastosuj od dziś</button><button class="btn ghost" data-prop-dismiss="${i}" style="flex:1;font-size:13px;padding:9px">Odrzuć</button></div>`;
-  return `<div class="coach-b a" style="border-color:var(--amber)"><div style="font-size:12px;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Propozycja zmian</div>${P.podsumowanie?'<div style="margin-bottom:6px">'+esc(P.podsumowanie)+'</div>':''}${rows}${act}</div>`;
+    ? `<div style="color:#5fbf7a;margin-top:8px">${t('✅ Zastosowano od {d}', {d:esc(m.appliedFrom||'')})}</div><button class="btn ghost" data-prop-undo="${i}" style="font-size:12px;padding:7px 10px;margin-top:6px">${t('Cofnij')}</button>`
+    : m.dismissed ? `<div style="color:var(--ink-faint);margin-top:8px">${t('Odrzucono')}</div>`
+    : `<div style="display:flex;gap:6px;margin-top:10px"><button class="btn" data-prop-apply="${i}" style="flex:2;font-size:13px;padding:9px">${t('Zastosuj od dziś')}</button><button class="btn ghost" data-prop-dismiss="${i}" style="flex:1;font-size:13px;padding:9px">${t('Odrzuć')}</button></div>`;
+  return `<div class="coach-b a" style="border-color:var(--amber)"><div style="font-size:12px;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">${t('Propozycja zmian')}</div>${P.podsumowanie?'<div style="margin-bottom:6px">'+esc(P.podsumowanie)+'</div>':''}${rows}${act}</div>`;
 }
 
 export function applyProposal(i){
@@ -347,7 +359,7 @@ export function renderCoachAtt(){
   const el=document.getElementById('coachAtt'); if(!el) return;
   if(!coachAtt){ el.style.display='none'; return; }
   el.style.display='inline-flex';
-  el.innerHTML=`<span>📎 Klatki: ${esc(coachAtt.ex)} · ${new Date(coachAtt.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><button aria-label="Nie dołączaj klatek" id="coachAttX">✕</button>`;
+  el.innerHTML=`<span>📎 ${t('Klatki:')} ${esc(t(coachAtt.ex))} · ${new Date(coachAtt.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><button aria-label="${t('Nie dołączaj klatek')}" id="coachAttX">✕</button>`;
   document.getElementById('coachAttX').onclick=()=>{ coachAtt=null; renderCoachAtt(); };
 }
 
@@ -375,7 +387,7 @@ export async function coachSend(text, {voice=false}={}){
     return;
   }
   if(quotaLeft('coach')===0){ quotaUi(); if(voice) coachVoice.say(''); return; }
-  if(!navigator.onLine){ coachVoice.say('Brak internetu — Trener odpowie, gdy wróci zasięg. Wiadomość czeka w polu.','info'); return; }
+  if(!navigator.onLine){ coachVoice.say(t('Brak internetu — Trener odpowie, gdy wróci zasięg. Wiadomość czeka w polu.'),'info'); return; }
   const att=coachAtt; coachAtt=null;
   const um={role:'user',content:text, id:coachId(), t:Date.now()};
   const h=loadCoach(); h.push(um); saveCoach(h);
@@ -400,10 +412,10 @@ export async function coachSend(text, {voice=false}={}){
     const j=await cloudCall('coach',Object.assign({messages:msgs, context:ctx.stat, contextLive:ctx.live, exercises:coachTargets().map(t=>t.n), features:['kroki','przesuniecia','przerwy','obwody']}, extra));
     if(j.quota) quotaSet(j.quota);
     const h2=loadCoach(); h2.push({role:'assistant',content:j.text, proposal:j.proposal||null, id:coachId(), t:Date.now()}); saveCoach(h2);
-    reply=j.text+(j.proposal?' Mam też propozycję zmian — sprawdź ją na ekranie.':'');
+    reply=j.text+(j.proposal?t(' Mam też propozycję zmian — sprawdź ją na ekranie.'):'');
   }catch(e){
     if(e.data && e.data.quota) quotaSet(e.data.quota);
-    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+(netDown(e)?'Brak połączenia z internetem. Spróbuj ponownie, gdy wróci zasięg.':e.message), id:coachId(), t:Date.now()}); saveCoach(h2);
+    const h2=loadCoach(); h2.push({role:'assistant',content:'⚠️ '+(netDown(e)?t('Brak połączenia z internetem. Spróbuj ponownie, gdy wróci zasięg.'):e.message), id:coachId(), t:Date.now()}); saveCoach(h2);
   }
   coachBusy=false; renderCoach();
   if(document.getElementById('usageSection').style.display==='block') loadUsage();
@@ -413,7 +425,7 @@ export async function coachSend(text, {voice=false}={}){
 }
 
 export function openCoach(){
-  if(!featOn('coach')){ showInAppReminder('Trener jest wyłączony', 'Rozmowa z Trenerem jest teraz niedostępna'+(planEnforced()?' w Twoim planie.':'.')); return; }
+  if(!featOn('coach')){ showInAppReminder(t('Trener jest wyłączony'), planEnforced()?t('Rozmowa z Trenerem jest niedostępna w Twoim planie.'):t('Rozmowa z Trenerem jest teraz niedostępna.')); return; }
   document.getElementById('coachDialog').classList.add('show'); renderCoach(); coachSpeakUi(); quotaUi(); quotaLoad(); setTimeout(()=>document.getElementById('coachIn').focus(),60); }
 
 export function coachSpeakOn(){ try{ return localStorage.getItem('zelazo_coach_tts')!=='off'; }catch(e){ return true; } }
@@ -422,7 +434,7 @@ export function coachSpeakUi(){
   const b=document.getElementById('coachSpeak');
   if(!TTS){ b.style.display='none'; return; }
   const on=coachSpeakOn(); b.textContent=on?'🔊':'🔇'; b.setAttribute('aria-pressed',on?'true':'false');
-  b.setAttribute('aria-label', on?'Wyłącz czytanie odpowiedzi':'Włącz czytanie odpowiedzi');
+  b.setAttribute('aria-label', on?t('Wyłącz czytanie odpowiedzi'):t('Włącz czytanie odpowiedzi'));
 }
    // przerwane czytanie nie może włączyć mikrofonu
 export function coachSpeakStop(){ coachSpeakSeq++; if(TTS) TTS.cancel(); }
@@ -435,7 +447,7 @@ export function coachSpeak(text, onEnd?){
   const parts=clean.match(/[^.!?…]+[.!?…]*\s*/g)||[clean], chunks=[];
   parts.forEach(p=>{ const last=chunks[chunks.length-1]; if(last && (last+p).length<220) chunks[chunks.length-1]=last+p; else chunks.push(p); });
   const loc=speechLocale(langOf(S.profile)), voice=(TTS.getVoices()||[]).find(v=>v.lang.toLowerCase().startsWith(loc.slice(0,2)));
-  coachVoice.say('🔊 Trener mówi… stuknij 🎤, żeby przerwać i odpowiedzieć.','info');
+  coachVoice.say(t('🔊 Trener mówi… stuknij 🎤, żeby przerwać i odpowiedzieć.'),'info');
   chunks.forEach((c,i)=>{
     const u=new SpeechSynthesisUtterance(c.trim()); u.lang=loc; if(voice) u.voice=voice;
     if(i===chunks.length-1){ u.onend=()=>{ if(seq===coachSpeakSeq && onEnd) onEnd(); }; u.onerror=()=>{ if(!coachVoice.active()) coachVoice.say(''); }; }
@@ -469,9 +481,9 @@ document.getElementById('coachClose').onclick=()=>{ coachVoice.stop(); coachSpea
    potem mikrofon włącza się ponownie — cisza kończy rozmowę. 🔊/🔇 wyłącza czytanie (zapamiętane na tym urządzeniu). */
 coachVoice = makeDictation({
   input:document.getElementById('coachIn'), mic:document.getElementById('coachMic'), msg:document.getElementById('coachVoice'),
-  listening:'● Słucham… zadaj pytanie. Wyślę je sam po chwili ciszy.',
-  onDone:heard=>{ coachVoice.say('Wysłano — Trener myśli…','info'); coachSend(document.getElementById('coachIn').value, {voice:true}); },
-  onSilence:()=>coachVoice.say('Rozmowa wstrzymana. Stuknij 🎤, żeby mówić dalej.','info')
+  listening:t('● Słucham… zadaj pytanie. Wyślę je sam po chwili ciszy.'),
+  onDone:heard=>{ coachVoice.say(t('Wysłano — Trener myśli…'),'info'); coachSend(document.getElementById('coachIn').value, {voice:true}); },
+  onSilence:()=>coachVoice.say(t('Rozmowa wstrzymana. Stuknij 🎤, żeby mówić dalej.'),'info')
 });
 document.getElementById('coachMic').addEventListener('click',()=>coachSpeakStop(), true);   // mówisz → Trener milknie
 TTS = window.speechSynthesis||null;
