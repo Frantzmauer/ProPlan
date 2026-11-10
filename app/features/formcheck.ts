@@ -14,7 +14,7 @@ import { daySummary, renderToday, swapCue } from '../screens/train';
 import { WO, woResume, woSave } from '../screens/workout';
 import { bindOffer, featOn, limitOffer, planEnforced, quotaCur, quotaLeft, quotaReset, quotaSet } from './plan-limits';
 import { refreshNotifUI, setupReminders } from './reminders';
-import { locale } from '../lib/i18n';
+import { dec, isEn, locale, t } from '../lib/i18n';
 
 export let FC, POSE_VER, POSE_MODEL, posePromise, FC_STEPS, fcWait, FC_BONES, FC_GRADE, fcLeft, fcLean, fcImg;
 
@@ -33,34 +33,34 @@ export function openFormCheck(name, setInfo, opts?){
   FC.ex=name; FC.set=setInfo||'';
   const lib=!!(opts&&opts.lib);
   const cue=GUIDE[name]||GUIDE[name.trim()]||swapCue(name)||'';
-  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' technika');
-  const head=lib ? `${cue?`<div class="fc-cue">${esc(cue)}</div>`:''}<a class="fc-yt" href="${yt}" target="_blank" rel="noopener">▶ Filmy z techniką (YouTube)</a>` : '';
+  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(isEn() ? t(name.trim())+' technique' : name+' technika');
+  const head=lib ? `${cue?`<div class="fc-cue">${esc(t(cue))}</div>`:''}<a class="fc-yt" href="${yt}" target="_blank" rel="noopener">${t('▶ Filmy z techniką (YouTube)')}</a>` : '';
   const hist=formHistory(name);
-  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>Twoje oceny (${hist.length})</h4><div class="fc-hist">`+hist.slice(0,8).map(m=>`<button data-fh="${esc(m.id)}"><span>${new Date(m.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><b class="g${FC_GRADE[m.grade]??3}">${esc(m.grade||'')}</b><span class="fx">${esc((m.fix||'').slice(0,60))}</span><span class="go">›</span></button>`).join('')+`</div></div>` : '';
+  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>${t('Twoje oceny ({n})', {n:hist.length})}</h4><div class="fc-hist">`+hist.slice(0,8).map(m=>`<button data-fh="${esc(m.id)}"><span>${new Date(m.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><b class="g${FC_GRADE[m.grade]??3}">${esc(t(m.grade||''))}</b><span class="fx">${esc((m.fix||'').slice(0,60))}</span><span class="go">›</span></button>`).join('')+`</div></div>` : '';
   if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
-    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(t(name))}</b></p>`+head:''}<p class="fc-sub">${t('Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).')}</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>${t('Zamknij')}</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
   }
   if(!featOn('form')){
-    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania jest teraz niedostępna${planEnforced()?' w Twoim planie':''}. Wskazówki i filmy z techniką działają dalej.</p>${planEnforced()?limitOffer('form'):''}<div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(t(name))}</b></p>`+head:''}<p class="fc-sub">${planEnforced()?t('Ocena techniki z nagrania jest niedostępna w Twoim planie.'):t('Ocena techniki z nagrania jest teraz niedostępna.')} ${t('Wskazówki i filmy z techniką działają dalej.')}</p>${planEnforced()?limitOffer('form'):''}<div class="fc-btns"><button class="fc-btn ghost" data-fc-close>${t('Zamknij')}</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; bindOffer(document.getElementById('fcBody')); return;
   }
   if(quotaLeft('form')===0){   // plan z limitami: nie każ nagrywać, gdy limit ocen wykorzystany
-    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Limit ${quotaCur().form.max} ocen techniki w tym miesiącu wykorzystany. Nowe od ${quotaReset()}. Wskazówki i filmy z techniką działają dalej.</p>${limitOffer('form')}<div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(t(name))}</b></p>`+head:''}<p class="fc-sub">${t('Limit {n} ocen techniki w tym miesiącu wykorzystany. Nowe od {d}.', {n:quotaCur().form.max, d:quotaReset()})} ${t('Wskazówki i filmy z techniką działają dalej.')}</p>${limitOffer('form')}<div class="fc-btns"><button class="fc-btn ghost" data-fc-close>${t('Zamknij')}</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; bindOffer(document.getElementById('fcBody')); return;
   }
-  const view=camView(name);
-  fcShow(`<p class="fc-sub"><b>${esc(name)}</b>${FC.set?' · '+esc(FC.set):''}</p>${head}
+  const view=t(camView(name));
+  fcShow(`<p class="fc-sub"><b>${esc(t(name))}</b>${FC.set?' · '+esc(FC.set):''}</p>${head}
     <ul class="fc-tips">
-      <li>Postaw telefon <b>${view}</b>, 2–3 m od siebie, na wysokości bioder (np. oparty o ławkę).</li>
-      <li>Całe ciało i sztanga/hantle w kadrze przez całą serię; dobre światło.</li>
-      <li>Nagraj całą serię (5–40 s). Film zostaje na telefonie — do Trenera trafi kilka klatek i pomiary.</li>
-      ${quotaCur()?`<li>Ocena zużywa 1 z ${quotaCur().form.max} ocen w tym miesiącu — zostało <b>${quotaLeft('form')}</b>.</li>`:''}
+      <li>${t('Postaw telefon <b>{v}</b>, 2–3 m od siebie, na wysokości bioder (np. oparty o ławkę).', {v:view})}</li>
+      <li>${t('Całe ciało i sztanga/hantle w kadrze przez całą serię; dobre światło.')}</li>
+      <li>${t('Nagraj całą serię (5–40 s). Film zostaje na telefonie — do Trenera trafi kilka klatek i pomiary.')}</li>
+      ${quotaCur()?`<li>${t('Ocena zużywa 1 z {n} ocen w tym miesiącu — zostało <b>{l}</b>.', {n:quotaCur().form.max, l:quotaLeft('form')})}</li>`:''}
     </ul>
     <div class="fc-btns">
-      <button class="fc-btn main" id="fcRecBtn">📹 NAGRAJ SERIĘ</button>
-      <button class="fc-btn" id="fcPickBtn">Wybierz film z galerii</button>
-      <button class="fc-btn ghost" data-fc-close>${lib?'Zamknij':'Anuluj'}</button>
+      <button class="fc-btn main" id="fcRecBtn">${t('📹 NAGRAJ SERIĘ')}</button>
+      <button class="fc-btn" id="fcPickBtn">${t('Wybierz film z galerii')}</button>
+      <button class="fc-btn ghost" data-fc-close>${lib?t('Zamknij'):t('Anuluj')}</button>
     </div>${histHtml}`);
   document.querySelectorAll('[data-fh]').forEach(b=>b.onclick=()=>fcOpenSaved(b.dataset.fh));
   document.getElementById('fcRecBtn').onclick=()=>{ const i=document.getElementById('fcRec'); i.value=''; i.click(); };
@@ -69,8 +69,8 @@ export function openFormCheck(name, setInfo, opts?){
 }
 
 export function fcProgress(cur, note?){
-  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}</p><div class="fc-prog">`+
-    FC_STEPS.map((t,i)=>`<div class="fc-step ${i<cur?'ok':i===cur?'on':''}"><i>${i<cur?'✓':i===cur?'●':'○'}</i>${t}${i===cur&&note?' — '+esc(note):''}</div>`).join('')+`</div>`);
+  fcShow(`<p class="fc-sub"><b>${esc(t(FC.ex))}</b>${FC.set?' · '+esc(FC.set):''}</p><div class="fc-prog">`+
+    FC_STEPS.map((st,i)=>`<div class="fc-step ${i<cur?'ok':i===cur?'on':''}"><i>${i<cur?'✓':i===cur?'●':'○'}</i>${t(st)}${i===cur&&note?' — '+esc(note):''}</div>`).join('')+`</div>`);
 }
 
 // klatki z filmu: n równych momentów (5–95% czasu), dłuższy bok maks. 640 px
@@ -81,7 +81,7 @@ export async function fcFrames(file, n){
     await fcWait(v,'loadeddata',15000);
     let d=v.duration;
     if(!isFinite(d)||!d){ v.currentTime=1e7; await fcWait(v,'seeked',8000); d=v.currentTime; }   // część Androidów nie podaje długości od razu
-    if(!(d>0.5)) throw new Error('Nagranie jest za krótkie albo nieczytelne.');
+    if(!(d>0.5)) throw new Error(t('Nagranie jest za krótkie albo nieczytelne.'));
     const sc=Math.min(1, 640/Math.max(v.videoWidth,v.videoHeight)), w=Math.round(v.videoWidth*sc), h=Math.round(v.videoHeight*sc), out=[];
     for(let i=0;i<n;i++){
       const t=d*(0.05+0.9*i/(n-1)); v.currentTime=t; await fcWait(v,'seeked',8000);
@@ -147,7 +147,7 @@ export async function fcRun(file){
   if(FC.busy) return;
   FC.busy=true;
   try{
-    if(file.size>400*1024*1024) throw new Error('Film jest bardzo duży — nagraj samą serię (do ok. 40 s).');
+    if(file.size>400*1024*1024) throw new Error(t('Film jest bardzo duży — nagraj samą serię (do ok. 40 s).'));
     fcProgress(0);
     const {frames, dur, w, h}=await fcFrames(file, 24);
     fcProgress(1);
@@ -178,22 +178,22 @@ export async function fcRun(file){
   }catch(e){
     if(e.data && e.data.quota) quotaSet(e.data.quota);
     FC.busy=false;
-    const msg=/Failed to fetch|NetworkError|Load failed/i.test(e.message)?'Brak połączenia — spróbuj ponownie, gdy złapiesz zasięg.':e.message==='timeout'?'Nie udało się odczytać nagrania. Spróbuj krótszego filmu albo nagraj ponownie.':e.message;
-    fcShow(`<p class="fc-sub">${esc(msg)}</p><div class="fc-btns"><button class="fc-btn" id="fcRetry">Spróbuj ponownie</button><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    const msg=/Failed to fetch|NetworkError|Load failed/i.test(e.message)?t('Brak połączenia — spróbuj ponownie, gdy złapiesz zasięg.'):e.message==='timeout'?t('Nie udało się odczytać nagrania. Spróbuj krótszego filmu albo nagraj ponownie.'):e.message;
+    fcShow(`<p class="fc-sub">${esc(msg)}</p><div class="fc-btns"><button class="fc-btn" id="fcRetry">${t('Spróbuj ponownie')}</button><button class="fc-btn ghost" data-fc-close>${t('Zamknij')}</button></div>`);
     document.getElementById('fcRetry').onclick=()=>openFormCheck(FC.ex, FC.set);
     document.querySelector('[data-fc-close]').onclick=fcClose;
   }
 }
 
 export function fcMeasLine(m){
-  if(!m || m.rozpoznanie_sylwetki || m.sylwetka) return m&&(m.rozpoznanie_sylwetki||('Sylwetka '+m.sylwetka))||'';
-  const a=[]; if(m.powtorzenia_wykryte) a.push(m.powtorzenia_wykryte+' powt.');
+  if(!m || m.rozpoznanie_sylwetki || m.sylwetka) return m&&(m.rozpoznanie_sylwetki?t(m.rozpoznanie_sylwetki):t('Sylwetka słabo widoczna'))||'';
+  const a=[]; if(m.powtorzenia_wykryte) a.push(m.powtorzenia_wykryte+' '+t('powt.'));
   // tylko pola, które są (niepełne pomiary nie mogą dawać „undefined”)
-  if(m.ruch_mierzony_na==='biodro' && m.glebokosc) a.push(m.glebokosc);
-  if(m.tulow_max_pochylenie_od_pionu!=null) a.push('pochylenie tułowia do '+m.tulow_max_pochylenie_od_pionu+'°');
-  if(m.czas_na_powtorzenie_s) a.push(String(m.czas_na_powtorzenie_s).replace('.',',')+' s/powt.');
-  if(m.widok_wg_sylwetki) a.push('widok '+m.widok_wg_sylwetki);
-  return a.length ? 'Pomiary: '+a.join(' · ') : '';
+  if(m.ruch_mierzony_na==='biodro' && m.glebokosc) a.push(t(m.glebokosc));
+  if(m.tulow_max_pochylenie_od_pionu!=null) a.push(t('pochylenie tułowia do {n}°', {n:m.tulow_max_pochylenie_od_pionu}));
+  if(m.czas_na_powtorzenie_s) a.push(dec(m.czas_na_powtorzenie_s)+' '+t('s/powt.'));
+  if(m.widok_wg_sylwetki) a.push(t('widok')+' '+t(m.widok_wg_sylwetki));
+  return a.length ? t('Pomiary:')+' '+a.join(' · ') : '';
 }
 
 /* ---- biblioteka ćwiczeń: wszystkie ćwiczenia z 24 tygodni planu (z wymianami od Trenera), według rodzaju treningu ---- */
@@ -213,11 +213,11 @@ export function exLibrary(){
 export function renderExLib(){
   const box=document.getElementById('exLib'); if(!box) return;
   const q=(document.getElementById('libSearch').value||'').trim().toLowerCase();
-  const groups=exLibrary().map(g=>({name:g.name, ex:g.ex.filter(n=>!q||n.toLowerCase().includes(q))})).filter(g=>g.ex.length);
-  box.innerHTML= groups.length ? groups.map(g=>`<details class="lib-grp" ${q?'open':''}><summary>${esc(g.name)}<span>${g.ex.length} ćw.</span></summary>`+
+  const groups=exLibrary().map(g=>({name:g.name, ex:g.ex.filter(n=>!q||n.toLowerCase().includes(q)||t(n).toLowerCase().includes(q))})).filter(g=>g.ex.length);
+  box.innerHTML= groups.length ? groups.map(g=>`<details class="lib-grp" ${q?'open':''}><summary>${esc(t(String(g.name)))}<span>${t('{n} ćw.', {n:g.ex.length})}</span></summary>`+
     g.ex.map(n=>{ const h=formHistory(n)[0], gc=h?FC_GRADE[h.grade]:null;
-      return `<button class="lib-ex" data-lib="${esc(n)}"><span class="nm">${esc(n)}</span>${h?`<span class="last g${gc}">${esc(h.grade)}</span>`:''}<span class="go">›</span></button>`; }).join('')+`</details>`).join('')
-    : '<p class="lib-hint">Nic nie znaleziono.</p>';
+      return `<button class="lib-ex" data-lib="${esc(n)}"><span class="nm">${esc(t(n))}</span>${h?`<span class="last g${gc}">${esc(t(h.grade))}</span>`:''}<span class="go">›</span></button>`; }).join('')+`</details>`).join('')
+    : '<p class="lib-hint">'+t('Nic nie znaleziono.')+'</p>';
   box.querySelectorAll('[data-lib]').forEach(b=>b.onclick=()=>openFormCheck(b.dataset.lib,'',{lib:true}));
 }
 
@@ -253,7 +253,7 @@ export function fcIssues(rec){
   const ext=(k,dir)=>fr.reduce((a,f)=>(dir<0?f[k]<a[k]:f[k]>a[k])?f:a, fr[0]);
   const add=(f,joint,val,target,cmp,name,hint,pivot,end,fn)=>{
     const off = cmp==='max' ? val-target : target-val; if(off<=3) return;
-    out[f.i].push({joint, delta:off, label:`${name} ${val}° → cel ${cmp==='max'?'≤':'≥'}${target}°`, hint:`${hint} o ${off}°`, pivot, to:fcRotTo(pivot,end,fn,target)});
+    out[f.i].push({joint, delta:off, label:`${t(name)} ${val}° → ${t('cel')} ${cmp==='max'?'≤':'≥'}${target}°`, hint:t('{h} o {n}°', {h:t(hint), n:off}), pivot, to:fcRotTo(pivot,end,fn,target)});
   };
   const knee=(f,t,h)=>add(f,'kolano',f.knee,t,'max','Kolano',h,f.p.kn,f.p.hip,q=>fcAngle(q,f.p.kn,f.p.an));
   const leanMax=(f,t,h)=>add(f,'tułów',f.lean,t,'max','Tułów (od pionu)',h,f.p.hip,f.p.sh,q=>fcLean(q,f.p.hip));
@@ -327,37 +327,37 @@ export function fcSaveAndShow(r, metrics, rec){
 // wynik (świeży albo z historii): ocena, poprawki, pomiary i klatki ze szkieletem i wzorcem — stuknij, by powiększyć
 export function fcResultView(r, metrics, rec, savedAt, id){
   const g=FC_GRADE[r.ocena]??3, issues=rec?fcIssues(rec):[], nIss=issues.flat().length;
-  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}${savedAt?' · '+new Date(savedAt).toLocaleString(locale(),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
-    <span class="fc-grade g${g}">${esc(r.ocena)}</span>
+  fcShow(`<p class="fc-sub"><b>${esc(t(FC.ex))}</b>${FC.set?' · '+esc(FC.set):''}${savedAt?' · '+new Date(savedAt).toLocaleString(locale(),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
+    <span class="fc-grade g${g}">${esc(t(r.ocena))}</span>
     <p class="fc-sub" style="color:var(--ink)">${esc(r.podsumowanie)}</p>
     ${r.bezpieczenstwo?`<div class="fc-warn">⚠ ${esc(r.bezpieczenstwo)}</div>`:''}
-    ${r.poprawki.length?`<div class="fc-sec"><h4>Do poprawy w następnej serii</h4>${r.poprawki.map(p=>`<div class="fc-fix ${p.waga}"><b>${esc(p.problem)}</b><span>${esc(p.jak_poprawic)}</span></div>`).join('')}</div>`:''}
-    ${r.mocne_strony.length?`<div class="fc-sec"><h4>Dobrze</h4><ul class="fc-tips">${r.mocne_strony.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+    ${r.poprawki.length?`<div class="fc-sec"><h4>${t('Do poprawy w następnej serii')}</h4>${r.poprawki.map(p=>`<div class="fc-fix ${p.waga}"><b>${esc(p.problem)}</b><span>${esc(p.jak_poprawic)}</span></div>`).join('')}</div>`:''}
+    ${r.mocne_strony.length?`<div class="fc-sec"><h4>${t('Dobrze')}</h4><ul class="fc-tips">${r.mocne_strony.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
     ${r.nagranie?`<p class="fc-meas">📹 ${esc(r.nagranie)}</p>`:''}
     <p class="fc-meas">${esc(fcMeasLine(metrics))}</p>
-    <div class="fc-sec"><h4>Klatki${rec?` · stuknij, by powiększyć${nIss?' · zielony = jak powinno być':''}`:''}</h4>
-      ${rec?'<div class="fc-thumbs" id="fcThumbs"></div>':'<p class="fc-meas">Klatki z tego nagrania są na telefonie, na którym je nagrano.</p>'}</div>
-    <div class="fc-btns">${id&&rec?'<button class="fc-btn" id="fcAsk">💬 Zapytaj Trenera o to nagranie</button>':''}${TTS?'<button class="fc-btn" id="fcRead">🔊 Przeczytaj</button>':''}
-      ${savedAt?'<button class="fc-btn" id="fcBack">← Wróć do ćwiczenia</button>':''}<button class="fc-btn main" data-fc-close>OK</button></div>`);
+    <div class="fc-sec"><h4>${t('Klatki')}${rec?t(' · stuknij, by powiększyć')+(nIss?t(' · zielony = jak powinno być'):''):''}</h4>
+      ${rec?'<div class="fc-thumbs" id="fcThumbs"></div>':'<p class="fc-meas">'+t('Klatki z tego nagrania są na telefonie, na którym je nagrano.')+'</p>'}</div>
+    <div class="fc-btns">${id&&rec?'<button class="fc-btn" id="fcAsk">'+t('💬 Zapytaj Trenera o to nagranie')+'</button>':''}${TTS?'<button class="fc-btn" id="fcRead">'+t('🔊 Przeczytaj')+'</button>':''}
+      ${savedAt?'<button class="fc-btn" id="fcBack">'+t('← Wróć do ćwiczenia')+'</button>':''}<button class="fc-btn main" data-fc-close>OK</button></div>`);
   document.querySelector('[data-fc-close]').onclick=()=>{ if(TTS) TTS.cancel(); fcClose(); };
   const bk=document.getElementById('fcBack'); if(bk) bk.onclick=()=>openFormCheck(FC.ex,'',{lib:true});
   // Trener z pełnym kontekstem: otwórz czat z dołączonymi klatkami tego nagrania
   const ak=document.getElementById('fcAsk'); if(ak) ak.onclick=()=>{ if(TTS) TTS.cancel(); __set_coachAtt({id, ex:FC.ex, t:savedAt||Date.now()}); fcClose(); openCoach();
-    const inp=document.getElementById('coachIn'); if(!inp.value) inp.value='Oceń ponownie to nagranie, biorąc pod uwagę mój plan, historię i ograniczenia.'; };
+    const inp=document.getElementById('coachIn'); if(!inp.value) inp.value=t('Oceń ponownie to nagranie, biorąc pod uwagę mój plan, historię i ograniczenia.'); };
   const rd=document.getElementById('fcRead'); if(rd) rd.onclick=()=>coachSpeak(r.podsumowanie+' '+r.poprawki.map(p=>p.problem+'. '+p.jak_poprawic).join(' ')+(r.bezpieczenstwo?' Uwaga: '+r.bezpieczenstwo:''));
   if(rec){ const box=document.getElementById('fcThumbs');
-    rec.raw.forEach((_,i)=>fcRenderFrame(rec,i,issues).then(c=>{ c.className='fc-th'+((issues[i]||[]).length?' bad':''); c.setAttribute('role','button'); c.setAttribute('aria-label','Klatka '+(i+1)); c.onclick=()=>fcZoom(rec,issues,i); c.style.order=i; box.appendChild(c); }).catch(()=>{})); }
+    rec.raw.forEach((_,i)=>fcRenderFrame(rec,i,issues).then(c=>{ c.className='fc-th'+((issues[i]||[]).length?' bad':''); c.setAttribute('role','button'); c.setAttribute('aria-label',t('Klatka {n}', {n:i+1})); c.onclick=()=>fcZoom(rec,issues,i); c.style.order=i; box.appendChild(c); }).catch(()=>{})); }
 }
 
 // powiększenie klatki: pełny ekran, ‹ › między klatkami, lista odchyleń pod spodem
 export async function fcZoom(rec, issues, i){
   const z=document.getElementById('fcZoom'); z.style.display='flex';
   const n=rec.raw.length; i=(i+n)%n;
-  document.getElementById('fzCap').textContent=`Klatka ${i+1} z ${n}`;
+  document.getElementById('fzCap').textContent=t('Klatka {a} z {b}', {a:i+1, b:n});
   const c=await fcRenderFrame(rec,i,issues), box=document.getElementById('fzImg'); box.innerHTML=''; box.appendChild(c);
   const it=issues[i]||[];
-  document.getElementById('fzNotes').innerHTML= !rec.lms[i] ? 'Na tej klatce nie rozpoznano sylwetki.'
-    : it.length ? it.map(x=>`<div><b>${esc(x.label)}</b><span>→ ${esc(x.hint)}</span></div>`).join('') : '<div class="ok">Na tej klatce kąty mieszczą się we wzorcu.</div>';
+  document.getElementById('fzNotes').innerHTML= !rec.lms[i] ? t('Na tej klatce nie rozpoznano sylwetki.')
+    : it.length ? it.map(x=>`<div><b>${esc(x.label)}</b><span>→ ${esc(x.hint)}</span></div>`).join('') : '<div class="ok">'+t('Na tej klatce kąty mieszczą się we wzorcu.')+'</div>';
   document.getElementById('fzPrev').onclick=()=>fcZoom(rec,issues,i-1);
   document.getElementById('fzNext').onclick=()=>fcZoom(rec,issues,i+1);
 }
@@ -366,7 +366,7 @@ export async function fcZoom(rec, issues, i){
 export async function fcOpenSaved(id){
   const m=loadCoach().find(x=>x.id===id); if(!m) return;
   FC.ex=m.ex||FC.ex; FC.set=m.set||'';
-  if(!m.res){ fcShow(`<div class="fc-cue">${coachMd(m.content)}</div><div class="fc-btns"><button class="fc-btn" id="fcBack">← Wróć do ćwiczenia</button></div>`); document.getElementById('fcBack').onclick=()=>openFormCheck(FC.ex,'',{lib:true}); return; }
+  if(!m.res){ fcShow(`<div class="fc-cue">${coachMd(m.content)}</div><div class="fc-btns"><button class="fc-btn" id="fcBack">${t('← Wróć do ćwiczenia')}</button></div>`); document.getElementById('fcBack').onclick=()=>openFormCheck(FC.ex,'',{lib:true}); return; }
   fcResultView(m.res, m.metrics||{}, await fcGet(id), m.t, id);
 }
 
