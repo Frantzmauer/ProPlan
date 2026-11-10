@@ -33,20 +33,22 @@ CHANNELS = {
     'stable': {'dir': '.',     'icons': 'icons/',    'apple': 'ŻELAZO',    'tag': '',
                'name': 'ŻELAZO — plan, trening, dieta', 'short': 'ŻELAZO',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.'},
-    'beta':   {'dir': 'beta',  'icons': '../icons/', 'apple': 'ŻELAZO β',  'tag': 'BETA',
-               'name': 'ŻELAZO β — plan, trening, dieta', 'short': 'ŻELAZO β',
+    'beta':   {'dir': 'beta',  'icons': '../icons/sixmo/', 'apple': 'SixMo β',  'tag': 'BETA',
+               'name': 'SixMo β — plan, trening, dieta', 'short': 'SixMo β',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI — wersja beta.'},
     'early':  {'dir': 'early', 'icons': '../icons/', 'apple': 'ŻELAZO EA', 'tag': 'EARLY',
                'name': 'ŻELAZO Early Access — plan, trening, dieta', 'short': 'ŻELAZO EA',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI — nowości wcześniej dla Premium.'},
-    'users':  {'dir': 'users', 'icons': '../icons/', 'apple': 'ŻELAZO U',  'tag': 'USERS',
-               'name': 'ŻELAZO USERS — konta i plany', 'short': 'ŻELAZO U',
-               'desc': 'ŻELAZO — wersja robocza kont, planów i limitów.'},
+    'users':  {'dir': 'users', 'icons': '../icons/sixmo/', 'apple': 'SixMo U',  'tag': 'USERS',
+               'name': 'SixMo USERS — konta i plany', 'short': 'SixMo U',
+               'desc': 'SixMo — wersja robocza kont, planów i limitów.'},
     # aplikacja na telefon: ścieżki jak w stabilnej (icons/, models/ obok index.html), kopie katalogów w paczce
-    'native': {'dir': 'native/www', 'icons': 'icons/', 'apple': 'ŻELAZO', 'tag': '',
-               'name': 'ŻELAZO — plan, trening, dieta', 'short': 'ŻELAZO',
+    'native': {'dir': 'native/www', 'icons': 'icons/sixmo/', 'apple': 'SixMo', 'tag': '',
+               'name': 'SixMo — plan, trening, dieta', 'short': 'SixMo',
                'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.', 'copy': ['icons', 'models']},
 }
+# Nowa marka SixMo (ikony icons/sixmo/) jest w becie, USERS i native. Stabilna i Early Access zostają przy ŻELAZO,
+# dopóki nie zostaną wydane z commita z nową marką — wtedy przestawić je tak samo (nazwa i ikony).
 SOURCES = ['app', 'vite.config.js', 'package.json', 'package-lock.json']
 
 

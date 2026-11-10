@@ -41,6 +41,9 @@ export function daySummary(iso){
 // karta „Gdzie jesteś w planie” w Postępie — zawsze dla dzisiejszego dnia
 export function renderPhaseCard(){
   const dayIdx=dayIndexFor(todayISO()), wk=weekOf(dayIdx);
+  // kolor fazy na karcie (pasek z lewej i nazwa fazy); poza planem — akcent
+  const card=document.querySelector('.phasebar .card') as HTMLElement|null;
+  if(card){ if(dayIdx>=1&&dayIdx<=168) card.dataset.ph=String(phaseInfo(wk).n); else delete card.dataset.ph; }
   if(dayIdx<1){
     const stD=parseISO(S.startDate);
     document.getElementById('dayNum').textContent = dayIdx===0?'🍳':(dayIdx===-1?'🛒':'—');

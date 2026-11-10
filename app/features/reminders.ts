@@ -75,7 +75,7 @@ notifTimers = [];
 NOTIF_SUPPORTED = typeof Notification !== 'undefined';
 
 REMINDER_ITEMS = ()=>[
-  {key:'workout',t:S.reminders.workout,title:'🏋️ Czas na trening',body:'Sprawdź dzisiejszą sesję w ŻELAZO.'},
+  {key:'workout',t:S.reminders.workout,title:'🏋️ Czas na trening',body:'Sprawdź dzisiejszą sesję w SixMo.'},
   {key:'water',t:S.reminders.water,title:'💧 Pij wodę',body:'Cel to 3 litry dziennie. Jak stoisz?'},
   {key:'weight',t:S.reminders.weight,title:'⚖️ Zważ się',body:'Rano, na czczo. Zapisz wagę i śledź trend.'},
 ];
@@ -99,7 +99,7 @@ document.getElementById('notifToggle').onclick=async()=>{
 // przycisk testowy
 btnTestNotif = document.getElementById('btnTestNotif');
 if(btnTestNotif) btnTestNotif.onclick=()=>{
-  if(NOTIF_SUPPORTED && Notification.permission==='granted'){ try{new Notification('🔔 Test',{body:'Tak wygląda przypomnienie ŻELAZO.'});return;}catch(e){} }
+  if(NOTIF_SUPPORTED && Notification.permission==='granted'){ try{new Notification('🔔 Test',{body:'Tak wygląda przypomnienie SixMo.'});return;}catch(e){} }
   showInAppReminder('🔔 Test przypomnienia','Tak wygląda baner w aplikacji.');
 };
 }

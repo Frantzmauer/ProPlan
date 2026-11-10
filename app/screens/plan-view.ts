@@ -25,7 +25,7 @@ export function renderPlan(){
           <span class="t">${p.name}</span>
         </div>
         <div class="panel-pad">
-          <div style="font-family:var(--font-disp);font-size:14px;color:var(--amber);letter-spacing:.06em">${p.wk}</div>
+          <div style="font-family:var(--font-disp);font-size:14px;color:var(--ph${p.n});letter-spacing:.06em">${p.wk}</div>
           <p style="color:var(--ink-dim);font-size:13.5px;margin:6px 0 10px">${p.desc}</p>
           <div style="font-size:12.5px;color:var(--ink-faint);background:var(--panel2);border-radius:8px;padding:9px 11px">${p.split}</div>
         </div>

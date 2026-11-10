@@ -1,7 +1,7 @@
 {
-  "name": "ŻELAZO USERS — konta i plany",
-  "short_name": "ŻELAZO U",
-  "description": "ŻELAZO — wersja robocza kont, planów i limitów.",
+  "name": "SixMo USERS — konta i plany",
+  "short_name": "SixMo U",
+  "description": "SixMo — wersja robocza kont, planów i limitów.",
   "lang": "pl",
   "id": "./",
   "start_url": "./",
@@ -12,19 +12,19 @@
   "theme_color": "#0e1114",
   "icons": [
     {
-      "src": "../icons/icon-192.png",
+      "src": "../icons/sixmo/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "../icons/icon-512.png",
+      "src": "../icons/sixmo/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "../icons/icon-maskable-512.png",
+      "src": "../icons/sixmo/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

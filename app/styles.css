@@ -2,6 +2,7 @@
   --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
   --ink:#f2f0ea; --ink-dim:#9aa3ab; --ink-faint:#8a949c;
   --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a; --gold:#ffc94a; --plum:#c58bd6;
+  --ph1:#7fb2ff; --ph2:#b79cff; --ph3:#ffc24b;   /* fazy planu: Adaptacja, Hipertrofia, Rzeźba */
   --r:14px; --shadow:0 8px 30px rgba(0,0,0,.4);
   --font-disp:'Barlow Condensed',sans-serif;
   --font-body:'Inter',system-ui,sans-serif;
@@ -27,7 +28,9 @@ a{color:var(--steel)}
 /* ---------- phase strip ---------- */
 .phasebar{margin-top:2px}
 .phasebar .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
-.phasebar .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--amber)}
+.phasebar .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--phc,var(--amber))}
+.phasebar .card[data-ph="1"]{--phc:var(--ph1)}.phasebar .card[data-ph="2"]{--phc:var(--ph2)}.phasebar .card[data-ph="3"]{--phc:var(--ph3)}
+.phasebar .card[data-ph] .meta .v{color:var(--phc)}
 .phasebar .big{font-family:var(--font-disp);font-size:40px;font-weight:700;line-height:.9;color:var(--amber)}
 .phasebar .meta{flex:1;min-width:0}
 .phasebar .meta .k{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}

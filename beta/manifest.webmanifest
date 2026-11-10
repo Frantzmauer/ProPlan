@@ -1,6 +1,6 @@
 {
-  "name": "ŻELAZO β — plan, trening, dieta",
-  "short_name": "ŻELAZO β",
+  "name": "SixMo β — plan, trening, dieta",
+  "short_name": "SixMo β",
   "description": "6-miesięczny plan treningowy i dieta z Trenerem AI — wersja beta.",
   "lang": "pl",
   "id": "./",
@@ -12,19 +12,19 @@
   "theme_color": "#0e1114",
   "icons": [
     {
-      "src": "../icons/icon-192.png",
+      "src": "../icons/sixmo/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "../icons/icon-512.png",
+      "src": "../icons/sixmo/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "../icons/icon-maskable-512.png",
+      "src": "../icons/sixmo/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

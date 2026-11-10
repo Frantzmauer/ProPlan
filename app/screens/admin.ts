@@ -64,7 +64,7 @@ export function showInviteLink(code, account, expires, title){
     <div class="md-hint">Wyślij link tylko tej osobie (SMS / Messenger). Działa jeden raz.</div></div>`;
   document.getElementById('admCopy').onclick=async()=>{ try{ await navigator.clipboard.writeText(link); document.getElementById('admCopy').textContent='Skopiowano ✓'; }catch(e){ box.querySelector('input').select(); } };
   const sh=document.getElementById('admShare');
-  if(sh) sh.onclick=()=>navigator.share({title:'ŻELAZO — zaproszenie',text:'Dołącz do mnie w ŻELAZO (dieta + trening):',url:link}).catch(()=>{});
+  if(sh) sh.onclick=()=>navigator.share({title:'SixMo — zaproszenie',text:'Dołącz do mnie w SixMo (dieta + trening):',url:link}).catch(()=>{});
 }
 
 export async function adminCall(action, payload?){

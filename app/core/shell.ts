@@ -58,7 +58,7 @@ setTimeout(applyFeatures, 0);   // ostatni znany plan z telefonu; serwer potwier
 // pierwsze otwarcie USERS: po co ta wersja
 try{
   if(APP_VER==='users' && localStorage.getItem('zelazo_seen_users')!=='1'){
-    setTimeout(()=>showInAppReminder('ŻELAZO USERS',
+    setTimeout(()=>showInAppReminder('SixMo USERS',
       'Wersja robocza kont i planów: tu powstają plany Darmowy i Premium, limity, panel administratora i płatności. Funkcje są takie jak w becie. Twój plan i limity: Więcej → Pakiet i limity AI.'), 1200);
     localStorage.setItem('zelazo_seen_users','1');
   }
@@ -66,17 +66,17 @@ try{
 // pierwsze otwarcie Early Access
 try{
   if(APP_VER==='early' && localStorage.getItem('zelazo_seen_ea')!=='1'){
-    setTimeout(()=>showInAppReminder('ŻELAZO Early Access',
+    setTimeout(()=>showInAppReminder('SixMo Early Access',
       'Nowe funkcje przed wersją stabilną — dla Premium. Limity Twojego planu widzisz w rozmowie z Trenerem i w Więcej → Pakiet i limity AI. Krótkie „dzięki” i „ok” nie liczą się do limitu.'), 1200);
     localStorage.setItem('zelazo_seen_ea','1');
   }
 }catch(e){}
-// jednorazowo po aktualizacji do 1.5.1: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
-APP_REL = '1.5.1';
+// jednorazowo po aktualizacji do 1.6: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
+APP_REL = '1.6';
 try{
   if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
-    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.5.1 — co nowego',
-      'Sylwetka 3D: przybliżanie dwoma palcami albo suwakiem po prawej (po przybliżeniu przesuwasz sylwetkę w górę i w dół), przycisk w rogu przełącza widok startu między siatką a wypełnieniem, krótsze spodenki.'), 1200);
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO to teraz SixMo',
+      'Sześć miesięcy, jeden plan — nowa nazwa, nowe logo i kolory faz planu. Twoje dane, plan i postępy zostają bez zmian. Ikonę na ekranie głównym telefonu odświeżysz, dodając stronę do ekranu głównego jeszcze raz.'), 1200);
     localStorage.setItem('zelazo_seen_rel', APP_REL);
   }
 }catch(e){}

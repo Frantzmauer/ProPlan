@@ -183,7 +183,7 @@ test('Trener dostaje dziennik jedzenia i opis aplikacji (USERS)', async ({ page 
   expect(sent.contextLive).toMatch(/DZIŚ\|[1-9]\d*\/2200\|B\d+\/\d+/);
   expect(sent.contextLive).toMatch(/\n {2}✓Śniadanie/);
   expect(sent.contextLive).toMatch(/DZIŚ\|.*\|(w toku|ZAL)/);
-  expect(sent.context).toMatch(/^Jak działa aplikacja ŻELAZO/);
+  expect(sent.context).toMatch(/^Jak działa aplikacja SixMo/);
   expect(sent.context).toContain('Dzień diety zaliczony');
   expect(sent.context).not.toContain('Dziennik jedzenia');
   expect(sent.features).toContain('obwody');

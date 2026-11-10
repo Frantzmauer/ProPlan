@@ -32,7 +32,7 @@ export function exportJSON(){
 // wczytaj plik i scal
 export function importJSONFromObject(obj, {silent=false}={}){
   const inc = (obj && obj.data) ? obj.data : obj; // akceptuj format z eksportu lub surowy stan
-  if(!inc || typeof inc!=='object'){ if(!silent) alert('To nie wygląda na poprawną kopię ŻELAZO.'); return false; }
+  if(!inc || typeof inc!=='object'){ if(!silent) alert('To nie wygląda na poprawną kopię SixMo.'); return false; }
   const before={days:Object.keys(S.log||{}).length, w:(S.weights||[]).length};
   __set_S(mergeState(S,normalizeIncoming(inc)));
   save();
@@ -58,7 +58,7 @@ export async function linkNewFile(){
   try{
     fileHandle=await window.showSaveFilePicker({
       suggestedName:'zelazo-dane.json',
-      types:[{description:'ŻELAZO dane',accept:{'application/json':['.json']}}]
+      types:[{description:'SixMo dane',accept:{'application/json':['.json']}}]
     });
     await writeFile(); await persistHandle(); refreshSyncUI();
     alert('Plik podłączony ✅\nOd teraz każda zmiana zapisuje się automatycznie do tego pliku. Zapisz go w folderze Google Drive, a Drive zsynchronizuje go z innymi urządzeniami.');
@@ -67,7 +67,7 @@ export async function linkNewFile(){
 
 export async function linkExistingFile(){
   try{
-    const [h]=await window.showOpenFilePicker({types:[{description:'ŻELAZO dane',accept:{'application/json':['.json']}}]});
+    const [h]=await window.showOpenFilePicker({types:[{description:'SixMo dane',accept:{'application/json':['.json']}}]});
     fileHandle=h;
     const f=await h.getFile(); const txt=await f.text();
     if(txt.trim()) importJSONFromObject(JSON.parse(txt),{silent:true});

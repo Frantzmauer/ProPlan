@@ -18,7 +18,7 @@ function channelSlots() {
       order: 'pre',
       handler(html) {
         if (serve) {   // podgląd lokalny = beta
-          return html.replaceAll('%%ICONS%%', '/icons/').replaceAll('%%APPLE_TITLE%%', 'ŻELAZO β').replaceAll('%%TAG%%', 'BETA');
+          return html.replaceAll('%%ICONS%%', '/icons/sixmo/').replaceAll('%%APPLE_TITLE%%', 'SixMo β').replaceAll('%%TAG%%', 'BETA');
         }
         return html.replaceAll('%%ICONS%%', SLOT + 'icons/').replaceAll('href="manifest.webmanifest"', `href="${SLOT}manifest.webmanifest"`);
       },
@@ -27,7 +27,7 @@ function channelSlots() {
     configureServer(server) {
       for (const dir of ['icons', 'models']) server.middlewares.use('/' + dir + '/', async (req, res, next) => {
         const name = decodeURIComponent((req.url || '').split('?')[0]).replace(/^\/+/, '');
-        if (!/^[\w.-]+$/.test(name)) return next();
+        if (!/^(sixmo\/)?[\w.-]+$/.test(name)) return next();   // ikony SixMo w icons/sixmo/
         try {
           const body = await readFile(resolve(__dirname, dir, name));
           res.setHeader('Content-Type', TYPES[extname(name)] || 'application/octet-stream');

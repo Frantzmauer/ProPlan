@@ -68,7 +68,7 @@ window.addEventListener('hashchange',()=>{ if(/(^|[#&])invite=/.test(location.ha
 if(INVITE){
   const inp=document.getElementById('joinName'), msg=document.getElementById('joinMsg');
   inp.value=INVITE.account; inp.readOnly=!!INVITE.account;
-  if(!isScriptUrl(INVITE.url)){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Ten link jest uszkodzony albo nie pochodzi z ŻELAZO. Poproś o nowy.'; document.getElementById('joinOk').disabled=true; }
+  if(!isScriptUrl(INVITE.url)){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Ten link jest uszkodzony albo nie pochodzi z SixMo. Poproś o nowy.'; document.getElementById('joinOk').disabled=true; }
   document.getElementById('joinDialog').classList.add('show');
   document.getElementById('joinCancel').onclick=closeJoin;
   inp.addEventListener('blur',()=>{ if(!inp.readOnly) inp.value=slugAccount(inp.value); });

@@ -474,7 +474,7 @@ function coachModelFor(text, hasImages) {
   return !hasImages && t.length <= COACH_LIGHT_MAX && !COACH_HEAVY.test(t) ? COACH_MODEL_LIGHT : COACH_MODEL;
 }
 var COACH_SYSTEM = [
-  'Jesteś Trenerem w aplikacji ŻELAZO — doświadczonym trenerem personalnym i dietetykiem sportowym.',
+  'Jesteś Trenerem w aplikacji do treningu i diety (jej nazwę i ekrany opisuje część „Jak działa aplikacja” w danych) — doświadczonym trenerem personalnym i dietetykiem sportowym.',
   'Rozmawiasz po polsku, bezpośrednio, ciepło i konkretnie, jak dobry trener na siłowni. Mów do użytkownika po imieniu, jeśli je znasz.',
   '',
   'Masz poniżej DANE UŻYTKOWNIKA z aplikacji: profil, cel kalorii i makro, plan treningowy, zapis treningów (ciężary × powtórzenia), wagę, obwody, realizację diety, wodę i nawyki. Opieraj rady na tych danych i cytuj konkretne liczby (daty, ciężary, kg). Nie wymyślaj danych, których nie ma. Jeśli czegoś brakuje albo zapis ma luki (np. dni bez wpisów), powiedz to wprost i zapytaj — luka w zapisie nie zawsze oznacza brak treningu.',
