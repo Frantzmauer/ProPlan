@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SixMo — strona startowa (prototyp)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Prototyp strony startowej sixmo.app (aplikacja: app.sixmo.app). Działa na telefonie i komputerze, przełącznik PL/EN.
+   Ceny i opinie — przykładowe, do ustalenia. */
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --dim:#9aa3ab; --faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e;
+  --ph1:#7fb2ff; --ph2:#b79cff; --ph3:#ffc24b;
+  --disp:'Barlow Condensed',sans-serif; --body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.w{max-width:1120px;margin:0 auto;padding:0 20px}
+.disp{font-family:var(--disp);font-weight:700;text-transform:uppercase;line-height:1;letter-spacing:.01em}
+
+/* nagłówek */
+header{position:sticky;top:0;z-index:10;background:rgba(14,17,20,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header .w{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--disp);font-weight:700;font-size:26px;text-decoration:none}
+.logo b{color:var(--amber)}
+nav.top{display:flex;align-items:center;gap:22px;font-size:14.5px;color:var(--dim)}
+nav.top a{text-decoration:none}nav.top a:hover{color:var(--ink)}
+@media(max-width:820px){nav.top .hide-m{display:none}}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-size:12.5px;font-weight:600}
+.lang button{padding:5px 10px;color:var(--faint)}
+.lang button[aria-pressed="true"]{background:var(--panel2);color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:14px;font-weight:600;text-decoration:none;white-space:nowrap}
+.btn.pri{background:var(--amber);color:#0e1114}
+.btn.sec{border:1px solid var(--line);background:var(--panel)}
+.btn.sm{height:38px;padding:0 14px;border-radius:11px;font-size:14px}
+
+/* hero */
+.hero{padding:64px 0 40px}
+.hero .w{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+@media(max-width:860px){.hero .w{grid-template-columns:1fr}.hero{padding-top:36px}}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+.hero h1{font-size:clamp(48px,8vw,88px);margin:12px 0 18px}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero p.sub{font-size:clamp(17px,2vw,19px);color:var(--dim);max-width:520px}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0 14px}
+.trust{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--faint)}
+.trust span::before{content:'✓ ';color:var(--green)}
+
+/* telefon z ekranem aplikacji */
+.mock{justify-self:center;width:300px;max-width:100%;border-radius:38px;border:1px solid var(--line);background:#0b0e11;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 6px #141a1f}
+.mock .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:var(--disp);font-weight:700;font-size:19px}
+.mock .bar b{color:var(--amber)}
+.mock .chipx{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--dim);font-family:var(--body);font-weight:600}
+.mock .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.mock .t{font-family:var(--disp);font-weight:700;font-size:24px;text-transform:uppercase;margin:2px 0 10px}
+.mac{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
+.mac div{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:7px 2px;text-align:center;font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.mac b{display:block;font-family:var(--disp);font-size:19px;color:var(--ink);letter-spacing:0}
+.mac div:first-child b{color:var(--amber)}
+.meal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:6px;font-size:12.5px}
+.meal b{display:block;font-family:var(--disp);color:var(--amber);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.meal.done{opacity:.6}
+.coachb{background:var(--panel2);border-radius:12px 12px 12px 4px;padding:9px 11px;font-size:12.5px;color:var(--dim);margin-top:8px}
+.coachb b{color:var(--ink)}
+
+section{padding:64px 0}
+section h2{font-size:clamp(34px,5vw,52px);margin-bottom:10px}
+section .intro{color:var(--dim);max-width:620px;margin-bottom:30px;font-size:17px}
+
+/* fazy */
+.phases{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.phases{grid-template-columns:1fr}}
+.ph{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;position:relative;overflow:hidden}
+.ph::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.ph .n{font-family:var(--disp);font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.ph h3{font-family:var(--disp);font-size:30px;text-transform:uppercase;margin:4px 0 6px}
+.ph p{color:var(--dim);font-size:14.5px}
+.track{display:flex;gap:6px;margin-top:18px}
+.track i{flex:1;height:8px;border-radius:4px;background:var(--c)}
+
+/* funkcje */
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.feat{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.feat{grid-template-columns:1fr}}
+.f{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+.f .ic{width:42px;height:42px;border-radius:12px;background:var(--amber-soft);display:grid;place-items:center;font-size:20px;margin-bottom:12px}
+.f h3{font-size:17px;margin-bottom:4px}
+.f p{color:var(--dim);font-size:14.5px}
+
+/* kroki */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:s}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+.st{border-top:2px solid var(--line);padding-top:16px}
+.st::before{counter-increment:s;content:counter(s);font-family:var(--disp);font-weight:700;font-size:44px;color:var(--amber);line-height:1}
+.st h3{font-size:17px;margin:6px 0 4px}.st p{color:var(--dim);font-size:14.5px}
+
+/* cennik */
+.price{display:grid;grid-template-columns:repeat(2,minmax(0,380px));gap:14px;justify-content:center}
+@media(max-width:760px){.price{grid-template-columns:1fr}}
+.pl{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;display:flex;flex-direction:column}
+.pl.best{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.pl .nm{font-family:var(--disp);font-size:24px;text-transform:uppercase;letter-spacing:.04em}
+.pl .pr{font-family:var(--disp);font-weight:700;font-size:48px;margin:6px 0}
+.pl .pr small{font-size:18px;color:var(--faint);font-weight:500}
+.pl ul{list-style:none;margin:10px 0 20px;flex:1}
+.pl li{padding:6px 0;color:var(--dim);font-size:14.5px;border-bottom:1px solid var(--line)}
+.pl li::before{content:'✓  ';color:var(--green)}
+.pl .tagb{align-self:flex-start;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--amber);color:#0e1114;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.pnote{text-align:center;color:var(--faint);font-size:13px;margin-top:14px}
+
+/* FAQ */
+details{border-bottom:1px solid var(--line);padding:16px 0}
+summary{cursor:pointer;font-weight:600;font-size:16.5px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:'+';color:var(--amber);font-size:22px;line-height:1}
+details[open] summary::after{content:'–'}
+details p{color:var(--dim);margin-top:8px;max-width:760px}
+
+.final{text-align:center;background:linear-gradient(180deg,var(--bg),#151a1f);border-top:1px solid var(--line)}
+.final h2{margin-bottom:12px}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);font-size:13.5px}
+footer .w{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer nav{display:flex;gap:18px;flex-wrap:wrap}
+footer a{text-decoration:none}footer a:hover{color:var(--ink)}
+</style>
+</head><body>
+
+<header><div class="w">
+  <a class="logo" href="#"><svg width="30" height="30" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke-width="16" stroke-linecap="round"><path d="M109.7 25.6L159.6 54.4" stroke="#f2f0ea"/><path d="M169.3 71.2L169.3 128.8" stroke="#f2f0ea"/><path d="M159.6 145.6L109.7 174.4" stroke="#f2f0ea"/><path d="M90.3 174.4L40.4 145.6" stroke="#f2f0ea"/><path d="M30.7 128.8L30.7 71.2" stroke="#f2f0ea"/><path d="M40.4 54.4L90.3 25.6" stroke="#ff7a1a"/></g><text x="100" y="133" text-anchor="middle" font-family="Barlow Condensed" font-weight="700" font-size="92" fill="#f2f0ea">6</text></svg><span>Six<b>Mo</b></span></a>
+  <nav class="top">
+    <a class="hide-m" href="#plan" data-t="navPlan"></a>
+    <a class="hide-m" href="#funkcje" data-t="navFeat"></a>
+    <a class="hide-m" href="#cennik" data-t="navPrice"></a>
+    <div class="lang" role="group" aria-label="Język"><button type="button" data-l="pl">PL</button><button type="button" data-l="en">EN</button></div>
+    <a class="btn sec sm" href="#" data-t="signIn"></a>
+  </nav>
+</div></header>
+
+<main>
+<div class="hero"><div class="w">
+  <div>
+    <div class="eyebrow" data-t="eyebrow"></div>
+    <h1 class="disp" data-t="h1" data-html></h1>
+    <p class="sub" data-t="sub"></p>
+    <div class="cta"><a class="btn pri" href="#" data-t="start"></a><a class="btn sec" href="#plan" data-t="how"></a></div>
+    <div class="trust"><span data-t="tr1"></span><span data-t="tr2"></span><span data-t="tr3"></span></div>
+  </div>
+  <div class="mock" aria-hidden="true">
+    <div class="bar"><span>Six<b>Mo</b></span><span class="chipx" data-t="mStreak"></span></div>
+    <div class="k" data-t="mK"></div>
+    <div class="t" data-t="mT"></div>
+    <div class="mac"><div>kcal<b>1883</b></div><div><span data-t="mP"></span><b>137</b></div><div><span data-t="mC"></span><b>171</b></div><div><span data-t="mF"></span><b>62</b></div></div>
+    <div class="meal done"><b data-t="mB"></b><span data-t="mBd"></span></div>
+    <div class="meal"><b data-t="mL"></b><span data-t="mLd"></span></div>
+    <div class="coachb" data-t="mCoach" data-html></div>
+  </div>
+</div></div>
+
+<section id="plan"><div class="w">
+  <h2 class="disp" data-t="planH"></h2>
+  <p class="intro" data-t="planP"></p>
+  <div class="phases">
+    <div class="ph" style="--c:var(--ph1)"><div class="n" data-t="p1n"></div><h3 data-t="p1h"></h3><p data-t="p1p"></p><div class="track"><i></i><i></i><i style="opacity:.25"></i><i style="opacity:.25"></i><i style="opacity:.25"></i><i style="opacity:.25"></i></div></div>
+    <div class="ph" style="--c:var(--ph2)"><div class="n" data-t="p2n"></div><h3 data-t="p2h"></h3><p data-t="p2p"></p><div class="track"><i style="opacity:.25"></i><i style="opacity:.25"></i><i></i><i></i><i style="opacity:.25"></i><i style="opacity:.25"></i></div></div>
+    <div class="ph" style="--c:var(--ph3)"><div class="n" data-t="p3n"></div><h3 data-t="p3h"></h3><p data-t="p3p"></p><div class="track"><i style="opacity:.25"></i><i style="opacity:.25"></i><i style="opacity:.25"></i><i style="opacity:.25"></i><i></i><i></i></div></div>
+  </div>
+</div></section>
+
+<section id="funkcje" style="background:#12161a;border-block:1px solid var(--line)"><div class="w">
+  <h2 class="disp" data-t="featH"></h2>
+  <p class="intro" data-t="featP"></p>
+  <div class="feat">
+    <div class="f"><div class="ic">🍽️</div><h3 data-t="f1h"></h3><p data-t="f1p"></p></div>
+    <div class="f"><div class="ic">🏋️</div><h3 data-t="f2h"></h3><p data-t="f2p"></p></div>
+    <div class="f"><div class="ic">💬</div><h3 data-t="f3h"></h3><p data-t="f3p"></p></div>
+    <div class="f"><div class="ic">📷</div><h3 data-t="f4h"></h3><p data-t="f4p"></p></div>
+    <div class="f"><div class="ic">🧍</div><h3 data-t="f5h"></h3><p data-t="f5p"></p></div>
+    <div class="f"><div class="ic">📶</div><h3 data-t="f6h"></h3><p data-t="f6p"></p></div>
+  </div>
+</div></section>
+
+<section><div class="w">
+  <h2 class="disp" data-t="stepsH"></h2>
+  <div class="steps" style="margin-top:24px">
+    <div class="st"><h3 data-t="s1h"></h3><p data-t="s1p"></p></div>
+    <div class="st"><h3 data-t="s2h"></h3><p data-t="s2p"></p></div>
+    <div class="st"><h3 data-t="s3h"></h3><p data-t="s3p"></p></div>
+  </div>
+</div></section>
+
+<section id="cennik" style="background:#12161a;border-block:1px solid var(--line)"><div class="w">
+  <h2 class="disp" data-t="priceH" style="text-align:center"></h2>
+  <p class="intro" data-t="priceP" style="text-align:center;margin-inline:auto"></p>
+  <div class="price">
+    <div class="pl"><div class="nm" data-t="free"></div><div class="pr">0 zł</div><ul><li data-t="fr1"></li><li data-t="fr2"></li><li data-t="fr3"></li><li data-t="fr4"></li></ul><a class="btn sec" href="#" data-t="start"></a></div>
+    <div class="pl best"><span class="tagb" data-t="popular"></span><div class="nm">Premium</div><div class="pr">—<small data-t="perMo"></small></div><ul><li data-t="pr1"></li><li data-t="pr2"></li><li data-t="pr3"></li><li data-t="pr4"></li></ul><a class="btn pri" href="#" data-t="tryPrem"></a></div>
+  </div>
+  <p class="pnote" data-t="priceNote"></p>
+</div></section>
+
+<section><div class="w" style="max-width:860px">
+  <h2 class="disp" data-t="faqH"></h2>
+  <details><summary data-t="q1"></summary><p data-t="a1"></p></details>
+  <details><summary data-t="q2"></summary><p data-t="a2"></p></details>
+  <details><summary data-t="q3"></summary><p data-t="a3"></p></details>
+  <details><summary data-t="q4"></summary><p data-t="a4"></p></details>
+  <details><summary data-t="q5"></summary><p data-t="a5"></p></details>
+</div></section>
+
+<section class="final"><div class="w">
+  <h2 class="disp" data-t="finalH"></h2>
+  <p class="intro" data-t="finalP" style="margin-inline:auto"></p>
+  <a class="btn pri" href="#" data-t="start"></a>
+</div></section>
+</main>
+
+<footer><div class="w">
+  <span>© 2026 SixMo</span>
+  <nav><a href="#" data-t="privacy"></a><a href="#" data-t="terms"></a><a href="#" data-t="contact"></a><a href="#" data-t="signIn"></a></nav>
+</div></footer>
+
+<script>
+const T = {
+  navPlan:{pl:'Plan',en:'Plan'}, navFeat:{pl:'Funkcje',en:'Features'}, navPrice:{pl:'Cennik',en:'Pricing'},
+  signIn:{pl:'Zaloguj',en:'Sign in'},
+  eyebrow:{pl:'Trening · dieta · Trener AI',en:'Training · nutrition · AI Coach'},
+  h1:{pl:'Sześć miesięcy.<br><em>Jeden plan.</em>',en:'Six months.<br><em>One plan.</em>'},
+  sub:{pl:'Plan treningowy i jadłospis na 24 tygodnie, który dopasowuje się do Ciebie. Trener AI zna Twoje treningi, posiłki i pomiary — i mówi konkretnie, co zrobić dziś.',en:'A 24-week training and meal plan that adapts to you. The AI Coach knows your workouts, meals and measurements — and tells you exactly what to do today.'},
+  start:{pl:'Zacznij za darmo',en:'Start for free'},
+  how:{pl:'Jak to działa',en:'How it works'},
+  tr1:{pl:'bez karty płatniczej',en:'no credit card'}, tr2:{pl:'po polsku i angielsku',en:'in English and Polish'}, tr3:{pl:'dane w UE',en:'data stored in the EU'},
+  mStreak:{pl:'6 dni',en:'6 days'}, mK:{pl:'Jadłospis · wtorek',en:'Meal plan · Tuesday'}, mT:{pl:'Co dziś jesz',en:'Today’s meals'},
+  mP:{pl:'Białko',en:'Protein'}, mC:{pl:'Węgle',en:'Carbs'}, mF:{pl:'Tłuszcz',en:'Fat'},
+  mB:{pl:'Śniadanie',en:'Breakfast'}, mBd:{pl:'Owsianka, WPC, jagody',en:'Oats, whey, blueberries'},
+  mL:{pl:'Obiad',en:'Lunch'}, mLd:{pl:'Łosoś, bulgur, warzywa',en:'Salmon, bulgur, vegetables'},
+  mCoach:{pl:'<b>Trener:</b> Brakuje 7 g białka — skyr do kolacji domknie dzień.',en:'<b>Coach:</b> You’re 7 g short on protein — a skyr with dinner closes the day.'},
+  planH:{pl:'24 tygodnie, 3 fazy',en:'24 weeks, 3 phases'},
+  planP:{pl:'Każdy miesiąc to krawędź sześciokąta w logo. Plan prowadzi Cię od adaptacji do formy — z progresją ciężarów i kalorii liczoną z Twojej wagi.',en:'Each month is one edge of the hexagon in our logo. The plan takes you from adaptation to peak shape — with weight progression and calories calculated from your own trend.'},
+  p1n:{pl:'Miesiące 1–2',en:'Months 1–2'}, p1h:{pl:'Adaptacja',en:'Adaptation'}, p1p:{pl:'Siła bazowa na wolnych ciężarach, technika, redukcja tkanki tłuszczowej.',en:'Base strength with free weights, technique, fat loss.'},
+  p2n:{pl:'Miesiące 3–4',en:'Months 3–4'}, p2h:{pl:'Hipertrofia',en:'Hypertrophy'}, p2p:{pl:'Podział góra/dół, więcej objętości, budowa mięśni.',en:'Upper/lower split, more volume, building muscle.'},
+  p3n:{pl:'Miesiące 5–6',en:'Months 5–6'}, p3h:{pl:'Rzeźba',en:'Definition'}, p3p:{pl:'Więcej powtórzeń, cardio po sesjach, wyraźna sylwetka.',en:'Higher reps, cardio after sessions, a defined physique.'},
+  featH:{pl:'Wszystko w jednym miejscu',en:'Everything in one place'},
+  featP:{pl:'Bez pięciu aplikacji i arkusza kalkulacyjnego.',en:'No more five apps and a spreadsheet.'},
+  f1h:{pl:'Jadłospis z zamiennikami',en:'Meal plan with swaps'}, f1p:{pl:'Warianty posiłków, „Zamień”, makro liczone same. Dzień diety zaliczony przy 85–110% kalorii i 80% białka.',en:'Meal variants, one-tap swaps, macros calculated for you. A diet day counts at 85–110% of calories and 80% of protein.'},
+  f2h:{pl:'Trening z progresją',en:'Training with progression'}, f2p:{pl:'Serie, przerwy, rekordy i podpowiedź ciężaru na następny raz. Instruktaż każdego ćwiczenia.',en:'Sets, rest timers, records and a suggested weight for next time. Guidance for every exercise.'},
+  f3h:{pl:'Trener AI',en:'AI Coach'}, f3p:{pl:'Zna Twoje dane i proponuje zmiany w planie, które zatwierdzasz jednym stuknięciem.',en:'Knows your data and suggests plan changes you approve with one tap.'},
+  f4h:{pl:'Zdjęcie posiłku i technika',en:'Meal photos and form check'}, f4p:{pl:'Zrób zdjęcie talerza — AI oszacuje kalorie. Nagraj serię — dostaniesz ocenę techniki.',en:'Snap your plate — AI estimates the calories. Record a set — get feedback on your form.'},
+  f5h:{pl:'Sylwetka 3D',en:'3D body model'}, f5p:{pl:'Model dopasowany do Twoich obwodów: zobacz, jak zmieniasz się od startu.',en:'A model fitted to your measurements: see how you’ve changed since day one.'},
+  f6h:{pl:'Działa bez internetu',en:'Works offline'}, f6p:{pl:'Siłownia w piwnicy? Zapisujesz normalnie, synchronizacja przy pierwszym zasięgu.',en:'Basement gym? Log as usual — it syncs when you’re back online.'},
+  stepsH:{pl:'Start w 2 minuty',en:'Start in 2 minutes'},
+  s1h:{pl:'Załóż konto',en:'Create an account'}, s1p:{pl:'Przez Google albo e-mail — bez hasła.',en:'With Google or email — no password.'},
+  s2h:{pl:'Podaj kilka danych',en:'Tell us a little'}, s2p:{pl:'Wzrost, waga, cel i dzień startu. Plan i kalorie ustawią się same.',en:'Height, weight, goal and start date. The plan and calories set themselves.'},
+  s3h:{pl:'Rób swoje',en:'Do the work'}, s3p:{pl:'Odhaczaj posiłki i serie. Trener pilnuje reszty.',en:'Tick off meals and sets. The Coach handles the rest.'},
+  priceH:{pl:'Cennik',en:'Pricing'},
+  priceP:{pl:'Zacznij za darmo. Premium, gdy chcesz więcej z Trenera AI.',en:'Start for free. Go Premium when you want more from the AI Coach.'},
+  free:{pl:'Darmowy',en:'Free'}, popular:{pl:'najczęściej wybierany',en:'most popular'}, perMo:{pl:' / mies.',en:' / mo'},
+  fr1:{pl:'Pełny plan 24 tygodni',en:'Full 24-week plan'}, fr2:{pl:'Jadłospis i lista zakupów',en:'Meal plan and shopping list'}, fr3:{pl:'Postęp, wykresy, rekordy',en:'Progress, charts, records'}, fr4:{pl:'Trener AI — kilka pytań miesięcznie',en:'AI Coach — a few questions a month'},
+  pr1:{pl:'Wszystko z planu Darmowego',en:'Everything in Free'}, pr2:{pl:'Trener AI bez codziennych limitów',en:'AI Coach without daily limits'}, pr3:{pl:'Zdjęcia posiłków i ocena techniki',en:'Meal photos and form check'}, pr4:{pl:'Nowości wcześniej (Early Access)',en:'New features first (Early Access)'},
+  tryPrem:{pl:'Wypróbuj Premium',en:'Try Premium'},
+  priceNote:{pl:'Ceny w przygotowaniu — prototyp.',en:'Pricing coming soon — prototype.'},
+  faqH:{pl:'Pytania',en:'FAQ'},
+  q1:{pl:'Dla kogo jest SixMo?',en:'Who is SixMo for?'}, a1:{pl:'Dla osób, które chcą w pół roku zmienić sylwetkę: schudnąć, nabrać siły i mięśni — na siłowni i w domu, bez zgadywania, co robić dalej.',en:'For anyone who wants to transform their body in six months: lose fat, build strength and muscle — at the gym and at home, without guessing what to do next.'},
+  q2:{pl:'Czy muszę liczyć kalorie?',en:'Do I have to count calories?'}, a2:{pl:'Nie. Jadłospis ma gotowe porcje, a kalorie dopasowują się do trendu Twojej wagi. Własne posiłki dodasz zdjęciem albo opisem.',en:'No. The meal plan has ready portions and calories adjust to your weight trend. Add your own meals with a photo or a description.'},
+  q3:{pl:'Co z moimi danymi?',en:'What about my data?'}, a3:{pl:'Dane są przechowywane w UE i służą tylko do prowadzenia Twojego planu. Możesz je pobrać albo usunąć konto w każdej chwili.',en:'Your data is stored in the EU and used only to run your plan. You can download it or delete your account at any time.'},
+  q4:{pl:'Czy działa na iPhonie i Androidzie?',en:'Does it work on iPhone and Android?'}, a4:{pl:'Tak — w przeglądarce na każdym telefonie i komputerze. Aplikacja w Google Play jest w przygotowaniu, App Store później.',en:'Yes — in the browser on any phone or computer. The Google Play app is coming soon, App Store later.'},
+  q5:{pl:'Czy Trener AI zastępuje lekarza?',en:'Does the AI Coach replace a doctor?'}, a5:{pl:'Nie. Trener AI pomaga w treningu i diecie, ale nie diagnozuje ani nie leczy. Przy chorobach i kontuzjach skonsultuj się z lekarzem.',en:'No. The AI Coach helps with training and nutrition but does not diagnose or treat. If you have a condition or injury, consult a doctor.'},
+  finalH:{pl:'Zacznij swoje sześć miesięcy',en:'Start your six months'},
+  finalP:{pl:'Za pół roku będziesz w innym miejscu. Pierwszy krok zajmie 2 minuty.',en:'Six months from now you’ll be somewhere else. The first step takes 2 minutes.'},
+  privacy:{pl:'Polityka prywatności',en:'Privacy Policy'}, terms:{pl:'Regulamin',en:'Terms'}, contact:{pl:'Kontakt',en:'Contact'},
+};
+let L = (navigator.language||'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+function render(){
+  document.documentElement.lang=L;
+  document.querySelectorAll('[data-t]').forEach(el=>{ const v=(T[el.dataset.t]||{})[L]; if(v!=null) el[el.hasAttribute('data-html')?'innerHTML':'textContent']=v; });
+  document.querySelectorAll('[data-l]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.l===L));
+}
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-l]'); if(b){ L=b.dataset.l; render(); } });
+render();
+</script>
+</body></html>

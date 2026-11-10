@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SixMo — konta i logowanie (prototyp)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Prototyp: logowanie (Google albo kod z e-maila, bez haseł), pierwsze uruchomienie (język, zgody),
+   przeniesienie danych z konta z zaproszenia, ekran „Konto”. Telefon 375 px, przykładowe dane, przełącznik PL/EN. */
+:root{
+  --bg:#0e1114; --panel:#171b1f; --panel2:#1e2429; --line:#2a3138;
+  --ink:#f2f0ea; --dim:#9aa3ab; --faint:#8a949c;
+  --amber:#ff7a1a; --amber-soft:#3a2410; --steel:#5fa8d3; --green:#4ec97e; --red:#e2543a;
+  --disp:'Barlow Condensed',sans-serif; --body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#07090b;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding:24px 16px 60px}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 375px;gap:36px;align-items:start}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}.phone{margin:0 auto}}
+h1{font-family:var(--disp);font-size:22px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.lead{color:var(--dim);font-size:14px;margin-bottom:18px}
+.side .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.side h2{font-family:var(--disp);font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.jump{display:flex;flex-wrap:wrap;gap:6px}
+.jump button{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--dim)}
+.jump button.on{border-color:var(--amber);color:var(--ink);background:var(--amber-soft)}
+.side ul{padding-left:18px;color:var(--dim);font-size:13.5px}.side li{margin:4px 0}.side b{color:var(--ink)}
+
+.phone{width:375px;height:780px;border-radius:40px;border:1px solid var(--line);background:var(--bg);overflow:hidden;position:sticky;top:20px;display:flex;flex-direction:column}
+.scr{flex:1;overflow-y:auto;padding:18px 20px 22px;display:flex;flex-direction:column;scrollbar-width:none}
+.scr::-webkit-scrollbar{display:none}
+.view{display:flex;flex-direction:column;flex:1}
+.view[hidden]{display:none}
+.topline{display:flex;justify-content:space-between;align-items:center;min-height:36px;margin-bottom:8px}
+.back{font-size:22px;color:var(--dim);width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-size:12.5px;font-weight:600}
+.lang button{padding:5px 11px;color:var(--faint)}
+.lang button[aria-pressed="true"]{background:var(--panel2);color:var(--ink)}
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:10px 0 20px}
+.word{font-family:var(--disp);font-weight:700;font-size:56px;line-height:.9;letter-spacing:.01em}
+.word b{color:var(--amber)}
+.tag{color:var(--dim);font-size:16px;max-width:280px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;height:52px;border-radius:14px;font-weight:600;font-size:15.5px;width:100%}
+.btn.pri{background:var(--amber);color:#0e1114}
+.btn.pri:disabled{opacity:.4;cursor:default}
+.btn.g{background:#fff;color:#1f1f1f}
+.btn.sec{border:1px solid var(--line);background:var(--panel)}
+.btn.link{height:auto;padding:10px;color:var(--steel);font-weight:500;font-size:14px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.fine{font-size:12px;color:var(--faint);text-align:center;margin-top:12px}
+.fine a{color:var(--dim)}
+.h{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1.05;text-transform:uppercase;margin:6px 0 8px}
+.p{color:var(--dim);font-size:14.5px;margin-bottom:16px}
+label.f{display:block;font-size:13px;color:var(--dim);margin-bottom:6px}
+input.in{width:100%;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:16px;padding:0 14px}
+input.in:focus{border-color:var(--amber);outline:none}
+.code{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:6px 0 10px}
+.code input{height:56px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-align:center;font-family:var(--disp);font-size:28px;font-weight:700;width:100%}
+.code input:focus{border-color:var(--amber);outline:none}
+.muted{font-size:13px;color:var(--faint)}
+.spacer{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.opt:last-child{border-bottom:0}
+.opt input{width:22px;height:22px;accent-color:var(--amber);flex:none;margin-top:1px}
+.opt b{display:block;font-size:14.5px}
+.opt span{font-size:13px;color:var(--dim)}
+.req{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-left:4px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{height:64px;border-radius:14px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600}
+.seg button small{font-weight:400;color:var(--faint);font-size:12px}
+.seg button[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-soft)}
+.note{font-size:12.5px;color:var(--faint);margin-top:8px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .k{font-size:13px;color:var(--faint)}
+.row .v{font-weight:500}
+.row small{display:block;font-size:12.5px;color:var(--faint)}
+.chip{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--panel2);color:var(--green)}
+.mini{font-size:13px;font-weight:600;color:var(--steel);padding:6px 4px}
+.danger{color:var(--red)}
+.sect{font-family:var(--disp);font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+.mig{display:flex;gap:12px;align-items:center;background:var(--panel2);border-radius:14px;padding:12px;margin-bottom:12px}
+.mig .n{font-family:var(--disp);font-size:26px;font-weight:700;color:var(--amber);min-width:52px;text-align:center}
+.mig div{font-size:13px;color:var(--dim)}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:24px;background:var(--panel2);border:1px solid var(--line);padding:10px 14px;border-radius:12px;font-size:13.5px;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+.phwrap{position:relative}
+</style>
+</head><body>
+<div class="wrap">
+<main class="side">
+  <h1>SixMo · konta i logowanie · prototyp</h1>
+  <p class="lead">Logowanie przez Google albo kodem z e-maila — bez haseł. Kod potrzebny tylko na nowym urządzeniu; potem aplikacja pamięta zalogowanie. Przełącznik PL/EN w prawym górnym rogu telefonu zmienia cały tekst (tak będzie działał słownik w aplikacji).</p>
+  <div class="box">
+    <h2>Ekrany</h2>
+    <div class="jump" id="jump"></div>
+  </div>
+  <div class="box">
+    <h2>Jak to działa</h2>
+    <ul>
+      <li><b>Język</b> wykrywany z telefonu (polski → PL, każdy inny → EN), do zmiany na ekranie startowym, przy pierwszym uruchomieniu i w Koncie. Zapisany w koncie — Trener i e-maile w tym samym języku.</li>
+      <li><b>Zgody</b> przy pierwszym logowaniu: regulamin i polityka prywatności oraz osobna, wyraźna zgoda na dane o zdrowiu (waga, obwody, cykl — RODO art. 9). Bez nich konta nie da się założyć.</li>
+      <li><b>Konto z zaproszenia</b> (obecni użytkownicy): po pierwszym logowaniu aplikacja widzi dane na telefonie i proponuje ich połączenie z nowym kontem — bez utraty historii.</li>
+      <li><b>Kilka urządzeń naraz</b> — telefon i laptop, każde z własnym zalogowaniem; lista urządzeń i „Wyloguj ze wszystkich” w Koncie.</li>
+      <li><b>Usuń konto</b> i <b>Pobierz moje dane</b> — wymagane przez Google Play i RODO.</li>
+    </ul>
+  </div>
+</main>
+
+<aside class="phwrap" aria-label="Podgląd aplikacji">
+  <div class="phone"><div class="scr" id="scr">
+
+    <!-- 1. start -->
+    <section class="view" id="v-start">
+      <div class="topline"><span></span><div class="lang" role="group" aria-label="Język"><button type="button" data-l="pl">PL</button><button type="button" data-l="en">EN</button></div></div>
+      <div class="hero">
+        <svg width="96" height="96" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke-width="12" stroke-linecap="round"><path d="M109.7 25.6L159.6 54.4" stroke="#f2f0ea"/><path d="M169.3 71.2L169.3 128.8" stroke="#f2f0ea"/><path d="M159.6 145.6L109.7 174.4" stroke="#f2f0ea"/><path d="M90.3 174.4L40.4 145.6" stroke="#f2f0ea"/><path d="M30.7 128.8L30.7 71.2" stroke="#f2f0ea"/><path d="M40.4 54.4L90.3 25.6" stroke="#ff7a1a"/></g><text x="100" y="129" text-anchor="middle" font-family="Barlow Condensed" font-weight="700" font-size="84" fill="#f2f0ea">6</text></svg>
+        <div class="word">Six<b>Mo</b></div>
+        <div class="tag" data-t="tagline"></div>
+      </div>
+      <div class="stack">
+        <button class="btn g" type="button" data-go="consent" data-google><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span data-t="google"></span></button>
+        <button class="btn sec" type="button" data-go="email"><span data-t="withEmail"></span></button>
+      </div>
+      <p class="fine" data-t="fine" data-html></p>
+    </section>
+
+    <!-- 2. e-mail -->
+    <section class="view" id="v-email" hidden>
+      <div class="topline"><button class="back" type="button" data-go="start" aria-label="Wstecz">‹</button></div>
+      <div class="h" data-t="emailH"></div>
+      <p class="p" data-t="emailP"></p>
+      <label class="f" for="em" data-t="emailL"></label>
+      <input class="in" id="em" type="email" inputmode="email" autocomplete="email" placeholder="ty@example.com" value="marek@example.com">
+      <div class="spacer"></div>
+      <button class="btn pri" type="button" data-go="code" data-t="sendCode"></button>
+    </section>
+
+    <!-- 3. kod -->
+    <section class="view" id="v-code" hidden>
+      <div class="topline"><button class="back" type="button" data-go="email" aria-label="Wstecz">‹</button></div>
+      <div class="h" data-t="codeH"></div>
+      <p class="p"><span data-t="codeP"></span> <b id="emShow">marek@example.com</b></p>
+      <div class="code" id="code" aria-label="Kod"></div>
+      <p class="muted"><span data-t="noCode"></span> <button class="mini" type="button" id="resend"></button></p>
+      <p class="muted" data-t="codeTip"></p>
+      <div class="spacer"></div>
+      <button class="btn pri" type="button" id="codeOk" data-go="consent" data-t="confirm" disabled></button>
+    </section>
+
+    <!-- 4. pierwsze uruchomienie: język i zgody -->
+    <section class="view" id="v-consent" hidden>
+      <div class="topline"><span class="muted" data-t="step1"></span></div>
+      <div class="h" data-t="welcomeH"></div>
+      <p class="sect" data-t="langH"></p>
+      <div class="seg" role="group" aria-label="Język aplikacji"><button type="button" data-l="pl">Polski<small data-t="detected" data-only="pl"></small></button><button type="button" data-l="en">English<small data-t="detected" data-only="en"></small></button></div>
+      <p class="note" data-t="langNote"></p>
+      <p class="sect" data-t="consH"></p>
+      <div class="card">
+        <label class="opt"><input type="checkbox" class="must"><div><b><span data-t="c1"></span><span class="req" data-t="req"></span></b><span data-t="c1d" data-html></span></div></label>
+        <label class="opt"><input type="checkbox" class="must"><div><b><span data-t="c2"></span><span class="req" data-t="req"></span></b><span data-t="c2d"></span></div></label>
+        <label class="opt"><input type="checkbox"><div><b data-t="c3"></b><span data-t="c3d"></span></div></label>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn pri" type="button" id="consOk" data-go="migrate" data-t="next" disabled></button>
+    </section>
+
+    <!-- 5. konto z zaproszenia -->
+    <section class="view" id="v-migrate" hidden>
+      <div class="topline"><span class="muted" data-t="step2"></span></div>
+      <div class="h" data-t="migH"></div>
+      <p class="p" data-t="migP"></p>
+      <div class="mig"><span class="n">212</span><div data-t="mig1"></div></div>
+      <div class="mig"><span class="n">48</span><div data-t="mig2"></div></div>
+      <div class="mig"><span class="n">🗣</span><div data-t="mig3"></div></div>
+      <p class="note" data-t="migNote"></p>
+      <div class="spacer"></div>
+      <div class="stack">
+        <button class="btn pri" type="button" data-go="account" data-toast="merged" data-t="migYes"></button>
+        <button class="btn link" type="button" data-go="account" data-t="migNo"></button>
+      </div>
+    </section>
+
+    <!-- 6. Więcej → Konto -->
+    <section class="view" id="v-account" hidden>
+      <div class="topline"><button class="back" type="button" aria-label="Wstecz">‹</button><span class="muted" data-t="moreAcc"></span><span style="width:36px"></span></div>
+      <div class="h" data-t="accH"></div>
+      <div class="card">
+        <div class="row"><div><div class="k" data-t="accEmail"></div><div class="v">marek@example.com</div></div><span class="chip" data-t="verified"></span></div>
+        <div class="row"><div><div class="k" data-t="accMethod"></div><div class="v" data-t="accMethodV"></div></div></div>
+        <div class="row"><div><div class="k" data-t="accLang"></div></div><div class="lang" role="group" aria-label="Język"><button type="button" data-l="pl">PL</button><button type="button" data-l="en">EN</button></div></div>
+        <div class="row"><div><div class="k" data-t="accPlan"></div><div class="v">Premium</div></div><button class="mini" type="button" data-t="manage"></button></div>
+      </div>
+      <p class="sect" data-t="devH"></p>
+      <div class="card">
+        <div class="row"><div><div class="v" data-t="dev1"></div><small data-t="dev1d"></small></div><span class="chip" data-t="thisDev"></span></div>
+        <div class="row"><div><div class="v">MacBook · Chrome</div><small data-t="dev2d"></small></div><button class="mini" type="button" data-t="logout"></button></div>
+        <div class="row"><button class="mini" type="button" data-t="logoutAll" data-toast="loggedOutAll"></button></div>
+      </div>
+      <p class="sect" data-t="dataH"></p>
+      <div class="card">
+        <div class="row"><div><div class="v" data-t="export"></div><small data-t="exportD"></small></div><button class="mini" type="button">↓</button></div>
+        <div class="row"><div><div class="v danger" data-t="delete"></div><small data-t="deleteD"></small></div><button class="mini danger" type="button">›</button></div>
+      </div>
+      <button class="btn sec" type="button" data-go="start" data-t="signOut"></button>
+    </section>
+
+  </div><div class="toast" id="toast"></div></div>
+</aside>
+</div>
+
+<script>
+// słownik — tak samo będzie zorganizowana aplikacja: klucz → {pl, en}
+const T = {
+  tagline:{pl:'Sześć miesięcy. Jeden plan. Trening, dieta i Trener AI w jednym miejscu.',en:'Six months. One plan. Training, nutrition and an AI Coach in one place.'},
+  google:{pl:'Kontynuuj z Google',en:'Continue with Google'},
+  withEmail:{pl:'Kontynuuj z e-mailem',en:'Continue with email'},
+  fine:{pl:'Kontynuując, akceptujesz <a href="#">Regulamin</a> i <a href="#">Politykę prywatności</a>.',en:'By continuing you accept the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.'},
+  emailH:{pl:'Twój e-mail',en:'Your email'},
+  emailP:{pl:'Wyślemy jednorazowy kod. Bez hasła — kod wpisujesz tylko na nowym urządzeniu.',en:'We’ll send a one-time code. No password — you only enter a code on a new device.'},
+  emailL:{pl:'Adres e-mail',en:'Email address'},
+  sendCode:{pl:'Wyślij kod',en:'Send code'},
+  codeH:{pl:'Wpisz kod',en:'Enter the code'},
+  codeP:{pl:'Wysłaliśmy 6-cyfrowy kod na',en:'We sent a 6-digit code to'},
+  noCode:{pl:'Nie doszedł?',en:'Didn’t get it?'},
+  resendIn:{pl:'Wyślij ponownie za {s} s',en:'Resend in {s}s'},
+  resend:{pl:'Wyślij ponownie',en:'Resend'},
+  codeTip:{pl:'Sprawdź też folder Spam. Kod jest ważny 10 minut.',en:'Check your spam folder too. The code is valid for 10 minutes.'},
+  confirm:{pl:'Zaloguj',en:'Sign in'},
+  step1:{pl:'Krok 1 z 2',en:'Step 1 of 2'},
+  step2:{pl:'Krok 2 z 2',en:'Step 2 of 2'},
+  welcomeH:{pl:'Witaj w SixMo',en:'Welcome to SixMo'},
+  langH:{pl:'Język aplikacji',en:'App language'},
+  detected:{pl:'z telefonu',en:'from your phone'},
+  langNote:{pl:'Dotyczy ekranów, planu, jadłospisu, Trenera AI i e-maili. Zmienisz go w każdej chwili w Koncie.',en:'Applies to screens, plan, meal plan, AI Coach and emails. You can change it any time in Account.'},
+  consH:{pl:'Zgody',en:'Consents'},
+  req:{pl:'wymagane',en:'required'},
+  c1:{pl:'Regulamin i polityka prywatności',en:'Terms and Privacy Policy'},
+  c1d:{pl:'Akceptuję <a href="#" style="color:var(--steel)">Regulamin</a> i <a href="#" style="color:var(--steel)">Politykę prywatności</a>.',en:'I accept the <a href="#" style="color:var(--steel)">Terms</a> and <a href="#" style="color:var(--steel)">Privacy Policy</a>.'},
+  c2:{pl:'Dane o zdrowiu',en:'Health data'},
+  c2d:{pl:'Zgadzam się na przetwarzanie moich danych o zdrowiu (waga, obwody, cykl, samopoczucie), żeby aplikacja i Trener AI mogli dopasować plan. Zgodę można wycofać w Koncie.',en:'I agree to the processing of my health data (weight, measurements, cycle, wellbeing) so the app and AI Coach can tailor my plan. I can withdraw consent in Account.'},
+  c3:{pl:'Nowości e-mailem',en:'News by email'},
+  c3d:{pl:'Raz w miesiącu: nowe funkcje i porady. Opcjonalne.',en:'Once a month: new features and tips. Optional.'},
+  next:{pl:'Dalej',en:'Next'},
+  migH:{pl:'Masz już dane na tym telefonie',en:'There’s data on this phone'},
+  migP:{pl:'Znaleźliśmy postępy z konta z zaproszenia „marek”. Połącz je z nowym kontem, żeby niczego nie stracić.',en:'We found progress from the invite account “marek”. Link it to your new account so nothing is lost.'},
+  mig1:{pl:'zapisanych dni treningu i diety',en:'logged training and diet days'},
+  mig2:{pl:'pomiarów wagi i obwodów',en:'weight and body measurements'},
+  mig3:{pl:'rozmowy z Trenerem i ustawienia planu',en:'AI Coach chats and plan settings'},
+  migNote:{pl:'Stare konto zostaje zamknięte, a jego dane przechodzą do nowego. Na innych urządzeniach zaloguj się tym samym e-mailem.',en:'The old account is closed and its data moves to the new one. On other devices, sign in with the same email.'},
+  migYes:{pl:'Połącz i zacznij',en:'Link and continue'},
+  migNo:{pl:'Zacznij od zera',en:'Start fresh'},
+  merged:{pl:'Połączono — witaj z powrotem 💪',en:'Linked — welcome back 💪'},
+  moreAcc:{pl:'Więcej',en:'More'},
+  accH:{pl:'Konto',en:'Account'},
+  accEmail:{pl:'E-mail',en:'Email'},
+  verified:{pl:'potwierdzony',en:'verified'},
+  accMethod:{pl:'Logowanie',en:'Sign-in'},
+  accMethodV:{pl:'Google · kod z e-maila',en:'Google · email code'},
+  accLang:{pl:'Język · Language',en:'Language · Język'},
+  accPlan:{pl:'Pakiet',en:'Plan'},
+  manage:{pl:'Zarządzaj',en:'Manage'},
+  devH:{pl:'Zalogowane urządzenia',en:'Signed-in devices'},
+  dev1:{pl:'Ten telefon · Android',en:'This phone · Android'},
+  dev1d:{pl:'aktywne teraz',en:'active now'},
+  thisDev:{pl:'to urządzenie',en:'this device'},
+  dev2d:{pl:'ostatnio 2 dni temu',en:'last active 2 days ago'},
+  logout:{pl:'Wyloguj',en:'Sign out'},
+  logoutAll:{pl:'Wyloguj ze wszystkich urządzeń',en:'Sign out of all devices'},
+  loggedOutAll:{pl:'Wylogowano z pozostałych urządzeń',en:'Signed out of other devices'},
+  dataH:{pl:'Twoje dane',en:'Your data'},
+  export:{pl:'Pobierz moje dane',en:'Download my data'},
+  exportD:{pl:'plik JSON ze wszystkim, co zapisała aplikacja',en:'a JSON file with everything the app stored'},
+  delete:{pl:'Usuń konto',en:'Delete account'},
+  deleteD:{pl:'trwale, z danymi na serwerze; potwierdzenie e-mailem',en:'permanently, including server data; confirmed by email'},
+  signOut:{pl:'Wyloguj',en:'Sign out'},
+};
+// język startowy z telefonu: polski → pl, każdy inny → en
+const detected = (navigator.language||'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+let L = detected;
+function t(k){ return (T[k]||{})[L] ?? k; }
+function render(){
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    if(el.dataset.only && el.dataset.only!==detected){ el.textContent=''; return; }
+    el[el.hasAttribute('data-html')?'innerHTML':'textContent'] = t(el.dataset.t);
+  });
+  document.querySelectorAll('[data-l]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.l===L));
+  tick();
+}
+// ekrany
+const VIEWS = [['start','Start'],['email','E-mail'],['code','Kod'],['consent','Język i zgody'],['migrate','Konto z zaproszenia'],['account','Więcej → Konto']];
+const jump = document.getElementById('jump');
+jump.innerHTML = VIEWS.map(([v,n])=>`<button type="button" data-go="${v}">${n}</button>`).join('');
+function go(v){
+  document.querySelectorAll('.view').forEach(s=>s.hidden = s.id!=='v-'+v);
+  jump.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.go===v));
+  document.getElementById('scr').scrollTop=0;
+  if(v==='code'){ secs=30; document.getElementById('emShow').textContent=document.getElementById('em').value||'—'; setTimeout(()=>document.querySelector('#code input').focus(),50); }
+}
+function toast(k){ const el=document.getElementById('toast'); el.textContent=t(k); el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),2200); }
+document.addEventListener('click', e=>{
+  const l=e.target.closest('[data-l]'); if(l){ L=l.dataset.l; render(); return; }
+  const g=e.target.closest('[data-go]'); if(g && !g.disabled){ if(g.dataset.toast) toast(g.dataset.toast); go(g.dataset.go); }
+});
+// kod: 6 pól, przeskok do następnego, wklejenie całego kodu
+const code=document.getElementById('code');
+code.innerHTML=Array.from({length:6},(_,i)=>`<input inputmode="numeric" maxlength="1" aria-label="Cyfra ${i+1}" autocomplete="${i?'off':'one-time-code'}">`).join('');
+const cells=[...code.querySelectorAll('input')];
+const codeOk=()=>{ document.getElementById('codeOk').disabled = !cells.every(c=>/\d/.test(c.value)); };
+cells.forEach((c,i)=>{
+  c.addEventListener('input',()=>{ c.value=c.value.replace(/\D/g,'').slice(-1); if(c.value&&cells[i+1]) cells[i+1].focus(); codeOk(); });
+  c.addEventListener('keydown',e=>{ if(e.key==='Backspace'&&!c.value&&cells[i-1]) cells[i-1].focus(); });
+  c.addEventListener('paste',e=>{ const d=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6); if(d.length){ e.preventDefault(); d.split('').forEach((x,j)=>cells[j]&&(cells[j].value=x)); codeOk(); } });
+});
+let secs=30;
+function tick(){ const r=document.getElementById('resend'); r.textContent = secs>0 ? t('resendIn').replace('{s}',secs) : t('resend'); r.disabled = secs>0; r.style.opacity = secs>0?.5:1; }
+setInterval(()=>{ if(secs>0){ secs--; tick(); } },1000);
+document.getElementById('resend').onclick=()=>{ secs=30; tick(); };
+// zgody: obie wymagane zaznaczone
+document.querySelectorAll('#v-consent input[type=checkbox]').forEach(c=>c.addEventListener('change',()=>{
+  document.getElementById('consOk').disabled = ![...document.querySelectorAll('#v-consent .must')].every(x=>x.checked);
+}));
+render(); go('start');
+</script>
+</body></html>
