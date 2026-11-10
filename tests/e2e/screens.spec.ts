@@ -299,8 +299,19 @@ test('Postęp: sylwetka 3D z obwodów, porównanie ze startem', async ({ page })
   await expect(page.locator('#b3Chg')).toContainText('Pas');
   await expect(page.locator('#b3Chg')).toContainText('-13');   // 101 teraz vs 114 na szacowanym starcie (110 + 4 kg × 1 cm)
   await expect(page.locator('#b3Est')).toContainText('szacunek z wagi');
+  await expect(page.locator('#b3Ghost')).toBeHidden();               // przełącznik tylko przy porównaniu
   await page.locator('#b3Mode [data-m="cmp"]').click();
   await expect(page.locator('#b3Leg')).toContainText('start');
+  // siatka ↔ wypełnienie, zapamiętane na urządzeniu
+  await expect(page.locator('#b3Ghost')).toHaveAttribute('aria-pressed', 'false');
+  await page.locator('#b3Ghost').click();
+  await expect(page.locator('#b3Ghost')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('zelazo_body3d_fill'))).toBe('1');
+  // przybliżenie suwakiem: po przybliżeniu pionowe przeciągnięcie przesuwa sylwetkę (nie przewija strony)
+  await page.locator('#b3Zoom').fill('2.5');
+  await expect(page.locator('#b3Stage canvas')).toHaveCSS('touch-action', 'none');
+  await page.locator('#b3Front').click();                             // Przód = cała sylwetka
+  await expect(page.locator('#b3Zoom')).toHaveValue('1');
   expect(errors).toEqual([]);
 });
 

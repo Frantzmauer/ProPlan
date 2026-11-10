@@ -56,11 +56,57 @@ function bodySetup(){
   Object.assign(B3, {r, scene, cam});
   bodyMeshes();
   new ResizeObserver(()=>{ const w=box.clientWidth, h=box.clientHeight; r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); bodyDraw(); }).observe(box);
-  // obrót przeciągnięciem w poziomie (przewijanie strony w pionie działa dalej: touch-action pan-y)
-  let drag=null;
-  r.domElement.addEventListener('pointerdown', e=>{ drag=e.clientX; B3.auto=false; bodyRotUi(); r.domElement.setPointerCapture(e.pointerId); });
-  r.domElement.addEventListener('pointermove', e=>{ if(drag==null) return; B3.angle+=(e.clientX-drag)*0.01; drag=e.clientX; bodyDraw(); });
-  const up=()=>{ drag=null; }; r.domElement.addEventListener('pointerup', up); r.domElement.addEventListener('pointercancel', up);
+  // gesty: jeden palec w poziomie obraca; po przybliżeniu w pionie przesuwa sylwetkę (bez przybliżenia przewija stronę);
+  // dwa palce — przybliżanie (szczypanie); kółko myszy — przybliżanie
+  const pts=new Map(); let pinch=0, zoom0=1;
+  const el=r.domElement;
+  el.addEventListener('pointerdown', e=>{ pts.set(e.pointerId, {x:e.clientX, y:e.clientY}); el.setPointerCapture(e.pointerId); B3.auto=false; bodyRotUi();
+    if(pts.size===2){ const [a,b]=[...pts.values()]; pinch=Math.hypot(a.x-b.x, a.y-b.y); zoom0=B3.zoom; } });
+  el.addEventListener('pointermove', e=>{ const p=pts.get(e.pointerId); if(!p) return;
+    if(pts.size>=2){ p.x=e.clientX; p.y=e.clientY; const [a,b]=[...pts.values()]; if(pinch) bodyZoom(zoom0*Math.hypot(a.x-b.x, a.y-b.y)/pinch); return; }
+    B3.angle+=(e.clientX-p.x)*0.01;
+    if(B3.zoom>1.02){ const bb=B3.mesh.geometry.boundingBox; B3.panY+=(e.clientY-p.y)*(bb.max.y-bb.min.y)/box.clientHeight/B3.zoom*1.2; bodyClampPan(); }
+    p.x=e.clientX; p.y=e.clientY; bodyDraw(); });
+  const up=e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch=0; };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', e=>{ e.preventDefault(); bodyZoom(B3.zoom*Math.exp(-e.deltaY*0.0015)); }, {passive:false});
+  bodyZoomUi();
+}
+
+// przybliżenie 1–4×; po przybliżeniu pionowe przeciągnięcie przesuwa sylwetkę zamiast przewijać stronę
+export function bodyZoom(z){
+  B3.zoom=Math.max(1, Math.min(4, z));
+  if(B3.zoom<=1.02) B3.panY=0;
+  bodyClampPan(); bodyZoomUi(); bodyDraw();
+}
+function bodyClampPan(){
+  const bb=B3.mesh&&B3.mesh.geometry.boundingBox; if(!bb) return;
+  const half=(bb.max.y-bb.min.y)/2*(1-1/B3.zoom);
+  B3.panY=Math.max(-half, Math.min(half, B3.panY));
+}
+function bodyZoomUi(){
+  const s=document.getElementById('b3Zoom') as HTMLInputElement; if(s) s.value=String(B3.zoom);
+  if(B3.r) B3.r.domElement.style.touchAction=B3.zoom>1.02?'none':'pan-y';
+}
+
+// widok startu w porównaniu: siatka (same linie) albo wypełnienie (pokazuje się tam, gdzie start wystaje poza obecną
+// sylwetkę; na części telefonów daje plamy). Wybór zapamiętany na urządzeniu.
+function ghostMaterial(){
+  const THREE=B3.THREE;
+  return B3.fill
+    ? new THREE.MeshBasicMaterial({color:0x5fa8d3, transparent:true, opacity:0.5, depthWrite:false, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:8})
+    : new THREE.MeshBasicMaterial({color:0x5fa8d3, wireframe:true, transparent:true, opacity:0.22, depthWrite:false});
+}
+export function bodyGhostToggle(){
+  B3.fill=!B3.fill; try{ localStorage.setItem('zelazo_body3d_fill', B3.fill?'1':'0'); }catch(e){}
+  if(B3.ghost){ B3.ghost.material.dispose(); B3.ghost.material=ghostMaterial(); }
+  bodyGhostUi(); bodyDraw();
+}
+function bodyGhostUi(){
+  const b=document.getElementById('b3Ghost'); if(!b) return;
+  b.setAttribute('aria-pressed', B3.fill?'true':'false');
+  b.setAttribute('aria-label', B3.fill?'Start: wypełnienie — przełącz na siatkę':'Start: siatka — przełącz na wypełnienie');
+  b.title=B3.fill?'Wypełnienie':'Siatka';
 }
 
 // siatka sylwetki i „duch” startu (przezroczysta powłoka) — dla płci z profilu
@@ -76,9 +122,8 @@ function bodyMeshes(){
   g.addGroup(G.skin[0]*3, G.skin[1]*3, 0); g.addGroup(G.cloth[0]*3, G.cloth[1]*3, 1);
   B3.mesh=new THREE.Mesh(g, [new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.55, metalness:0.1}),
     new THREE.MeshStandardMaterial({color:0x23292f, roughness:0.8, metalness:0, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2})]);
-  // start: przezroczysta niebieska siatka na całej sylwetce (same linie). Wypełniona powłoka „przepychała się” z ciałem
-  // tam, gdzie powierzchnie prawie się pokrywają, i na telefonach dawała nieregularne plamy (z-fighting).
-  B3.ghost=new THREE.Mesh(geo(), new THREE.MeshBasicMaterial({color:0x5fa8d3, wireframe:true, transparent:true, opacity:0.22, depthWrite:false}));
+  // start: niebieska siatka albo wypełnienie (przycisk w rogu, ghostMaterial)
+  B3.ghost=new THREE.Mesh(geo(), ghostMaterial());
   B3.ghost.renderOrder=1;
   B3.ghost.geometry.setDrawRange(G.skin[0]*3, G.skin[1]*3);   // tylko ciało, bez spodenek
   B3.scene.add(B3.mesh); B3.scene.add(B3.ghost);
@@ -106,6 +151,7 @@ export async function bodyRefresh(){
   const cur=n?tl[B3.idx]:{d:'', m:D.height?{height:D.height}:{}}, st=n?tl[0]:cur;
   shape(B3.mesh, B3.mode==='start'?st.m:cur.m);
   B3.ghost.visible=B3.mode==='cmp' && n>1 && B3.idx>0;
+  document.getElementById('b3Ghost').style.display=B3.ghost.visible?'':'none';
   if(B3.ghost.visible) shape(B3.ghost, st.m);
   const fmt=d=>d?d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4):'—', n1=v=>(Math.round(v*10)/10).toString().replace('.',',');
   const shown=B3.mode==='start'?st:cur;
@@ -126,7 +172,7 @@ export function bodyDraw(){
   if(B3.raf) return;
   B3.raf=requestAnimationFrame(()=>{
     B3.raf=0;
-    const bb=B3.mesh.geometry.boundingBox, H=bb.max.y-bb.min.y, cy=(bb.max.y+bb.min.y)/2, dist=H*2.35;
+    const bb=B3.mesh.geometry.boundingBox, H=bb.max.y-bb.min.y, cy=(bb.max.y+bb.min.y)/2+B3.panY, dist=H*2.35/B3.zoom;
     if(B3.auto){ B3.angle+=0.01; bodyDraw(); }
     B3.cam.position.set(Math.sin(B3.angle)*dist, cy, Math.cos(B3.angle)*dist); B3.cam.lookAt(0, cy, 0);
     B3.r.render(B3.scene, B3.cam);
@@ -136,12 +182,16 @@ export function bodyDraw(){
 function bodyRotUi(){ document.getElementById('b3Rot').textContent=B3.auto?'⏸ Stop':'▶ Obracaj'; }
 
 export function __init_30(){
-B3 = {on:false, models:{}, mode:'now', idx:null, angle:0, auto:false, raf:0};
+B3 = {on:false, models:{}, mode:'now', idx:null, angle:0, auto:false, raf:0, zoom:1, panY:0, fill:false};
+try{ B3.fill=localStorage.getItem('zelazo_body3d_fill')==='1'; }catch(e){}
+document.getElementById('b3Zoom').oninput=e=>bodyZoom(+(e.target as HTMLInputElement).value);
+document.getElementById('b3Ghost').onclick=()=>bodyGhostToggle();
+bodyGhostUi();
 document.getElementById('b3Open').onclick=()=>bodyOpen();
 document.querySelectorAll('#b3Mode button').forEach(b=>(b as HTMLElement).onclick=()=>{ B3.mode=b.getAttribute('data-m'); bodyRefresh(); });
 document.getElementById('b3Tl').oninput=e=>{ B3.idx=+(e.target as HTMLInputElement).value; bodyRefresh(); };
 document.getElementById('b3Rot').onclick=()=>{ B3.auto=!B3.auto; bodyRotUi(); bodyDraw(); };
-document.getElementById('b3Front').onclick=()=>{ B3.angle=0; B3.auto=false; bodyRotUi(); bodyDraw(); };
+document.getElementById('b3Front').onclick=()=>{ B3.angle=0; B3.auto=false; bodyRotUi(); bodyZoom(1); };   // przód = też widok całej sylwetki
 document.getElementById('b3Side').onclick=()=>{ B3.angle=Math.PI/2; B3.auto=false; bodyRotUi(); bodyDraw(); };
 // raz otwarta na tym urządzeniu — przy następnych wejściach w Postęp ładuje się sama
 try{ if(localStorage.getItem('zelazo_body3d')==='1') document.querySelector('.nav button[data-v="progress"]').addEventListener('click', ()=>bodyOpen(), {once:true}); }catch(e){}

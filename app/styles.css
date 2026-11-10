@@ -1040,3 +1040,14 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .b3-intro .b3-foot{padding:0}
 .b3-est{margin:0 12px 12px;padding:9px 11px;border-radius:10px;border:1px dashed rgba(95,168,211,.45);font-size:12.5px;color:var(--ink-dim)}
 .b3-est b{color:var(--steel)}
+/* sylwetka 3D: suwak przybliżenia (pionowy, po prawej) i przełącznik siatka / wypełnienie (lewy dolny róg) */
+/* zwykły poziomy suwak obrócony o −90° (pionowe suwaki z writing-mode nie wszędzie się rysują); dół = cała sylwetka */
+.b3-zoom{position:absolute;right:-82px;top:50%;width:200px;height:36px;transform:translateY(-50%) rotate(-90deg);margin:0;background:none;-webkit-appearance:none;appearance:none;cursor:pointer;touch-action:none}
+.b3-zoom::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:rgba(95,168,211,.35)}
+.b3-zoom::-moz-range-track{height:6px;border-radius:3px;background:rgba(95,168,211,.35)}
+.b3-zoom::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9px;border-radius:50%;background:var(--steel);border:2px solid var(--bg)}
+.b3-zoom::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--steel);border:2px solid var(--bg)}
+.b3-ghost{position:absolute;left:10px;bottom:34px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(23,27,31,.85);color:var(--steel);display:grid;place-items:center;cursor:pointer}
+.b3-ghost svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.b3-ghost[aria-pressed="true"]{background:rgba(95,168,211,.25);border-color:var(--steel)}
+.b3-ghost[aria-pressed="true"] svg{fill:rgba(95,168,211,.45)}
