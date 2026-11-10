@@ -621,6 +621,8 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .cq-chip.out{color:var(--red);border-color:var(--red)}
 #coachLimit{display:none;border:1px solid var(--red);background:rgba(226,84,58,.1);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;margin-top:6px}
 #coachLimit .btn{display:block;margin-top:8px;font-size:13px;padding:9px 12px}
+.btn.lim-offer{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin-top:8px;padding:10px 12px;font-size:13.5px}
+.btn.lim-offer small{font-size:12px;font-weight:400;opacity:.8;text-transform:none;letter-spacing:0}
 .coach-b .ea-note{display:block;margin-top:4px;font-size:12px;color:var(--ink-dim)}
 #vqSheet{position:fixed;inset:0;z-index:465;display:none;align-items:flex-end;justify-content:center}
 #vqSheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6)}

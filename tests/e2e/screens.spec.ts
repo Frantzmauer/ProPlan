@@ -345,3 +345,28 @@ test('Trener: historia rozmowy — 8 ostatnich wiadomości, starsze odpowiedzi s
   expect(m[m.length - 2].content.length).toBeGreaterThan(1500);   // ostatnia odpowiedź w całości
   expect(errors).toEqual([]);
 });
+
+test('limit Trenera wykorzystany: bez wysyłania do AI, oferta Premium i pakietu (USERS, plan Darmowy)', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  let asked = 0;
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    if (b.action === 'coach') asked++;
+    if (b.action !== 'ping' && b.action !== 'usage') return route.fallback();
+    const quota = { m: ago(0).slice(0, 7), coach: { n: 5, max: 5 }, form: { n: 0, max: 0 }, est: { n: 2, max: 10, day: 10 } };
+    const features = { ...ALL_ON, voice: false, form: false, photo: false, scanner: false, early: false };
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ ok: true, pong: true, admin: false, plan: 'free', planName: 'Darmowy', enforced: true, features, quota }) });
+  });
+  await page.goto('/users/');
+  await page.locator('#coachFab').click();
+  await expect(page.locator('#coachLimit')).toBeVisible();
+  await expect(page.locator('#coachLimit')).toContainText('Limit 5 pytań');
+  await expect(page.locator('#coachLimit [data-offer="premium"]')).toContainText('Przejdź na Premium');
+  await expect(page.locator('#coachLimit [data-offer="pack"]')).toContainText('50 pytań');
+  await expect(page.locator('#coachIn')).toBeDisabled();
+  await page.locator('#coachLimit [data-offer="premium"]').click();
+  expect(asked).toBe(0);
+  expect(errors).toEqual([]);
+});

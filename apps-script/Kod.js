@@ -79,14 +79,25 @@ var FEATURES = ['coach', 'voice', 'form', 'estimate', 'photo', 'scanner', 'early
 var LIMIT_KEYS = ['coach', 'form', 'est', 'estDay'];
 function allOn() { var f = {}; FEATURES.forEach(function (k) { f[k] = true; }); return f; }
 var DEFAULT_PLANS = {
-  free:    { name: 'Darmowy', limits: { coach: 5,  form: 1,  est: 30,  estDay: 20 },
-             features: { coach: true, voice: false, form: true, estimate: true, photo: false, scanner: true, early: false } },
+  // Darmowy: Trener tylko tekstem (5/mies.), posiłki wpisywane ręcznie, 10 szacowań kalorii z opisu; bez głosu, zdjęć, skanera i oceny techniki
+  free:    { name: 'Darmowy', limits: { coach: 5,  form: 0,  est: 10,  estDay: 10 },
+             features: { coach: true, voice: false, form: false, estimate: true, photo: false, scanner: false, early: false } },
   premium: { name: 'Premium', limits: { coach: 30, form: 10, est: 300, estDay: 20 }, features: allOn() },
   tester:  { name: 'Tester',  limits: { coach: 60, form: 20, est: 600, estDay: 40 }, features: allOn() }
 };
+// wersja domyślnych planów: przy zmianie DEFAULT_PLANS podnieś — zapisane w ustawieniach plany Darmowy i Premium
+// zostaną raz nadpisane nowymi wartościami (pozostałe plany, np. Tester, zostają bez zmian)
+var PLANS_VER = 2;
 // konta bez przypisanego planu dostają Premium, żeby nikt z obecnych użytkowników niczego nie stracił
 var DEFAULT_CFG = { enforce: ['users', 'early'], defaultPlan: 'premium', adminPlan: 'premium', off: [] };
-function getPlans() { return getJSON('plans') || DEFAULT_PLANS; }
+function getPlans() {
+  var p = getJSON('plans');
+  if (p && +(PROPS.getProperty('plansVer') || 1) < PLANS_VER) {
+    p.free = DEFAULT_PLANS.free; p.premium = DEFAULT_PLANS.premium;
+    setJSON('plans', p); PROPS.setProperty('plansVer', String(PLANS_VER));
+  }
+  return p || DEFAULT_PLANS;
+}
 function getCfg() {
   var c = getJSON('cfg') || {};
   Object.keys(DEFAULT_CFG).forEach(function (k) { if (c[k] === undefined) c[k] = DEFAULT_CFG[k]; });

@@ -12,7 +12,7 @@ import { renderWeight } from '../screens/progress';
 import { refreshSyncUI } from '../screens/sync-ui';
 import { daySummary, renderToday, swapCue } from '../screens/train';
 import { WO, woResume, woSave } from '../screens/workout';
-import { featOn, planEnforced, quotaCur, quotaLeft, quotaReset, quotaSet } from './plan-limits';
+import { bindOffer, featOn, limitOffer, planEnforced, quotaCur, quotaLeft, quotaReset, quotaSet } from './plan-limits';
 import { refreshNotifUI, setupReminders } from './reminders';
 
 export let FC, POSE_VER, POSE_MODEL, posePromise, FC_STEPS, fcWait, FC_BONES, FC_GRADE, fcLeft, fcLean, fcImg;
@@ -41,12 +41,12 @@ export function openFormCheck(name, setInfo, opts?){
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
   }
   if(!featOn('form')){
-    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania jest teraz niedostępna${planEnforced()?' w Twoim planie':''}. Wskazówki i filmy z techniką działają dalej.</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
-    document.querySelector('[data-fc-close]').onclick=fcClose; return;
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania jest teraz niedostępna${planEnforced()?' w Twoim planie':''}. Wskazówki i filmy z techniką działają dalej.</p>${planEnforced()?limitOffer('form'):''}<div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    document.querySelector('[data-fc-close]').onclick=fcClose; bindOffer(document.getElementById('fcBody')); return;
   }
   if(quotaLeft('form')===0){   // plan z limitami: nie każ nagrywać, gdy limit ocen wykorzystany
-    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Limit ${quotaCur().form.max} ocen techniki w tym miesiącu wykorzystany. Nowe od ${quotaReset()}. Wskazówki i filmy z techniką działają dalej.</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
-    document.querySelector('[data-fc-close]').onclick=fcClose; return;
+    fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Limit ${quotaCur().form.max} ocen techniki w tym miesiącu wykorzystany. Nowe od ${quotaReset()}. Wskazówki i filmy z techniką działają dalej.</p>${limitOffer('form')}<div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
+    document.querySelector('[data-fc-close]').onclick=fcClose; bindOffer(document.getElementById('fcBody')); return;
   }
   const view=camView(name);
   fcShow(`<p class="fc-sub"><b>${esc(name)}</b>${FC.set?' · '+esc(FC.set):''}</p>${head}

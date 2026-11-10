@@ -4,7 +4,7 @@ import { dayIndexFor, weekOf } from '../core/backup';
 import { netDown } from '../core/shell';
 import { CLOUD, S, cloudCall, save } from '../core/state';
 import { cyDiff } from '../features/cycle';
-import { quotaCur, quotaLeft, quotaReset, quotaSet } from '../features/plan-limits';
+import { bindOffer, limitOffer, quotaCur, quotaLeft, quotaReset, quotaSet } from '../features/plan-limits';
 import { fireReminder, notifTimers, setupReminders } from '../features/reminders';
 import { addDays, minuteOfDay, parseISO, todayISO } from '../lib/dates';
 import { EVENING, MEAL_LATE, hm, mealEntry, stampKind, usualTime } from '../lib/mealtime';
@@ -185,7 +185,7 @@ export function renderMealHabits(){
 
 export function phOpen(){
   if(!(CLOUD.on && CLOUD.url && CLOUD.token)){ const m=document.getElementById('mdEstMsg'); m.style.display='block'; m.style.color='var(--red)'; m.textContent='Szacowanie ze zdjęcia korzysta z serwera — włącz synchronizację (Więcej → Synchronizacja).'; return; }
-  if(quotaLeft('est')===0){ const m=document.getElementById('mdEstMsg'); m.style.display='block'; m.style.color='var(--red)'; m.textContent='Limit '+quotaCur().est.max+' szacowań w tym miesiącu wykorzystany. Nowe od '+quotaReset()+'.'; return; }
+  if(quotaLeft('est')===0){ const m=document.getElementById('mdEstMsg'); m.style.display='block'; m.style.color='var(--red)'; m.innerHTML='Limit '+quotaCur().est.max+' szacowań w tym miesiącu wykorzystany. Nowe od '+quotaReset()+'.'+limitOffer('est'); bindOffer(m); return; }
   const f=document.getElementById('phFile'); f.value=''; f.click();
 }
 

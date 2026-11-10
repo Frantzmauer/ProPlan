@@ -4,7 +4,7 @@ import { CLOUD, cloudCall } from '../core/state';
 import { esc } from '../screens/accounts';
 import { closeGuide, closeMealDialog } from '../screens/guide';
 import { saveMealDialog } from '../ui/dictation';
-import { quotaCur, quotaLeft, quotaReset, quotaSet } from './plan-limits';
+import { bindOffer, limitOffer, quotaCur, quotaLeft, quotaReset, quotaSet } from './plan-limits';
 
 export let ZXING_URL, BC, bcNum;
 
@@ -180,7 +180,7 @@ document.getElementById('mdEstimate').onclick=async()=>{
   if(!CLOUD.url||!CLOUD.token){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Najpierw skonfiguruj synchronizację w chmurze (URL + token) w „Więcej".'; return; }
   if(quotaLeft('est')===0){   // plan z limitami: miesięczny limit szacowań
     msg.style.display='block'; msg.style.color='var(--red)';
-    msg.textContent='Limit '+quotaCur().est.max+' szacowań w tym miesiącu wykorzystany. Nowe od '+quotaReset()+'. Kalorie i makro możesz wpisać ręcznie.'; return;
+    msg.innerHTML='Limit '+quotaCur().est.max+' szacowań w tym miesiącu wykorzystany. Nowe od '+quotaReset()+'. Kalorie i makro możesz wpisać ręcznie.'+limitOffer('est'); bindOffer(msg); return;
   }
   const btn=document.getElementById('mdEstimate');
   const old=btn.textContent; btn.textContent='⏳ Szacuję...'; btn.disabled=true;

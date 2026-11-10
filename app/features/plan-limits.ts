@@ -62,12 +62,27 @@ export function quotaUi(){
   chip.classList.toggle('low', left>0 && left<=3); chip.classList.toggle('out', out);
   lim.style.display=out?'block':'none';
   if(out){
-    lim.innerHTML=`<b>Limit ${q.coach.max} pytań na ${MONTHS_PL[+q.m.slice(5,7)-1]} wykorzystany.</b> Nowe pytania od ${quotaReset()}. Plan, tryb treningu, check-in i przerwy działają dalej bez limitu.<button class="btn" id="coachTopUp" type="button">Dokup 20 pytań · 4,99 zł</button>`;
-    document.getElementById('coachTopUp').onclick=()=>showInAppReminder('Dokupienie pytań — wkrótce', 'Płatności jeszcze nie działają. Limit odnowi się '+quotaReset()+'.');
+    lim.innerHTML=`<b>Limit ${q.coach.max} pytań na ${MONTHS_PL[+q.m.slice(5,7)-1]} wykorzystany.</b> Nowe pytania od ${quotaReset()}. Plan, tryb treningu, check-in i przerwy działają dalej bez limitu.${limitOffer('coach')}`;
+    bindOffer(lim);
   }
   ['coachIn','coachSend','coachMic'].forEach(id=>{ document.getElementById(id).disabled=out; });
   document.getElementById('coachChips').style.opacity=out?'.4':'';
   document.getElementById('coachChips').style.pointerEvents=out?'none':'';
+}
+
+/* ---- po wyczerpaniu limitu: oferta Premium (gdy plan jej nie ma) i pakietu pytań do Trenera ----
+   Płatności jeszcze nie działają — przyciski mówią, kiedy będą. Ceny w jednym miejscu (zgodne ze stroną startową). */
+export const OFFER = { premium: '29 zł / mies.', pack: { n: 50, price: '24,99 zł' } };
+export function isPremium(){ return !!PLAN && (PLAN.plan==='premium' || PLAN.plan==='tester'); }
+export function limitOffer(kind){
+  const btn=(id,main,sub,cls='')=>`<button class="btn lim-offer ${cls}" type="button" data-offer="${id}"><b>${main}</b>${sub?`<small>${sub}</small>`:''}</button>`;
+  return (isPremium()?'':btn('premium','Przejdź na Premium · '+OFFER.premium,'30 rozmów z Trenerem (też głosem), posiłki ze zdjęcia i kodu kreskowego, 300 szacowań kalorii'))
+    +(kind==='coach'?btn('pack','Dokup pakiet '+OFFER.pack.n+' pytań · '+OFFER.pack.price,'pytania z pakietu nie wygasają z końcem miesiąca', isPremium()?'':'ghost'):'');
+}
+export function bindOffer(root){
+  (root||document).querySelectorAll('[data-offer]').forEach(b=>b.onclick=()=>showInAppReminder(
+    b.dataset.offer==='pack'?'Pakiet pytań — wkrótce':'Premium — wkrótce',
+    'Płatności uruchomimy razem z nowymi kontami. Do tego czasu limit odnowi się '+quotaReset()+'.'));
 }
 
 export function renderPlanQuota(){
@@ -77,7 +92,7 @@ export function renderPlanQuota(){
   }
   const q=quotaCur();
   if(!q){ box.innerHTML='<div class="md-hint" style="margin:0">Wczytuję limity…</div>'; return; }
-  const meter=(label,n,max)=>`<div class="pq-m"><div class="t"><span>${label}</span><b>${n} / ${max}</b></div><div class="pq-bar"><span class="${n>=max?'full':''}" style="width:${Math.min(100,Math.round(n/max*100))}%"></span></div></div>`;
+  const meter=(label,n,max)=>!max?`<div class="pq-m"><div class="t"><span>${label}</span><b>w Premium</b></div></div>`:`<div class="pq-m"><div class="t"><span>${label}</span><b>${n} / ${max}</b></div><div class="pq-bar"><span class="${n>=max?'full':''}" style="width:${Math.min(100,Math.round(n/max*100))}%"></span></div></div>`;
   box.innerHTML=`<div class="pq-top"><div><b>${esc((PLAN&&PLAN.planName)||'Twój plan')}</b><small>Limity odnawiają się ${quotaReset()}</small></div><span class="pq-badge">${MONTHS_PL[+q.m.slice(5,7)-1]}</span></div>
     ${meter('Pytania do Trenera', q.coach.n, q.coach.max)}
     ${meter('Oceny techniki z nagrania', q.form.n, q.form.max)}
