@@ -7,6 +7,7 @@ import { applyName, kcalSlider, loadProfileUI, updateKcalHint } from './more';
 import { renderWeight } from './progress';
 import { cloudAccount, cloudToken, cloudUrl, refreshCloudUI } from './sync-ui';
 import { renderToday } from './train';
+import { locale, t } from '../lib/i18n';
 
 export let esc, isScriptUrl, INVITE;
 
@@ -34,10 +35,10 @@ export function obValid(v){ return v.age>=14&&v.age<=95 && v.height>=120&&v.heig
 
 export function obCalc(){
   const v=obValues(), el=document.getElementById('obCalc');
-  if(!obValid(v)){ el.textContent='Uzupełnij wiek, wzrost i wagę, a policzymy kalorie.'; return null; }
+  if(!obValid(v)){ el.textContent=t('Uzupełnij wiek, wzrost i wagę, a policzymy kalorie.'); return null; }
   const maint=Math.round((10*v.weight+6.25*v.height-5*v.age+(v.sex==='f'?-161:5))*v.activity);
   const goal=Math.min(3200,Math.max(1500,Math.round((maint+v.goal)/100)*100));
-  el.innerHTML=`Utrzymanie ok. <b>${maint} kcal</b> · Twój cel: <b style="color:var(--amber)">${goal} kcal/dzień</b> (zmienisz w Więcej → Cel kalorii).`;
+  el.innerHTML=t('Utrzymanie ok. <b>{m} kcal</b> · Twój cel: <b style="color:var(--amber)">{g} kcal/dzień</b> (zmienisz w Więcej → Cel kalorii).', {m:maint, g:goal});
   return {v,goal};
 }
 
@@ -68,7 +69,7 @@ window.addEventListener('hashchange',()=>{ if(/(^|[#&])invite=/.test(location.ha
 if(INVITE){
   const inp=document.getElementById('joinName'), msg=document.getElementById('joinMsg');
   inp.value=INVITE.account; inp.readOnly=!!INVITE.account;
-  if(!isScriptUrl(INVITE.url)){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Ten link jest uszkodzony albo nie pochodzi z SixMo. Poproś o nowy.'; document.getElementById('joinOk').disabled=true; }
+  if(!isScriptUrl(INVITE.url)){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent=t('Ten link jest uszkodzony albo nie pochodzi z SixMo. Poproś o nowy.'); document.getElementById('joinOk').disabled=true; }
   document.getElementById('joinDialog').classList.add('show');
   document.getElementById('joinCancel').onclick=closeJoin;
   inp.addEventListener('blur',()=>{ if(!inp.readOnly) inp.value=slugAccount(inp.value); });
@@ -77,7 +78,7 @@ if(INVITE){
   const choiceBox=document.getElementById('joinChoice'), moveBtn=document.getElementById('joinMove');
   document.getElementById('joinFresh').onclick=()=>{ joinChoice='fresh'; document.getElementById('joinOk').click(); };
   moveBtn.onclick=()=>{
-    if(!moveBtn.dataset.armed){ moveBtn.dataset.armed='1'; moveBtn.textContent='Na pewno? Dane z tego urządzenia trafią na konto „'+slugAccount(inp.value)+'”'; return; }
+    if(!moveBtn.dataset.armed){ moveBtn.dataset.armed='1'; moveBtn.textContent=t('Na pewno? Dane z tego urządzenia trafią na konto „{a}”', {a:slugAccount(inp.value)}); return; }
     joinChoice='move'; document.getElementById('joinOk').click();
   };
   document.getElementById('joinOk').onclick=async()=>{
@@ -85,17 +86,17 @@ if(INVITE){
     if(account.length<2){ inp.focus(); return; }
     const sameAccount=(CLOUD.account||'').toLowerCase()===account;
     if(!sameAccount && deviceHasData() && !joinChoice){
-      document.getElementById('joinWho').textContent=(S.profile&&S.profile.name)?' ('+S.profile.name+')':(CLOUD.account?' (konto „'+CLOUD.account+'”)':'');
+      document.getElementById('joinWho').textContent=(S.profile&&S.profile.name)?' ('+S.profile.name+')':(CLOUD.account?t(' (konto „{a}”)', {a:CLOUD.account}):'');
       choiceBox.style.display='flex'; document.getElementById('joinOk').style.display='none'; inp.readOnly=true;
       return;
     }
-    const btn=document.getElementById('joinOk'); btn.disabled=true; btn.textContent='⏳ Łączę…';
+    const btn=document.getElementById('joinOk'); btn.disabled=true; btn.textContent=t('⏳ Łączę…');
     [document.getElementById('joinFresh'), moveBtn].forEach(b=>b.disabled=true);
     msg.style.display='none';
     try{
       const res=await fetch(INVITE.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'redeem',code:INVITE.code,account})});
       const j=JSON.parse(await res.text());
-      if(!j.ok) throw new Error(j.error||'Błąd serwera');
+      if(!j.ok) throw new Error(j.error||t('Błąd serwera'));
       const same=(CLOUD.account||'').toLowerCase()===j.account;
       SYNC.cancel();   // nic nie może już trafić na poprzednie konto
       // nowa osoba: wszystko z poprzedniego konta znika z urządzenia (chyba że świadomie przenosi swoje dane)
@@ -108,12 +109,12 @@ if(INVITE){
       closeJoin();
       await cloudPull({silent:true}); cloudPush();
       refreshAllViews(); refreshCloudUI(); loadProfileUI();
-      if(same) alert('✅ Połączono ponownie. Twoje dane są bezpieczne.');
+      if(same) alert(t('✅ Połączono ponownie. Twoje dane są bezpieczne.'));
       else openProfileSetup();
     }catch(e){
-      msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Nie udało się dołączyć: '+e.message;
+      msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent=t('Nie udało się dołączyć: ')+e.message;
     }
-    btn.disabled=false; btn.textContent='Dołącz';
+    btn.disabled=false; btn.textContent=t('Dołącz');
     [document.getElementById('joinFresh'), moveBtn].forEach(b=>b.disabled=false);
   };
 }
@@ -130,7 +131,7 @@ document.getElementById('obSave').onclick=()=>{
   document.getElementById('profileDialog').classList.remove('show');
   loadProfileUI(); applyName(); kcalSlider.value=goal; updateKcalHint();
   renderToday(); renderWeight();
-  alert('✅ Gotowe'+(v.name?', '+v.name:'')+'! Twój plan startuje '+parseISO(S.startDate).toLocaleDateString('pl-PL')+'.\n\nNa drugim urządzeniu: Więcej → Synchronizacja → wpisz to samo konto i token (znajdziesz je tutaj, w tej samej sekcji).');
+  alert(t('✅ Gotowe{n}! Twój plan startuje {d}.\n\nNa drugim urządzeniu: Więcej → Synchronizacja → wpisz to samo konto i token (znajdziesz je tutaj, w tej samej sekcji).', {n:v.name?', '+v.name:'', d:parseISO(S.startDate).toLocaleDateString(locale())}));
 };
 // profil niedokończony (np. zamknięta karta w trakcie) — wróć do niego przy następnym starcie
 if(S.profile && S.profile.needsSetup && !INVITE) openProfileSetup();

@@ -3,6 +3,7 @@
 import { S, save } from '../core/state';
 import { mark } from '../lib/state';
 import { renderToday } from './train';
+import { isEn, t } from '../lib/i18n';
 
 export let DEFAULT_STEPS, tysKrokow;
 
@@ -12,11 +13,11 @@ export function renderHabits(iso, dow, L){
   const box=document.getElementById('habitsBox');
   const sa=stepsAdj(iso);
   const habits=[
-    {k:'sleep',ic:'😴',t:'Sen 7–8 h',s:'Regeneracja + testosteron'},
-    {k:'sun',ic:'🚶',t:tysKrokow(sa?sa.goal:DEFAULT_STEPS),s:sa?'Cel od Trenera':'Cel startowy'},
-    {k:'notool',ic:'📓',t:'Zapis w dzienniku',s:'Ciężary i powtórzenia'},
-    {k:'noalco',ic:'🚫',t:'Bez alkoholu',s:'Trzymaj deficyt'},
-    {k:'nosugar',ic:'🍬',t:'Bez słodyczy',s:'Trzymaj deficyt'},
+    {k:'sleep',ic:'😴',t:t('Sen 7–8 h'),s:t('Regeneracja + testosteron')},
+    {k:'sun',ic:'🚶',t:tysKrokow(sa?sa.goal:DEFAULT_STEPS),s:sa?t('Cel od Trenera'):t('Cel startowy')},
+    {k:'notool',ic:'📓',t:t('Zapis w dzienniku'),s:t('Ciężary i powtórzenia')},
+    {k:'noalco',ic:'🚫',t:t('Bez alkoholu'),s:t('Trzymaj deficyt')},
+    {k:'nosugar',ic:'🍬',t:t('Bez słodyczy'),s:t('Trzymaj deficyt')},
   ];
   box.innerHTML=habits.map(h=>{
     const on=!!L.habits[h.k];
@@ -49,5 +50,5 @@ export function __init_7(){
 
 /* ---- dzienny cel kroków: S.adj.steps=[{from, goal, id}] od Trenera; obowiązuje najnowszy wpis z from <= dzień ---- */
 DEFAULT_STEPS = 8000;
-tysKrokow = n=>String(Math.round(n/100)/10).replace('.',',')+' tys. kroków';
+tysKrokow = n=>isEn() ? Math.round(n).toLocaleString('en-GB')+' steps' : String(Math.round(n/100)/10).replace('.',',')+' tys. kroków';
 }

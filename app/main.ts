@@ -1,8 +1,11 @@
 // ŻELAZO — start aplikacji. Ekrany i funkcje są w modułach (app/screens, app/features, app/core, app/plan, app/diet, app/ui),
 // obliczenia w app/lib. Moduły tylko deklarują; tu uruchamiamy ich kod startowy w pierwotnej kolejności.
 import './styles.css';
+import { setLang, translateDom } from './lib/i18n';
+import { EN } from './i18n/en';
+import { KEYS } from './lib/storage';
 import { __init_1 } from './plan/data';
-import { __init_2 } from './core/state';
+import { S, __init_2 } from './core/state';
 import { __init_3 } from './core/backup';
 import { __init_4 } from './screens/train';
 import { __init_5 } from './screens/guide';
@@ -30,8 +33,17 @@ import { __init_27 } from './features/cycle';
 import { __init_29 } from './features/formcheck';
 import { __init_30 } from './features/body3d';
 
+// język przed pierwszym ekranem: z profilu na tym urządzeniu, a na nowym urządzeniu z języka telefonu (polski → pl, inny → en)
+const saved = (() => { try { return JSON.parse(localStorage.getItem(KEYS.STATE) || 'null'); } catch { return null; } })();
+const bootLang = saved ? (saved.profile && saved.profile.lang === 'en' ? 'en' : 'pl')
+  : ((navigator.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en');
+setLang(bootLang, EN);
+document.documentElement.lang = bootLang;
+translateDom(document.body);
+
 __init_1();
 __init_2();
+if (!saved && S.profile && !S.profile.lang) S.profile.lang = bootLang;   // pierwszy start: zapisze się z pierwszym zapisem
 __init_3();
 __init_4();
 __init_5();

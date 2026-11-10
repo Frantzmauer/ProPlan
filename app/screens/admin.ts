@@ -9,6 +9,7 @@ import { COACH_KEEP_ADMIN } from '../lib/merge.js';
 import { esc, inviteLink, slugAccount } from './accounts';
 import { moreOpen } from './more';
 import { cloudToken, refreshCloudUI } from './sync-ui';
+import { locale } from '../lib/i18n';
 
 export let fmtUsd, MONTHS_PL, monthName, fmtDate, AP_FEAT, AP_LIM, AP_CH, AP_COST, AP_PLN, AP, apClone, apPlural, apZl;
 
@@ -306,7 +307,7 @@ export function __init_19(){
 fmtUsd = v=>{ v=+v||0; return '$'+(v>0&&v<0.01?v.toFixed(3):v.toFixed(2)); };
 MONTHS_PL = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
 monthName = m=>m?MONTHS_PL[+m.slice(5,7)-1]+' '+m.slice(0,4):'';
-fmtDate = t=>t?new Date(t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})+' '+new Date(t).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}):'—';
+fmtDate = t=>t?new Date(t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})+' '+new Date(t).toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'}):'—';
 /* ---- panel administratora (USERS): konta z planami, plany (limity i funkcje), ustawienia ----
    Dane z adminList (konta, zużycie, plany, cfg). Plan konta zapisuje się od razu (adminSetPlan);
    plany i ustawienia zbierają zmiany i idą razem przez „Zapisz” (adminSavePlans, serwer je sprawdza). */

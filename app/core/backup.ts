@@ -8,6 +8,7 @@ import { renderShop } from '../screens/shop';
 import { refreshSyncUI } from '../screens/sync-ui';
 import { renderToday } from '../screens/train';
 import { S, __set_S, save } from './state';
+import { t } from '../lib/i18n';
 
 export let SCHEMA_VERSION, fileHandle, fileWriteTimer, FS_SUPPORTED, viewOffset;
 export function __set_viewOffset(v){ viewOffset=v; return v; }
@@ -32,7 +33,7 @@ export function exportJSON(){
 // wczytaj plik i scal
 export function importJSONFromObject(obj, {silent=false}={}){
   const inc = (obj && obj.data) ? obj.data : obj; // akceptuj format z eksportu lub surowy stan
-  if(!inc || typeof inc!=='object'){ if(!silent) alert('To nie wygląda na poprawną kopię SixMo.'); return false; }
+  if(!inc || typeof inc!=='object'){ if(!silent) alert(t('To nie wygląda na poprawną kopię SixMo.')); return false; }
   const before={days:Object.keys(S.log||{}).length, w:(S.weights||[]).length};
   __set_S(mergeState(S,normalizeIncoming(inc)));
   save();
@@ -43,14 +44,14 @@ export function importJSONFromObject(obj, {silent=false}={}){
   renderToday(); renderWeight(); renderShop(); refreshSyncUI();
   if(!silent){
     const newDays=after.days-before.days, newW=after.w-before.w;
-    alert('Scalono ✅\nDni w planie: '+after.days+' (+'+newDays+')\nPomiary wagi: '+after.w+' (+'+newW+')');
+    alert(t('Scalono ✅\nDni w planie: {d} (+{nd})\nPomiary wagi: {w} (+{nw})', {d:after.days, nd:newDays, w:after.w, nw:newW}));
   }
   return true;
 }
 
 export function importJSONFile(file){
   const r=new FileReader();
-  r.onload=()=>{ try{ importJSONFromObject(JSON.parse(String(r.result))); }catch(e){ alert('Nie udało się odczytać pliku: '+e.message); } };
+  r.onload=()=>{ try{ importJSONFromObject(JSON.parse(String(r.result))); }catch(e){ alert(t('Nie udało się odczytać pliku: ')+e.message); } };
   r.readAsText(file);
 }
 
@@ -58,22 +59,22 @@ export async function linkNewFile(){
   try{
     fileHandle=await window.showSaveFilePicker({
       suggestedName:'zelazo-dane.json',
-      types:[{description:'SixMo dane',accept:{'application/json':['.json']}}]
+      types:[{description:t('SixMo dane'),accept:{'application/json':['.json']}}]
     });
     await writeFile(); await persistHandle(); refreshSyncUI();
-    alert('Plik podłączony ✅\nOd teraz każda zmiana zapisuje się automatycznie do tego pliku. Zapisz go w folderze Google Drive, a Drive zsynchronizuje go z innymi urządzeniami.');
-  }catch(e){ if(e.name!=='AbortError') alert('Nie udało się: '+e.message); }
+    alert(t('Plik podłączony ✅\nOd teraz każda zmiana zapisuje się automatycznie do tego pliku. Zapisz go w folderze Google Drive, a Drive zsynchronizuje go z innymi urządzeniami.'));
+  }catch(e){ if(e.name!=='AbortError') alert(t('Nie udało się: ')+e.message); }
 }
 
 export async function linkExistingFile(){
   try{
-    const [h]=await window.showOpenFilePicker({types:[{description:'SixMo dane',accept:{'application/json':['.json']}}]});
+    const [h]=await window.showOpenFilePicker({types:[{description:t('SixMo dane'),accept:{'application/json':['.json']}}]});
     fileHandle=h;
     const f=await h.getFile(); const txt=await f.text();
     if(txt.trim()) importJSONFromObject(JSON.parse(txt),{silent:true});
     await writeFile(); await persistHandle(); refreshSyncUI();
-    alert('Plik podłączony i scalony ✅\nZmiany będą się zapisywać automatycznie.');
-  }catch(e){ if(e.name!=='AbortError') alert('Nie udało się: '+e.message); }
+    alert(t('Plik podłączony i scalony ✅\nZmiany będą się zapisywać automatycznie.'));
+  }catch(e){ if(e.name!=='AbortError') alert(t('Nie udało się: ')+e.message); }
 }
 
 export async function writeFile(){

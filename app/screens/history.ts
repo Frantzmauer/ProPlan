@@ -8,6 +8,7 @@ import { prAnalyze, prBest } from '../lib/records';
 import { workoutOn } from '../plan/data';
 import { esc } from './accounts';
 import { DOW_SHORT, effEx, setOk, timedSpec } from './train';
+import { locale } from '../lib/i18n';
 
 export let exIdxCache, IC_HIST, EH, recAll;
 export function __set_exIdxCache(v){ exIdxCache=v; return v; }
@@ -38,7 +39,7 @@ export function prFmt(x){ return String(Math.round(x*10)/10).replace('.',','); }
 
 export function prE1(x){ return prFmt(Math.round(x*2)/2); }
 
-export function prNum(x){ return Math.round(x).toLocaleString('pl-PL'); }
+export function prNum(x){ return Math.round(x).toLocaleString(locale()); }
 
 export function prDD(iso){ return iso.slice(8,10)+'.'+iso.slice(5,7); }
 

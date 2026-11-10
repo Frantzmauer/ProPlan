@@ -1,5 +1,6 @@
 // ŻELAZO — Stan aplikacji (S), konfiguracja serwera (CLOUD) i synchronizacja — połączenie lib/state, lib/api, lib/sync z ekranem.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
+import { curLang, t } from '../lib/i18n';
 import { showInAppReminder } from '../features/reminders';
 import { EMPTY_CLOUD, apiCall, channelFromPath } from '../lib/api';
 import { langOf } from '../lib/lang';
@@ -54,6 +55,7 @@ export function applyAccountLang(j){
   if(!j || !j.lang || !S.profile || (+j.langAt||0)<=(S.profile.langAt||0)) return;
   S.profile.lang=j.lang==='en'?'en':'pl'; S.profile.langAt=+j.langAt; S._settingsM=Date.now(); save();
   const el=document.getElementById('pfLang') as HTMLSelectElement|null; if(el) el.value=S.profile.lang;
+  if(S.profile.lang!==curLang()){ setTimeout(()=>location.reload(), 400); return; }   // cała aplikacja w nowym języku
   renderCoach();
 }
 
@@ -62,21 +64,21 @@ export function cloudPush(){ return SYNC.push(); }
 export async function cloudPull({silent=false}={}){
   const r=await SYNC.pull();
   if(silent) return;
-  if(r.skipped==='url') alert('Najpierw wpisz URL skryptu.');
-  else if(r.skipped==='account') alert('Wpisz nazwę konta.');
-  else if(r.ok) showInAppReminder('✅ Zsynchronizowano','Dane pobrane i scalone.');
-  else if(r.offline) alert('Brak internetu. Dane są zapisane na telefonie — zsynchronizuję je, gdy wróci zasięg.');
-  else alert('Błąd synchronizacji: '+r.error);
+  if(r.skipped==='url') alert(t('Najpierw wpisz URL skryptu.'));
+  else if(r.skipped==='account') alert(t('Wpisz nazwę konta.'));
+  else if(r.ok) showInAppReminder(t('✅ Zsynchronizowano'),t('Dane pobrane i scalone.'));
+  else if(r.offline) alert(t('Brak internetu. Dane są zapisane na telefonie — zsynchronizuję je, gdy wróci zasięg.'));
+  else alert(t('Błąd synchronizacji: ')+r.error);
 }
 
 export async function cloudTest(){
-  if(!CLOUD.url){ alert('Wpisz URL skryptu.'); return; }
+  if(!CLOUD.url){ alert(t('Wpisz URL skryptu.')); return; }
   refreshCloudUI('...test');
   try{
     const j=await cloudCall('ping', {});
     CLOUD.lastError=''; saveCloud(); refreshCloudUI(); setAdmin(!!j.admin); applyAccountLang(j);
-    showInAppReminder('✅ Połączenie działa', 'Skrypt odpowiada poprawnie.');
-  }catch(e){ CLOUD.lastError=e.message; saveCloud(); refreshCloudUI(); alert('Test nieudany: '+e.message); }
+    showInAppReminder(t('✅ Połączenie działa'), t('Skrypt odpowiada poprawnie.'));
+  }catch(e){ CLOUD.lastError=e.message; saveCloud(); refreshCloudUI(); alert(t('Test nieudany: ')+e.message); }
 }
 
 export function isEditing(){

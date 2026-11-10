@@ -24,6 +24,7 @@ import { MEASURES, goalOn, kcalRecord, renderMeasures, tdFmt, tdeeEstimate } fro
 import { DEFAULT_STEPS, stepsAdj, tysKrokow } from './steps';
 import { dayMeals, dmy, dowOf, effEx, exAny, nextMoves, prevSession, renderToday, scaledStart, setOk, timedSpec, wIcon } from './train';
 import { WO, fmtDur, hasSession } from './workout';
+import { locale } from '../lib/i18n';
 
 export let coachKey, coachId, coachDecided, coachBusy, fmtKg, DAY_SHORT, daysTxt, coachAtt, coachOpen, coachVoice, TTS, coachSpeakSeq;
 export function __set_coachAtt(v){ coachAtt=v; return v; }
@@ -346,7 +347,7 @@ export function renderCoachAtt(){
   const el=document.getElementById('coachAtt'); if(!el) return;
   if(!coachAtt){ el.style.display='none'; return; }
   el.style.display='inline-flex';
-  el.innerHTML=`<span>📎 Klatki: ${esc(coachAtt.ex)} · ${new Date(coachAtt.t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})}</span><button aria-label="Nie dołączaj klatek" id="coachAttX">✕</button>`;
+  el.innerHTML=`<span>📎 Klatki: ${esc(coachAtt.ex)} · ${new Date(coachAtt.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><button aria-label="Nie dołączaj klatek" id="coachAttX">✕</button>`;
   document.getElementById('coachAttX').onclick=()=>{ coachAtt=null; renderCoachAtt(); };
 }
 

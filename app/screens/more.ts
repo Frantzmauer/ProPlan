@@ -17,6 +17,7 @@ import { renderShop } from './shop';
 import { updateStreak } from './streak';
 import { renderToday } from './train';
 import { bodyRefresh } from '../features/body3d';
+import { dec, plural, t } from '../lib/i18n';
 
 export let MORE_TITLES, sd, kcalSlider, pf;
 
@@ -39,18 +40,17 @@ export function moreOpen(sec, fromHistory?){
 export function moreStatus(){
   const set=(id,t,warn?)=>{ const e=document.getElementById(id); if(e){ e.textContent=t; e.classList.toggle('warn',!!warn); } };
   const p=S.profile||{}, st=parseISO(S.startDate);
-  set('mmProf', `${p.name||'bez imienia'} · ${S.kcalGoal||DEFAULT_KCAL} kcal · start ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
-  set('mmSync', !CLOUD.on ? 'Wyłączona' : CLOUD.lastError ? '⚠ Ostatnia synchronizacja nieudana' : 'Włączona · konto '+(CLOUD.account||'—'), CLOUD.on&&CLOUD.lastError);
-  set('mmRem', S.reminders&&S.reminders.on ? 'Włączone · trening '+S.reminders.workout : 'Wyłączone');
-  set('mmVer', ({stable:'Stabilna · v1.6', early:'Early Access', users:'USERS'})[APP_VER] || 'Beta');
-  { const q=quotaCur(); set('mmPlan', q ? `Zostało ${quotaLeft('coach')} z ${q.coach.max} pytań · ${quotaLeft('form')} z ${q.form.max} nagrań · ${quotaLeft('est')} z ${q.est.max} szacowań` : 'Limity Trenera AI', q&&quotaLeft('coach')===0); }
+  set('mmProf', `${p.name||t('bez imienia')} · ${S.kcalGoal||DEFAULT_KCAL} kcal · ${t('start')} ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
+  set('mmSync', !CLOUD.on ? t('Wyłączona') : CLOUD.lastError ? t('⚠ Ostatnia synchronizacja nieudana') : t('Włączona · konto {a}', {a:CLOUD.account||'—'}), CLOUD.on&&CLOUD.lastError);
+  set('mmRem', S.reminders&&S.reminders.on ? t('Włączone · trening {h}', {h:S.reminders.workout}) : t('Wyłączone'));
+  set('mmVer', ({stable:t('Stabilna · v1.6'), early:'Early Access', users:'USERS'})[APP_VER] || 'Beta');
+  { const q=quotaCur(); set('mmPlan', q ? t('Zostało {a} z {am} pytań · {b} z {bm} nagrań · {c} z {cm} szacowań', {a:quotaLeft('coach'), am:q.coach.max, b:quotaLeft('form'), bm:q.form.max, c:quotaLeft('est'), cm:q.est.max}) : t('Limity Trenera AI'), q&&quotaLeft('coach')===0); }
   { const c=cyGet(), on=cyTracking(), btn=document.getElementById('mmCycleBtn');
     if(btn) btn.style.display=(on || c.on || (S.profile&&S.profile.sex==='f')) ? '' : 'none';   // proponowane przy profilu kobiety albo gdy już włączone
-    set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?' · synchronizowane':' · tylko na tym telefonie') : 'Wyłączone · dobrowolne'); }
-  { const r=Object.values((S.adj&&S.adj.rest)||{}); set('mmRest', r.length ? 'Zmienione: '+r.length+(r.some(x=>x.by==='tr')?' (także od Trenera)':'') : 'Z planu · zmień przy ćwiczeniu'); }
+    set('mmCycle', on ? (CY_SIT.find(x=>x[0]===c.sit)||['',''])[1]+(c.sync?t(' · synchronizowane'):t(' · tylko na tym telefonie')) : t('Wyłączone · dobrowolne')); }
+  { const r=Object.values((S.adj&&S.adj.rest)||{}); set('mmRest', r.length ? t('Zmienione: {n}', {n:r.length})+(r.some(x=>x.by==='tr')?t(' (także od Trenera)'):'') : t('Z planu · zmień przy ćwiczeniu')); }
   const n=exLibrary().reduce((a,g)=>a+g.ex.length,0), last=loadCoach().filter(m=>m.kind==='form').pop();
-  const pl=n===1?'ćwiczenie':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'ćwiczenia':'ćwiczeń';
-  set('mmCw', n+' '+pl+(last?' · ostatnio: '+(last.ex||'')+' — '+(last.grade||''):' · nagraj serię i dostań ocenę'));
+  set('mmCw', plural(n,'{n} ćwiczenie','{n} ćwiczenia','{n} ćwiczeń','{n} exercise','{n} exercises')+(last?t(' · ostatnio: ')+(last.ex||'')+' — '+(last.grade||''):t(' · nagraj serię i dostań ocenę')));
 }
 
 export function showView(v){
@@ -79,11 +79,11 @@ export function updateKcalHint(){
   const deficit=maint-k;
   const perWeek=(deficit*7/7700); // 7700 kcal ≈ 1 kg tłuszczu
   let msg;
-  if(deficit<=0) msg=`To poziom utrzymania lub nadwyżka — waga nie spadnie. Zejdź poniżej ~${maint} kcal, by chudnąć.`;
-  else msg=`Deficyt ~${deficit} kcal/dzień → ok. <b>${perWeek.toFixed(2).replace('.',',')} kg tłuszczu tygodniowo</b>. ${deficit>700?'Szybko — pilnuj białka i regeneracji.':deficit>400?'Solidne, realne tempo.':'Łagodnie i komfortowo.'}`;
+  if(deficit<=0) msg=t('To poziom utrzymania lub nadwyżka — waga nie spadnie. Zejdź poniżej ~{m} kcal, by chudnąć.', {m:maint});
+  else msg=t('Deficyt ~{d} kcal/dzień → ok. <b>{kg} kg tłuszczu tygodniowo</b>.', {d:deficit, kg:dec(perWeek,2)})+' '+(deficit>700?t('Szybko — pilnuj białka i regeneracji.'):deficit>400?t('Solidne, realne tempo.'):t('Łagodnie i komfortowo.'));
   document.getElementById('kcalHint').innerHTML=msg;
   const g=macroGoalFor(k);
-  document.getElementById('macroHint').textContent=`Cele makro: białko ${g.p} g · węgle ${g.c} g · tłuszcz ${g.f} g`;
+  document.getElementById('macroHint').textContent=t('Cele makro: białko {p} g · węgle {c} g · tłuszcz {f} g', {p:g.p, c:g.c, f:g.f});
 }
 
 export function loadProfileUI(){
@@ -105,7 +105,7 @@ export function updateTdee(){
 // zapis pojedynczego pola profilu — nie rusza pozostałych, nie wywołuje wrażenia zmiany kalorii
 export function saveProfileField(key){
   if(key==='name'){ S.profile.name=document.getElementById('pfName').value.trim(); S._settingsM=Date.now(); save(); applyName(); return; }
-  if(key==='lang'){ S.profile.lang=document.getElementById('pfLang').value==='en'?'en':'pl'; S.profile.langAt=Date.now(); S._settingsM=Date.now(); save(); return; }
+  if(key==='lang'){ S.profile.lang=document.getElementById('pfLang').value==='en'?'en':'pl'; S.profile.langAt=Date.now(); S._settingsM=Date.now(); save(); setTimeout(()=>location.reload(), 400); return; }   // cała aplikacja w nowym języku
   if(key==='weight') S.profile.weight=parseFloat(document.getElementById('pfWeight').value)||S.profile.weight;
   if(key==='height') S.profile.height=parseFloat(document.getElementById('pfHeight').value)||S.profile.height;
   if(key==='age')    S.profile.age=parseInt(document.getElementById('pfAge').value)||S.profile.age;
@@ -133,9 +133,9 @@ export function __init_13(){
    ============================================================ */
 // Trening i Dieta pokazują ten sam dzień; pasek dnia i przełącznik tylko w nich
 /* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
-MORE_TITLES = {cw:['Ćwiczenia','Nauka techniki'],prof:['Profil i plan','Profil · kalorie · start'],sync:['Synchronizacja','Chmura · zużycie AI · konta'],
-  rem:['Przypomnienia','Powiadomienia'],data:['Kopia i dane','Eksport · import · plik'],ver:['Wersja aplikacji','Stabilna, beta albo poprzednia'],
-  plan:['Pakiet i limity','Twój plan · Trener AI'], adm:['Konta i plany','Administrator · USERS']};
+MORE_TITLES = {cw:[t('Ćwiczenia'),t('Nauka techniki')],prof:[t('Profil i plan'),t('Profil · kalorie · start')],sync:[t('Synchronizacja'),t('Chmura · zużycie AI · konta')],
+  rem:[t('Przypomnienia'),t('Powiadomienia')],data:[t('Kopia i dane'),t('Eksport · import · plik')],ver:[t('Wersja aplikacji'),t('Stabilna, beta albo poprzednia')],
+  plan:[t('Pakiet i limity'),t('Twój plan · Trener AI')], adm:[t('Konta i plany'),t('Administrator · USERS')]};
 document.getElementById('moreBack').onclick=()=>{ if(history.state&&history.state.more) history.back(); else moreOpen(''); };
 document.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>moreOpen(b.dataset.more));
 document.querySelectorAll('#moreMenu [data-rest-list]').forEach(b=>b.onclick=()=>openRestList(todayISO()));

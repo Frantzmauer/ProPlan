@@ -11,6 +11,7 @@ import { DEFAULT_KCAL, DIET } from '../plan/data';
 import { prDD, renderRecords } from './history';
 import { estMaintenance, kcalSlider, updateKcalHint } from './more';
 import { dayMeals, renderToday } from './train';
+import { dec, t } from '../lib/i18n';
 
 export let TD_WIN, TD_SPAN, TD_WN, TD_DAYS, TD_EVERY, tdFmt, MEASURES, msChartKey, msEdit;
 
@@ -73,35 +74,35 @@ export function tdeeProposal(e){ return proposeGoal(e, S.kcalGoal||DEFAULT_KCAL,
 export function renderTdee(){
   const box=document.getElementById('tdeeCard'); if(!box) return;
   const e:any=tdeeEstimate(), A=(S.adj&&S.adj.kcal)||{}, today=todayISO(), goal=S.kcalGoal||DEFAULT_KCAL, last=A.last;
-  const head=`<div class="td-h"><b>Wydatek z Twoich danych</b><span class="md-hint" style="margin:0;white-space:nowrap">28 dni</span></div>`;
+  const head=`<div class="td-h"><b>${t('Wydatek z Twoich danych')}</b><span class="md-hint" style="margin:0;white-space:nowrap">${t('28 dni')}</span></div>`;
   if(!e.ok){
     const n=e.need, row=(l,v,max,u)=>`<div class="r"><span>${l}</span><span class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></span><small>${Math.min(v,max)}/${max}${u}</small></div>`;
-    box.innerHTML=head+(e.odd?`<div class="td-note">Wynik wyszedł nierealny — zwykle przez niepełny zapis jedzenia albo pomyłkę przy wadze. Sprawdź ostatnie wpisy.</div>`:
-      `<div class="md-hint" style="margin:0">Po 2–3 tygodniach aplikacja porówna, co jesz, ze zmianą wagi i zaproponuje cel kalorii dopasowany do Ciebie.</div>
-      <div class="td-prog">${row('Ważenia',n.w,TD_WN,'')}${row('Okres ważeń',n.span,TD_SPAN,' dni')}${row('Dni z pełnym zapisem jedzenia',n.days,TD_DAYS,'')}</div>
-      <div class="td-note">Dzień z pełnym zapisem: odhaczone co najmniej 3 posiłki albo 70% celu. Waż się rano, na czczo, kilka razy w tygodniu.</div>`);
+    box.innerHTML=head+(e.odd?`<div class="td-note">${t('Wynik wyszedł nierealny — zwykle przez niepełny zapis jedzenia albo pomyłkę przy wadze. Sprawdź ostatnie wpisy.')}</div>`:
+      `<div class="md-hint" style="margin:0">${t('Po 2–3 tygodniach aplikacja porówna, co jesz, ze zmianą wagi i zaproponuje cel kalorii dopasowany do Ciebie.')}</div>
+      <div class="td-prog">${row(t('Ważenia'),n.w,TD_WN,'')}${row(t('Okres ważeń'),n.span,TD_SPAN,t(' dni'))}${row(t('Dni z pełnym zapisem jedzenia'),n.days,TD_DAYS,'')}</div>
+      <div class="td-note">${t('Dzień z pełnym zapisem: odhaczone co najmniej 3 posiłki albo 70% celu. Waż się rano, na czczo, kilka razy w tygodniu.')}</div>`);
     return;
   }
   const to=tdeeProposal(e), since=last ? cyDiff(last.d, today) : 99, snoozed=A.snooze && A.snooze>today;
   const show=Math.abs(to-goal)>=100 && since>=TD_EVERY && !snoozed;
   const pace=(e.formula-goal)*7/7700;
   box.innerHTML=head+`<div class="td-grid">
-      <div><b>${e.tdee}</b><span>kcal — Twój wydatek<br>(wzór: ${e.formula})</span></div>
-      <div><b>${e.avg}</b><span>kcal — jesz średnio<br>(${e.need.days} dni)</span></div>
-      <div><b>${tdFmt(e.weekly)}</b><span>kg/tydz. — trend wagi</span></div></div>`+
-    (show?`<div class="td-prop"><span><b>Proponuję cel ${to} kcal zamiast ${goal}.</b> ${to<goal?'Twój wydatek jest niższy, niż zakładał wzór':'Twój wydatek jest wyższy, niż zakładał wzór'} — z nowym celem utrzymasz zamierzone tempo${pace>0?' (~'+pace.toFixed(2).replace('.',',')+' kg tłuszczu/tydz.)':''}.</span>
-      <div class="row"><button class="btn" type="button" id="tdApply">Zastosuj od dziś</button><button class="btn ghost" type="button" id="tdLater">Za tydzień</button></div></div>`
-    : last && last.d===today ? `<div class="td-note">Cel zmieniony dziś: ${last.from} → ${last.to} kcal (z trendu wagi). <button class="btn ghost" type="button" id="tdUndo" style="font-size:12px;padding:5px 10px;margin-left:4px">Cofnij</button></div>`
-    : `<div class="td-note">${last?'Ostatnia zmiana z trendu: '+prDD(last.d)+' ('+last.from+' → '+last.to+' kcal). ':''}${Math.abs(to-goal)<100?'Obecny cel '+goal+' kcal pasuje do Twoich danych.':snoozed?'Następna propozycja od '+prDD(A.snooze)+'.':'Następne sprawdzenie od '+prDD(addDays(last.d,TD_EVERY))+'.'}</div>`)+
-    `<div class="td-note">Liczone z odhaczonych posiłków i wag. Wahania wody (sól, trening${cyTracking()?', cykl':''}) wygładza trend z 4 tygodni. Zmiana celu to zawsze Twoja decyzja.</div>`;
+      <div><b>${e.tdee}</b><span>${t('kcal — Twój wydatek<br>(wzór: {f})', {f:e.formula})}</span></div>
+      <div><b>${e.avg}</b><span>${t('kcal — jesz średnio<br>({n} dni)', {n:e.need.days})}</span></div>
+      <div><b>${tdFmt(e.weekly)}</b><span>${t('kg/tydz. — trend wagi')}</span></div></div>`+
+    (show?`<div class="td-prop"><span><b>${t('Proponuję cel {to} kcal zamiast {goal}.', {to, goal})}</b> ${to<goal?t('Twój wydatek jest niższy, niż zakładał wzór'):t('Twój wydatek jest wyższy, niż zakładał wzór')}${t(' — z nowym celem utrzymasz zamierzone tempo')}${pace>0?t(' (~{kg} kg tłuszczu/tydz.)', {kg:dec(pace,2)}):''}.</span>
+      <div class="row"><button class="btn" type="button" id="tdApply">${t('Zastosuj od dziś')}</button><button class="btn ghost" type="button" id="tdLater">${t('Za tydzień')}</button></div></div>`
+    : last && last.d===today ? `<div class="td-note">${t('Cel zmieniony dziś: {a} → {b} kcal (z trendu wagi).', {a:last.from, b:last.to})} <button class="btn ghost" type="button" id="tdUndo" style="font-size:12px;padding:5px 10px;margin-left:4px">${t('Cofnij')}</button></div>`
+    : `<div class="td-note">${last?t('Ostatnia zmiana z trendu: {d} ({a} → {b} kcal). ', {d:prDD(last.d), a:last.from, b:last.to}):''}${Math.abs(to-goal)<100?t('Obecny cel {g} kcal pasuje do Twoich danych.', {g:goal}):snoozed?t('Następna propozycja od {d}.', {d:prDD(A.snooze)}):t('Następne sprawdzenie od {d}.', {d:prDD(addDays(last.d,TD_EVERY))})}</div>`)+
+    `<div class="td-note">${cyTracking()?t('Liczone z odhaczonych posiłków i wag. Wahania wody (sól, trening, cykl) wygładza trend z 4 tygodni. Zmiana celu to zawsze Twoja decyzja.'):t('Liczone z odhaczonych posiłków i wag. Wahania wody (sól, trening) wygładza trend z 4 tygodni. Zmiana celu to zawsze Twoja decyzja.')}</div>`;
   const ap=document.getElementById('tdApply');
   if(ap) ap.onclick=()=>{ const Aa=kcalAdj(), from=goal; Aa.prevLast=Aa.last||null; Aa.last={at:Date.now(), d:today, from, to, tdee:e.tdee}; delete Aa.snooze;
-    S.kcalGoal=to; kcalRecord(to, from); kcalSlider.value=to; updateKcalHint(); S._settingsM=Date.now(); save(); renderToday(); renderWeight(); restToast('Nowy cel: '+to+' kcal'); };
+    S.kcalGoal=to; kcalRecord(to, from); kcalSlider.value=to; updateKcalHint(); S._settingsM=Date.now(); save(); renderToday(); renderWeight(); restToast(t('Nowy cel: {n} kcal', {n:to})); };
   const lt=document.getElementById('tdLater');
   if(lt) lt.onclick=()=>{ kcalAdj().snooze=addDays(today,7); S._settingsM=Date.now(); save(); renderWeight(); };
   const un=document.getElementById('tdUndo');
   if(un) un.onclick=()=>{ const Aa=kcalAdj(), l=Aa.last; S.kcalGoal=l.from; kcalRecord(l.from, l.to); Aa.last=Aa.prevLast||null; delete Aa.prevLast;
-    kcalSlider.value=S.kcalGoal; updateKcalHint(); S._settingsM=Date.now(); save(); renderToday(); renderWeight(); restToast('Cofnięto — cel '+S.kcalGoal+' kcal'); };
+    kcalSlider.value=S.kcalGoal; updateKcalHint(); S._settingsM=Date.now(); save(); renderToday(); renderWeight(); restToast(t('Cofnięto — cel {n} kcal', {n:S.kcalGoal})); };
 }
 
 export function renderMeasures(){
@@ -115,7 +116,7 @@ export function renderMeasures(){
   document.getElementById('msEmpty').style.display=ms.length?'none':'block';
   const first=k=>{const x=ms.find(m=>m[k]>0);return x?x[k]:null;};
   const last=k=>{for(let i=ms.length-1;i>=0;i--) if(ms[i][k]>0) return ms[i][k]; return null;};
-  const fmt=v=>v.toFixed(1).replace('.',',');
+  const fmt=v=>dec(v,1);
   const half=S.profile&&S.profile.height?S.profile.height/2:null;
   document.getElementById('msTable').innerHTML=ms.length?MEASURES.map(m=>{
     const a=first(m.k), b=last(m.k); if(b===null) return '';
@@ -123,18 +124,18 @@ export function renderMeasures(){
     const col=dv===0?'var(--ink-dim)':(good?'#5fbf7a':'var(--red)');
     const sel=m.k===msChartKey?'border-color:var(--amber)':'';
     return `<div data-ms="${m.k}" style="display:flex;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;${sel}">
-      <span>${m.l}${m.k==='waist'&&half?` <span style="color:var(--ink-faint);font-size:12px">cel &lt; ${fmt(half)}</span>`:''}</span>
+      <span>${m.l}${m.k==='waist'&&half?` <span style="color:var(--ink-faint);font-size:12px">${t('cel')} &lt; ${fmt(half)}</span>`:''}</span>
       <span><b>${fmt(b)}</b> <span style="color:${col};font-size:13px">${dv>0?'+':''}${fmt(dv)}</span></span></div>`;
-  }).join('')+'<div style="font-size:12px;color:var(--ink-faint)">Kliknij wiersz, żeby zobaczyć wykres. Zmiana liczona od pierwszego pomiaru.</div>':'';
+  }).join('')+'<div style="font-size:12px;color:var(--ink-faint)">'+t('Kliknij wiersz, żeby zobaczyć wykres. Zmiana liczona od pierwszego pomiaru.')+'</div>':'';
   document.querySelectorAll('[data-ms]').forEach(el=>el.onclick=()=>{msChartKey=el.dataset.ms;renderMeasures();});
   const series=ms.filter(m=>m[msChartKey]>0).map(m=>({d:m.d,w:m[msChartKey]}));
   const c=document.getElementById('msChart'); c.style.display=series.length?'block':'none';
   if(series.length) drawChart(series,'msChart');
   // historia pomiarów: każdy zapis można poprawić
   const fmtD=d=>d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4);
-  document.getElementById('msHist').innerHTML=ms.length?`<div class="eyebrow" style="margin-top:14px">Historia pomiarów</div>`+ms.slice().reverse().map(m=>
+  document.getElementById('msHist').innerHTML=ms.length?`<div class="eyebrow" style="margin-top:14px">${t('Historia pomiarów')}</div>`+ms.slice().reverse().map(m=>
     `<div class="ms-hist"><div><b>${fmtD(m.d)}</b><span>${MEASURES.filter(x=>m[x.k]>0).map(x=>x.l.split(' ')[0]+' '+fmt(m[x.k])).join(' · ')}</span></div>
-      <button class="btn ghost" data-msedit="${m.d}" aria-label="Edytuj pomiar z ${fmtD(m.d)}">Edytuj</button></div>`).join(''):'';
+      <button class="btn ghost" data-msedit="${m.d}" aria-label="${t('Edytuj pomiar z {d}', {d:fmtD(m.d)})}">${t('Edytuj')}</button></div>`).join(''):'';
   document.querySelectorAll('[data-msedit]').forEach(b=>b.onclick=()=>msStartEdit(b.dataset.msedit));
   msEditUi();
   bodyRefresh();   // sylwetka 3D z nowych obwodów (jeśli otwarta)
@@ -153,9 +154,9 @@ export function msStartEdit(d){
 export function msEditUi(){
   const note=document.getElementById('msEditNote'), on=!!msEdit;
   note.style.display=on?'block':'none';
-  if(on) note.textContent='Edytujesz pomiar z '+msEdit.slice(8,10)+'.'+msEdit.slice(5,7)+'.'+msEdit.slice(0,4)+'. Puste pole usuwa wartość.';
+  if(on) note.textContent=t('Edytujesz pomiar z {d}. Puste pole usuwa wartość.', {d:msEdit.slice(8,10)+'.'+msEdit.slice(5,7)+'.'+msEdit.slice(0,4)});
   document.getElementById('msCancel').style.display=on?'':'none';
-  document.getElementById('msSave').textContent=on?'Zapisz zmiany':'Zapisz pomiar';
+  document.getElementById('msSave').textContent=on?t('Zapisz zmiany'):t('Zapisz pomiar');
 }
 
 export function msStopEdit(){ msEdit=null; MEASURES.forEach(m=>document.getElementById('ms_'+m.k).value=''); msEditUi(); }
@@ -222,15 +223,15 @@ TD_SPAN = TREND.MIN_SPAN;
 TD_WN = TREND.MIN_WEIGHINGS;
 TD_DAYS = TREND.MIN_DAYS;
 TD_EVERY = TREND.EVERY;
-tdFmt = v=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2).replace('.',',');
+tdFmt = v=>(v>0?'+':v<0?'−':'')+dec(Math.abs(v),2);
 
 /* ---- obwody ciała: S.measures=[{d, waist, chest, arm, thigh, hips, _t}] ---- */
 MEASURES = [
-  {k:'waist',l:'Pas (pępek)',down:true},
-  {k:'chest',l:'Klatka',down:false},
-  {k:'arm',l:'Ramię (napięte)',down:false},
-  {k:'thigh',l:'Udo',down:false},
-  {k:'hips',l:'Biodra',down:true},
+  {k:'waist',l:t('Pas (pępek)'),down:true},
+  {k:'chest',l:t('Klatka'),down:false},
+  {k:'arm',l:t('Ramię (napięte)'),down:false},
+  {k:'thigh',l:t('Udo'),down:false},
+  {k:'hips',l:t('Biodra'),down:true},
 ];
 msChartKey = 'waist';
 msEdit = null;

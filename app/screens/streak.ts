@@ -7,6 +7,7 @@ import { dietScore } from '../lib/dietday';
 import { macroGoalFor, workoutOn } from '../plan/data';
 import { goalOn } from './progress';
 import { dayTotals, exAny } from './train';
+import { dayShort, monthNames, t } from '../lib/i18n';
 
 export let STREAK_CATS, calMonth, calCat;
 
@@ -137,12 +138,12 @@ export function renderStreakCalendar(){
   catsBox.innerHTML=STREAK_CATS.map(c=>`<button class="cal-cat ${c.k===calCat?'on':''}" data-cal="${c.k}">${c.ic} ${c.lab}</button>`).join('');
   catsBox.querySelectorAll('[data-cal]').forEach(el=>el.onclick=()=>{calCat=el.dataset.cal;renderStreakCalendar();});
   const y=calMonth.getFullYear(), m=calMonth.getMonth();
-  const MON=['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+  const MON=monthNames();
   document.getElementById('calMonth').textContent=MON[m]+' '+y;
   document.getElementById('calNext').disabled = new Date(y,m+1,1) > calMaxMonth();
   const first=new Date(y,m,1); const daysInMonth=new Date(y,m+1,0).getDate();
   let startDow=first.getDay(); startDow=(startDow===0)?6:startDow-1; // Pn=0
-  const DOW=['Pn','Wt','Śr','Cz','Pt','So','Nd'];
+  const ds=dayShort(), DOW=[...ds.slice(1), ds[0]];   // od poniedziałku
   const grid=document.getElementById('calGrid');
   const todayStr=todayISO(new Date());
   let html=DOW.map(d=>`<div class="cal-cell dow">${d}</div>`).join('');
@@ -161,11 +162,11 @@ export function renderStreakCalendar(){
 export function __init_8(){
 
 STREAK_CATS = [
-  {k:'diet',ic:'🍽️',lab:'Dieta'},
-  {k:'train',ic:'🏋️',lab:'Trening'},
-  {k:'alco',ic:'🚫',lab:'Bez alkoholu'},
-  {k:'sugar',ic:'🍬',lab:'Bez słodyczy'},
-  {k:'sleep',ic:'😴',lab:'Sen'},
+  {k:'diet',ic:'🍽️',lab:t('Dieta')},
+  {k:'train',ic:'🏋️',lab:t('Trening')},
+  {k:'alco',ic:'🚫',lab:t('Bez alkoholu')},
+  {k:'sugar',ic:'🍬',lab:t('Bez słodyczy')},
+  {k:'sleep',ic:'😴',lab:t('Sen')},
 ];
 
 // 1. dzień miesiąca o północy — bez godziny, żeby porównanie z limitem było dokładne

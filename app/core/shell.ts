@@ -10,6 +10,7 @@ import { renderToday } from '../screens/train';
 import { WO } from '../screens/workout';
 import { __set_fileHandle, __set_viewOffset, delHandle, fileHandle, viewOffset } from './backup';
 import { CLOUD, LS, S, __set_S, appChannel, cloudPush, load } from './state';
+import { t } from '../lib/i18n';
 
 export let netPillT, APP_VER, APP_REL;
 
@@ -38,8 +39,8 @@ export function verVisible(admin){
 
 export function __init_21(){
 netPillT = null;
-document.getElementById('netPill').onclick=()=>showInAppReminder(navigator.onLine?'Znów online':'Brak internetu',
-  navigator.onLine?'Wysyłam zmiany zapisane bez zasięgu.':'Aplikacja działa dalej: serie, posiłki i waga zapisują się na telefonie. Zsynchronizuję je, gdy wróci zasięg. Trener i ocena techniki potrzebują internetu.');
+document.getElementById('netPill').onclick=()=>showInAppReminder(navigator.onLine?t('Znów online'):t('Brak internetu'),
+  navigator.onLine?t('Wysyłam zmiany zapisane bez zasięgu.'):t('Aplikacja działa dalej: serie, posiłki i waga zapisują się na telefonie. Zsynchronizuję je, gdy wróci zasięg. Trener i ocena techniki potrzebują internetu.'));
 window.addEventListener('online', ()=>{ updateNetPill(true); netResync(); });
 window.addEventListener('offline', ()=>updateNetPill());
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) netResync(); });
@@ -59,7 +60,7 @@ setTimeout(applyFeatures, 0);   // ostatni znany plan z telefonu; serwer potwier
 try{
   if(APP_VER==='users' && localStorage.getItem('zelazo_seen_users')!=='1'){
     setTimeout(()=>showInAppReminder('SixMo USERS',
-      'Wersja robocza kont i planów: tu powstają plany Darmowy i Premium, limity, panel administratora i płatności. Funkcje są takie jak w becie. Twój plan i limity: Więcej → Pakiet i limity AI.'), 1200);
+      t('Wersja robocza kont i planów: tu powstają plany Darmowy i Premium, limity, panel administratora i płatności. Funkcje są takie jak w becie. Twój plan i limity: Więcej → Pakiet i limity AI.')), 1200);
     localStorage.setItem('zelazo_seen_users','1');
   }
 }catch(e){}
@@ -67,7 +68,7 @@ try{
 try{
   if(APP_VER==='early' && localStorage.getItem('zelazo_seen_ea')!=='1'){
     setTimeout(()=>showInAppReminder('SixMo Early Access',
-      'Nowe funkcje przed wersją stabilną — dla Premium. Limity Twojego planu widzisz w rozmowie z Trenerem i w Więcej → Pakiet i limity AI. Krótkie „dzięki” i „ok” nie liczą się do limitu.'), 1200);
+      t('Nowe funkcje przed wersją stabilną — dla Premium. Limity Twojego planu widzisz w rozmowie z Trenerem i w Więcej → Pakiet i limity AI. Krótkie „dzięki” i „ok” nie liczą się do limitu.')), 1200);
     localStorage.setItem('zelazo_seen_ea','1');
   }
 }catch(e){}
@@ -75,18 +76,18 @@ try{
 APP_REL = '1.6';
 try{
   if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
-    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO to teraz SixMo',
-      'Sześć miesięcy, jeden plan — nowa nazwa, nowe logo i kolory faz planu. Twoje dane, plan i postępy zostają bez zmian. Ikonę na ekranie głównym telefonu odświeżysz, dodając stronę do ekranu głównego jeszcze raz.'), 1200);
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder(t('ŻELAZO to teraz SixMo'),
+      t('Sześć miesięcy, jeden plan — nowa nazwa, nowe logo i kolory faz planu. Twoje dane, plan i postępy zostają bez zmian. Ikonę na ekranie głównym telefonu odświeżysz, dodając stronę do ekranu głównego jeszcze raz.')), 1200);
     localStorage.setItem('zelazo_seen_rel', APP_REL);
   }
 }catch(e){}
 
 // wipe
 document.getElementById('wipe').onclick=()=>{
-  if(confirm('Na pewno wyczyścić cały postęp? Tego nie da się cofnąć.')){
+  if(confirm(t('Na pewno wyczyścić cały postęp? Tego nie da się cofnąć.'))){
     localStorage.removeItem(LS);__set_S(load());__set_fileHandle(null);delHandle();
     __set_viewOffset(0);renderToday();renderWeight();renderShop();refreshNotifUI();refreshSyncUI();
-    alert('Wyczyszczono. Zaczynamy od zera 💪');
+    alert(t('Wyczyszczono. Zaczynamy od zera 💪'));
   }
 };
 }

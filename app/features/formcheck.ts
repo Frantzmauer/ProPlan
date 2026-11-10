@@ -14,6 +14,7 @@ import { daySummary, renderToday, swapCue } from '../screens/train';
 import { WO, woResume, woSave } from '../screens/workout';
 import { bindOffer, featOn, limitOffer, planEnforced, quotaCur, quotaLeft, quotaReset, quotaSet } from './plan-limits';
 import { refreshNotifUI, setupReminders } from './reminders';
+import { locale } from '../lib/i18n';
 
 export let FC, POSE_VER, POSE_MODEL, posePromise, FC_STEPS, fcWait, FC_BONES, FC_GRADE, fcLeft, fcLean, fcImg;
 
@@ -35,7 +36,7 @@ export function openFormCheck(name, setInfo, opts?){
   const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' technika');
   const head=lib ? `${cue?`<div class="fc-cue">${esc(cue)}</div>`:''}<a class="fc-yt" href="${yt}" target="_blank" rel="noopener">▶ Filmy z techniką (YouTube)</a>` : '';
   const hist=formHistory(name);
-  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>Twoje oceny (${hist.length})</h4><div class="fc-hist">`+hist.slice(0,8).map(m=>`<button data-fh="${esc(m.id)}"><span>${new Date(m.t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'})}</span><b class="g${FC_GRADE[m.grade]??3}">${esc(m.grade||'')}</b><span class="fx">${esc((m.fix||'').slice(0,60))}</span><span class="go">›</span></button>`).join('')+`</div></div>` : '';
+  const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>Twoje oceny (${hist.length})</h4><div class="fc-hist">`+hist.slice(0,8).map(m=>`<button data-fh="${esc(m.id)}"><span>${new Date(m.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><b class="g${FC_GRADE[m.grade]??3}">${esc(m.grade||'')}</b><span class="fx">${esc((m.fix||'').slice(0,60))}</span><span class="go">›</span></button>`).join('')+`</div></div>` : '';
   if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
     fcShow(`${lib?`<p class="fc-sub"><b>${esc(name)}</b></p>`+head:''}<p class="fc-sub">Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>Zamknij</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
@@ -326,7 +327,7 @@ export function fcSaveAndShow(r, metrics, rec){
 // wynik (świeży albo z historii): ocena, poprawki, pomiary i klatki ze szkieletem i wzorcem — stuknij, by powiększyć
 export function fcResultView(r, metrics, rec, savedAt, id){
   const g=FC_GRADE[r.ocena]??3, issues=rec?fcIssues(rec):[], nIss=issues.flat().length;
-  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}${savedAt?' · '+new Date(savedAt).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
+  fcShow(`<p class="fc-sub"><b>${esc(FC.ex)}</b>${FC.set?' · '+esc(FC.set):''}${savedAt?' · '+new Date(savedAt).toLocaleString(locale(),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
     <span class="fc-grade g${g}">${esc(r.ocena)}</span>
     <p class="fc-sub" style="color:var(--ink)">${esc(r.podsumowanie)}</p>
     ${r.bezpieczenstwo?`<div class="fc-warn">⚠ ${esc(r.bezpieczenstwo)}</div>`:''}
