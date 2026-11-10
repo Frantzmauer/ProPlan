@@ -140,7 +140,7 @@ export function renderCycle(){
             <span class="g">${g==null?t('pierwszy zapisany'):g<15?'<b>'+t('tylko {n} dni po poprzednim?', {n:g})+'</b>':t('{n} dni po poprzednim', {n:g})}${cyPeriodLen(p)?t(' · trwał {d}', {d:plural(cyPeriodLen(p),'{n} dzień','{n} dni','{n} dni','{n} day','{n} days')})+(p.auto?t(' (przyjęte automatycznie — popraw, jeśli trzeba)'):''):t(' · koniec niezapisany')}</span></div>`; }).join('')||'<div class="rs-hint">'+t('Brak zapisanych okresów.')+'</div>'}</div>
         <div class="cy-pr add"><input type="date" class="md-in" id="cyAdd" max="${todayISO()}" aria-label="${t('Dodaj początek okresu')}"><span class="g">${t('dodaj wcześniejszy okres')}</span></div>
         <div class="rs-hint">${t('Najnowszy okres jest na górze. ✕ usuwa tylko ten jeden wpis.')}</div>`:''}
-      <div class="sw-lab">Prywatność</div>
+      <div class="sw-lab">${t('Prywatność')}</div>
       <div class="cy-row"><div><b>${t('Tylko na tym telefonie')}</b><small>${c.sync?t('Synchronizacja włączona — dane o cyklu trafiają na serwer aplikacji razem z resztą. Administrator aplikacji technicznie ma do nich dostęp.'):t('Dane o cyklu nie są wysyłane na serwer ani na inne urządzenia.')}</small></div>${sw('local', !c.sync, t('Tylko na tym telefonie'))}</div>
       <div class="cy-row"><div><b>${t('Trener może z tego korzystać')}</b><small>${t('Dzień cyklu i objawy idą do Trenera tylko razem z Twoim pytaniem.')}</small></div>${sw('coach', c.coach!==false, t('Trener może korzystać z danych o cyklu'))}</div>
       <button class="ci-alt" data-cydel style="color:var(--red)">${CYS.del?t('Na pewno? Stuknij jeszcze raz, żeby usunąć'):t('Usuń historię cyklu')}</button>`:''}

@@ -549,7 +549,7 @@ export const EN: Dict = {
   "Jak się dziś czujesz?": "How do you feel today?",
   "Dzień {n} cyklu · ": "Cycle day {n} · ",
   "okres": "period",
-  "Jak spałeś?": "How did you sleep?",
+  "Jak się spało?": "How did you sleep?",
   "Słabo": "Poorly",
   "OK": "OK",
   "Dobrze": "Well",
@@ -1472,4 +1472,8 @@ export const EN: Dict = {
   "Wysłano — Trener myśli…": "Sent — the Coach is thinking…",
   "Rozmowa wstrzymana. Stuknij 🎤, żeby mówić dalej.": "Chat paused. Tap 🎤 to keep talking.",
   "nagranie": "video",
+  // ---- Lista zakupów (uzup.) ----
+  "szt.": "pcs",
+  // ---- Cykl (uzup.) ----
+  "Prywatność": "Privacy",
 };

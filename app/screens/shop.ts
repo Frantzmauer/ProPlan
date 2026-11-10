@@ -4,7 +4,9 @@ import { dayIndexFor, viewDateISO, weekOf } from '../core/backup';
 import { S, save } from '../core/state';
 import { parseISO, todayISO } from '../lib/dates';
 import { DIET, FOODS, autoVariant } from '../plan/data';
-import { dec, t } from '../lib/i18n';
+import { dec, locale, t } from '../lib/i18n';
+
+const SHOP_NAME: Record<string,string> = {};   // polska nazwa (klucz) → nazwa na ekranie
 
 export let FOOD_CAT, SHOP_CATS_ORDER;
 
@@ -33,10 +35,12 @@ export function buildWeekShop(wk){
   Object.keys(acc).forEach(k=>{
     const cat=FOOD_CAT[k]; if(!cat) return;
     const f=FOODS[k]; if(!f) return;
-    let label=f.n.replace(" (such.)","").replace("(such.)","");
-    label=label.charAt(0).toUpperCase()+label.slice(1);
+    // klucz odhaczenia z polskiej nazwy (nie zależy od języka); na ekranie nazwa w języku aplikacji, bez dopisku „suchy”
+    const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
+    const label=cap(f.n.replace(" (such.)","").replace("(such.)",""));
+    SHOP_NAME[label]=cap(t(f.n).replace(/\s*\((such\.|dry)\)/,""));
     let qtyStr;
-    if(f.unit==="szt"){ qtyStr=Math.round(acc[k])+" szt."; }
+    if(f.unit==="szt"){ qtyStr=Math.round(acc[k])+" "+t("szt."); }
     else if(f.unit==="porcja"){ qtyStr=Math.round(acc[k])+"×"; }
     else { const g=Math.round(acc[k]); qtyStr = g>=1000 ? dec(g/1000,1)+" kg" : g+" g"; }
     found[cat][label]=qtyStr;
@@ -52,7 +56,7 @@ export function renderShop(){
   if(hdr) hdr.textContent=t('Tydzień {n} · warianty wybrane na ten tydzień', {n:wk});
   let html='';
   SHOP_CATS_ORDER.forEach(cat=>{
-    const items=Object.keys(found[cat]).sort();
+    const items=Object.keys(found[cat]).sort((a,b)=>(SHOP_NAME[a]||a).localeCompare(SHOP_NAME[b]||b, locale()));
     if(!items.length) return;
     html+=`<div class="shop-cat"><div class="ch">${t(cat)}</div>`;
     items.forEach(it=>{
@@ -61,7 +65,7 @@ export function renderShop(){
       const on=!!S.shop[k];
       html+=`<div class="shop-item ${on?'on':''}" data-shop="${k}">
         <span class="mini ${on?'on':''}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
-        <span class="nm">${t(it)}</span>
+        <span class="nm">${SHOP_NAME[it]||it}</span>
         ${qty?`<span class="qty">${qty}</span>`:''}
       </div>`;
     });

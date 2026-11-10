@@ -95,7 +95,7 @@ export function __init_26(){
    L.checkin = {sleep, sore, energy: 0 słabo … 2 dobrze, plan:'normal'|'light'|'light2'|'skip', at}
    light: ciężar −10% (zaokrąglenie jak w planie), light2: do tego jedna seria mniej (effEx). Synchronizowane (nowsze at). */
 CI_Q = [
-  {k:'sleep', l:'Jak spałeś?', o:[['😴','Słabo'],['🙂','OK'],['😌','Dobrze']]},
+  {k:'sleep', l:'Jak się spało?', o:[['😴','Słabo'],['🙂','OK'],['😌','Dobrze']]},
   {k:'sore', l:'Zakwasy, ból mięśni?', o:[['🔥','Mocne'],['〰️','Lekkie'],['✅','Brak']]},
   {k:'energy', l:'Energia teraz?', o:[['🪫','Niska'],['⚡','OK'],['🚀','Wysoka']]}
 ];

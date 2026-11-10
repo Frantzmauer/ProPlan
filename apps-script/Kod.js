@@ -340,6 +340,7 @@ function cleanCfg(c, plans) {
 function doPost(e) {
   try {
     var req = JSON.parse(e.postData.contents || '{}');
+    OUT_LANG = req.lang === 'en' ? 'en' : 'pl';
     if (!prop('SECRET')) {
       // same nazwy (bez wartości, bez danych kont) — żeby było widać, co skrypt faktycznie ma
       var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use)_/.test(k); });
@@ -426,7 +427,36 @@ function doGet() {
   return out({ ok: true, hello: 'ZELAZO sync dziala' });
 }
 
+// komunikaty dla użytkownika po angielsku, gdy konto ma język angielski (techniczne i administracyjne zostają po polsku)
+var OUT_LANG = 'pl';
+var ERR_EN = {
+  'Nieprawidłowy link zaproszenia': 'Invalid invite link',
+  'Zaproszenie nie istnieje albo zostało już użyte': "This invite doesn't exist or has already been used",
+  'Zaproszenie wygasło — poproś o nowe': 'The invite has expired — ask for a new one',
+  'To konto już nie istnieje': 'This account no longer exists',
+  'Ta nazwa konta jest zajęta — wybierz inną': 'This account name is taken — choose another',
+  'Zły token': 'Invalid token', 'Brak nazwy konta': 'Missing account name', 'Brak pytania': 'No question',
+  'Trener jest teraz przeciążony — spróbuj za chwilę': 'The Coach is busy right now — try again in a moment',
+  'Trener nie może odpowiedzieć na to pytanie. Spróbuj sformułować je inaczej.': "The Coach can't answer this question. Try phrasing it differently.",
+  'Trener nie zwrócił odpowiedzi — spróbuj ponownie': "The Coach didn't reply — please try again",
+  'Za mało klatek z nagrania — nagraj całą serię (kilka sekund).': 'Not enough frames in the video — record the whole set (a few seconds).',
+  'Trener nie może ocenić tego nagrania.': "The Coach can't review this video.",
+  'Trener nie zwrócił oceny — spróbuj ponownie': "The Coach didn't return a review — please try again",
+  'Nieprawidłowe zdjęcie — zrób je jeszcze raz.': 'Invalid photo — please take it again.',
+  'Serwer AI jest teraz przeciążony — spróbuj za chwilę.': 'The AI server is busy right now — try again in a moment.',
+  'Nie udało się odczytać wyniku — spróbuj jeszcze raz.': "Couldn't read the result — please try again.",
+  'Pusty opis': 'Empty description'
+};
+function errEn(m) {
+  if (ERR_EN[m]) return ERR_EN[m];
+  var r;
+  if ((r = /^Niedostępne (w Twoim planie|teraz): /.exec(m))) return r[1] === 'teraz' ? 'Not available right now.' : 'Not available on your plan.';
+  if ((r = /^Dzienny limit .* wyczerpany \((\d+)\)\. Wróć jutro\.$/.exec(m))) return 'Daily limit reached (' + r[1] + '). Come back tomorrow.';
+  if ((r = /^Limit (\d+) .* w tym miesiącu wykorzystany\./.exec(m))) return "You've used this month's limit of " + r[1] + '. New ones from the 1st of next month.';
+  return m;
+}
 function out(obj) {
+  if (OUT_LANG === 'en' && obj && typeof obj.error === 'string') obj.error = errEn(obj.error);
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
