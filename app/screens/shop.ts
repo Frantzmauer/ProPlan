@@ -4,6 +4,7 @@ import { dayIndexFor, viewDateISO, weekOf } from '../core/backup';
 import { S, save } from '../core/state';
 import { parseISO, todayISO } from '../lib/dates';
 import { DIET, FOODS, autoVariant } from '../plan/data';
+import { dec, t } from '../lib/i18n';
 
 export let FOOD_CAT, SHOP_CATS_ORDER;
 
@@ -37,7 +38,7 @@ export function buildWeekShop(wk){
     let qtyStr;
     if(f.unit==="szt"){ qtyStr=Math.round(acc[k])+" szt."; }
     else if(f.unit==="porcja"){ qtyStr=Math.round(acc[k])+"×"; }
-    else { const g=Math.round(acc[k]); qtyStr = g>=1000 ? (g/1000).toFixed(1).replace(".",",")+" kg" : g+" g"; }
+    else { const g=Math.round(acc[k]); qtyStr = g>=1000 ? dec(g/1000,1)+" kg" : g+" g"; }
     found[cat][label]=qtyStr;
   });
   return found;
@@ -48,25 +49,25 @@ export function renderShop(){
   const wk=currentShopWeek();
   const found=buildWeekShop(wk);
   const hdr=document.getElementById('shopWeekLabel');
-  if(hdr) hdr.textContent='Tydzień '+wk+' · warianty wybrane na ten tydzień';
+  if(hdr) hdr.textContent=t('Tydzień {n} · warianty wybrane na ten tydzień', {n:wk});
   let html='';
   SHOP_CATS_ORDER.forEach(cat=>{
     const items=Object.keys(found[cat]).sort();
     if(!items.length) return;
-    html+=`<div class="shop-cat"><div class="ch">${cat}</div>`;
+    html+=`<div class="shop-cat"><div class="ch">${t(cat)}</div>`;
     items.forEach(it=>{
       const qty=found[cat][it];
       const k='w'+wk+'_'+cat.slice(0,3)+'_'+it.slice(0,14);
       const on=!!S.shop[k];
       html+=`<div class="shop-item ${on?'on':''}" data-shop="${k}">
         <span class="mini ${on?'on':''}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
-        <span class="nm">${it}</span>
+        <span class="nm">${t(it)}</span>
         ${qty?`<span class="qty">${qty}</span>`:''}
       </div>`;
     });
     html+=`</div>`;
   });
-  box.innerHTML=html || '<div class="empty">Brak pozycji — sprawdź warianty posiłków na ten tydzień.</div>';
+  box.innerHTML=html || '<div class="empty">'+t('Brak pozycji — sprawdź warianty posiłków na ten tydzień.')+'</div>';
   box.querySelectorAll('[data-shop]').forEach(el=>{
     el.onclick=()=>{const k=el.dataset.shop;S.shop[k]=!S.shop[k];if(!S.shopT)S.shopT={};S.shopT[k]=Date.now();save();renderShop()};
   });
