@@ -190,9 +190,9 @@ export function woRefHtml(x, v){
   const before=h.sess.filter(q=>q.iso<WO.iso); if(!before.length) return '';
   const last=before[before.length-1], an=prAnalyze(h).filter(q=>q.iso<=WO.iso), b=prBest(h.kind,an);
   const will=x.timed&&WO.tStart?[]:woPrCheck(x, v.kg||0, v.r);
-  return `<div class="wo-ref"><div>Ostatnio (${prDD(last.iso)}): <b>${prSetsText(h.kind,last.sets)}</b></div>
-    <div class="g">🏆 Rekord: <b>${prTopText(h.kind,b.top)}</b>${h.kind==='kg'&&b.e1.m.e1?' · 1RM ≈ '+prE1(b.e1.m.e1)+' kg':''}</div></div>
-    ${will.length?`<div class="wo-willpr">🏆 To będzie rekord: ${will.map(p=>prName(p.kind,p.t)).join(' + ')}</div>`:''}`;
+  return `<div class="wo-ref"><div>${tt('Ostatnio ({d}):', {d:prDD(last.iso)})} <b>${prSetsText(h.kind,last.sets)}</b></div>
+    <div class="g">🏆 ${tt('Rekord:')} <b>${prTopText(h.kind,b.top)}</b>${h.kind==='kg'&&b.e1.m.e1?' · 1RM ≈ '+prE1(b.e1.m.e1)+' kg':''}</div></div>
+    ${will.length?`<div class="wo-willpr">🏆 ${tt('To będzie rekord:')} ${will.map(p=>prName(p.kind,p.t)).join(' + ')}</div>`:''}`;
 }
 
 export function woPrShow(x, v, prs){

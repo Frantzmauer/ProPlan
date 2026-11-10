@@ -1476,4 +1476,8 @@ export const EN: Dict = {
   "szt.": "pcs",
   // ---- Cykl (uzup.) ----
   "Prywatność": "Privacy",
+  // ---- Tryb treningu (uzup.) ----
+  "Ostatnio ({d}):": "Last time ({d}):",
+  "Rekord:": "Record:",
+  "To będzie rekord:": "This will be a record:",
 };

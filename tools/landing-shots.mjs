@@ -99,7 +99,7 @@ await shot('03-trening', async () => { await tab('train'); await top(); });
 await page.goto(BASE); await page.waitForTimeout(1500);
 await shot('05-postep', async () => { await tab('progress'); await page.locator('#weightInput').scrollIntoViewIfNeeded(); await page.evaluate(() => { document.getElementById('weightInput').scrollIntoView({ block: 'start' }); window.scrollBy(0, -150); }); });
 await shot('06-rekordy', async () => { await page.locator('#recSide').scrollIntoViewIfNeeded(); await page.evaluate(() => window.scrollBy(0, -70)); });
-await shot('07-historia-cwiczenia', async () => { if (await page.locator('#recMore').isVisible()) await page.locator('#recMore').click(); await page.locator('[data-hist]', { hasText: 'Wyciskanie sztangi' }).first().click(); });
+await shot('07-historia-cwiczenia', async () => { if (await page.locator('#recMore').isVisible()) await page.locator('#recMore').click(); await page.locator('[data-hist]', { hasText: LANG === 'en' ? 'Barbell bench' : 'Wyciskanie sztangi' }).first().click(); });
 await page.goto(BASE); await page.waitForTimeout(1500);
 await shot('08-sylwetka-3d', async () => {
   await tab('progress'); await page.locator('#b3Open').click();
