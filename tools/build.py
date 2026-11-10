@@ -45,7 +45,7 @@ CHANNELS = {
     # aplikacja na telefon: ścieżki jak w stabilnej (icons/, models/ obok index.html), kopie katalogów w paczce
     'native': {'dir': 'native/www', 'icons': 'icons/sixmo/', 'apple': 'SixMo', 'tag': '',
                'name': 'SixMo — plan, trening, dieta', 'short': 'SixMo',
-               'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.', 'copy': ['icons', 'models', 'legal']},
+               'desc': '6-miesięczny plan treningowy i dieta z Trenerem AI.', 'copy': ['icons', 'models', 'legal', 'vendor']},
 }
 # Marka SixMo (od v1.6): ikony w icons/sixmo/. Stare icons/ zostają dla v1.0 i starszych skrótów na telefonach.
 SOURCES = ['app', 'vite.config.js', 'package.json', 'package-lock.json']

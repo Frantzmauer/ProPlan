@@ -61,3 +61,20 @@ for (const [ver, tag] of [['beta', 'BETA'], ['users', 'USERS']] as const) {
     });
   });
 }
+
+test('bez zewnętrznych serwerów: czcionki, skaner i rozpoznawanie sylwetki z paczki aplikacji', async ({ page }) => {
+  const outside: string[] = [];
+  page.on('request', r => { const h = new URL(r.url()).host; if (h && !/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(h)) outside.push(r.url()); });
+  await page.goto('/beta/');
+  await page.waitForLoadState('networkidle');
+  const ok = await page.evaluate(async () => {
+    const m = await import('/vendor/mediapipe/vision_bundle.mjs');
+    const fs = await m.FilesetResolver.forVisionTasks('/vendor/mediapipe/wasm');
+    const p = await m.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: '/vendor/mediapipe/pose_landmarker_lite.task', delegate: 'CPU' }, runningMode: 'IMAGE', numPoses: 1 });
+    await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/vendor/zxing/index.min.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    return !!p && typeof (window as any).ZXing === 'object';
+  });
+  expect(ok).toBe(true);
+  expect(await page.evaluate(() => document.fonts.check('700 20px "Barlow Condensed"'))).toBe(true);
+  expect(outside).toEqual([]);
+});

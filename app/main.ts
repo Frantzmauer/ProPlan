@@ -1,5 +1,6 @@
 // ŻELAZO — start aplikacji. Ekrany i funkcje są w modułach (app/screens, app/features, app/core, app/plan, app/diet, app/ui),
 // obliczenia w app/lib. Moduły tylko deklarują; tu uruchamiamy ich kod startowy w pierwotnej kolejności.
+import './fonts.css';
 import './styles.css';
 import { setLang, translateDom } from './lib/i18n';
 import { EN } from './i18n/en';

@@ -1,7 +1,7 @@
 // ŻELAZO — Ocena techniki z nagrania, biblioteka ćwiczeń, wzorce ruchu.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { restoreHandle } from '../core/backup';
-import { CLOUD, S, cloudCall } from '../core/state';
+import { CLOUD, S, cloudCall, vendorUrl } from '../core/state';
 import { todayISO } from '../lib/dates';
 import { workoutFor } from '../plan/data';
 import { esc } from '../screens/accounts';
@@ -94,8 +94,9 @@ export async function fcFrames(file, n){
 
 export function loadPose(){
   if(!posePromise) posePromise=(async()=>{
-    const m=await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}/vision_bundle.mjs`);
-    const fs=await m.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}/wasm`);
+    // biblioteka i model w paczce aplikacji (vendor/ obok wersji stabilnej) — bez zewnętrznych serwerów
+    const m=await import(/* @vite-ignore */ vendorUrl('mediapipe/vision_bundle.mjs'));
+    const fs=await m.FilesetResolver.forVisionTasks(vendorUrl('mediapipe/wasm'));
     const opts=d=>({baseOptions:{modelAssetPath:POSE_MODEL, delegate:d}, runningMode:'IMAGE', numPoses:1});
     try{ return await m.PoseLandmarker.createFromOptions(fs, opts('GPU')); }catch(e){ return await m.PoseLandmarker.createFromOptions(fs, opts('CPU')); }
   })().catch(e=>{ posePromise=null; throw e; });
@@ -381,7 +382,7 @@ export function __init_29(){
    ============================================================ */
 FC = {ex:'', set:'', busy:false};
 POSE_VER = '0.10.14';
-POSE_MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+POSE_MODEL = vendorUrl('mediapipe/pose_landmarker_lite.task');   // MediaPipe Pose Landmarker lite (Apache-2.0), wersja biblioteki: POSE_VER
 posePromise = null;
 ['fcRec','fcPick'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(f) fcRun(f); }));
 document.getElementById('formDialog').addEventListener('click',e=>{ if(e.target.id==='formDialog') fcClose(); });

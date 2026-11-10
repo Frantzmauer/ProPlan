@@ -7,7 +7,7 @@ import { resolve, extname } from 'node:path';
 // Adres zastępczy: Vite nie próbuje dołączać plików spod pełnego adresu, więc ikony i manifest zostają
 // poza pakietem (każda wersja ma do nich inną ścieżkę). build.py podmienia go na ścieżkę wersji.
 export const SLOT = 'https://zelazo.invalid/';
-const TYPES = { '.svg': 'image/svg+xml', '.png': 'image/png', '.zbm': 'application/octet-stream' };
+const TYPES = { '.svg': 'image/svg+xml', '.png': 'image/png', '.zbm': 'application/octet-stream', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.html': 'text/html', '.css': 'text/css' };
 
 function channelSlots() {
   let serve = false;
@@ -25,9 +25,9 @@ function channelSlots() {
     },
     // podgląd lokalny: ikony z icons/ i modele sylwetki z models/ w repozytorium
     configureServer(server) {
-      for (const dir of ['icons', 'models']) server.middlewares.use('/' + dir + '/', async (req, res, next) => {
+      for (const dir of ['icons', 'models', 'vendor', 'legal']) server.middlewares.use('/' + dir + '/', async (req, res, next) => {
         const name = decodeURIComponent((req.url || '').split('?')[0]).replace(/^\/+/, '');
-        if (!/^(sixmo\/)?[\w.-]+$/.test(name)) return next();   // ikony SixMo w icons/sixmo/
+        if (!/^([\w-]+\/)*[\w.-]+$/.test(name) || name.includes('..')) return next();   // podkatalogi (icons/sixmo/, vendor/mediapipe/wasm/)
         try {
           const body = await readFile(resolve(__dirname, dir, name));
           res.setHeader('Content-Type', TYPES[extname(name)] || 'application/octet-stream');

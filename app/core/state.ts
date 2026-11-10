@@ -43,6 +43,9 @@ export function scheduleCloudPush(){ SYNC.schedule(); }
 // wersja aplikacji z adresu: stabilna w katalogu głównym, pozostałe w /beta/, /early/, /users/ (funkcja, bo potrzebna od startu)
 export function appChannel(){ return channelFromPath(location.pathname); }
 
+// pliki bibliotek w paczce aplikacji: vendor/ obok wersji stabilnej (beta, Early Access, USERS — piętro wyżej)
+export function vendorUrl(p){ return new URL((appChannel()==='stable'?'':'../')+'vendor/'+p, location.href).href; }
+
 // lang: język konta — Trener, ocena techniki i szacowanie AI odpowiadają w nim (serwer: langOf / accountLang w Kod.js)
 // langAt: kiedy ustawiony; język od administratora wygrywa tylko, gdy jest nowszy (wybór sprzed tej zmiany = 1)
 export function cloudCall(action, payload){

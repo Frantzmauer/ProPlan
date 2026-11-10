@@ -1,6 +1,6 @@
 // ŻELAZO — Skaner kodów kreskowych (Open Food Facts).
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
-import { CLOUD, cloudCall } from '../core/state';
+import { CLOUD, cloudCall, vendorUrl } from '../core/state';
 import { esc } from '../screens/accounts';
 import { closeGuide, closeMealDialog } from '../screens/guide';
 import { saveMealDialog } from '../ui/dictation';
@@ -163,7 +163,7 @@ export function __init_14(){
    Znalezione produkty zostają na telefonie (zelazo_bc), więc drugi raz działają też bez internetu.
    „Wstaw” dodaje produkt do pól posiłku — kilka skanów składa się w jeden posiłek. */
 /* global ZXing */   // biblioteka skanera wczytywana z CDN dopiero przy pierwszym skanie
-ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+ZXING_URL = vendorUrl('zxing/index.min.js');   // @zxing/library 0.21.3 (MIT) w paczce aplikacji
 BC = {stream:null, timer:null, zx:null, busy:false};
 bcNum = x=>String(Math.round(x*10)/10).replace('.',',');
 document.getElementById('mdScan').onclick=openScanner;
