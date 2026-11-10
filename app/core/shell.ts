@@ -71,12 +71,12 @@ try{
     localStorage.setItem('zelazo_seen_ea','1');
   }
 }catch(e){}
-// jednorazowo po aktualizacji do 1.5: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
-APP_REL = '1.5';
+// jednorazowo po aktualizacji do 1.5.1: co nowego (tylko w stabilnej i tylko u osób, które już korzystały)
+APP_REL = '1.5.1';
 try{
   if(APP_VER==="stable" && localStorage.getItem('zelazo_seen_rel')!==APP_REL){
-    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.5 — co nowego',
-      'Sylwetka 3D w zakładce Postęp: model zbudowany z obwodów i wzrostu, porównanie ze startem (także szacunek z wagi). Język Trenera: Więcej → Profil i plan → Język · Language (Polski / English). Trener odpowiada szybciej i taniej, a proste pytania obsługuje lżejszy model.'), 1200);
+    if(Object.keys(S.log||{}).length) setTimeout(()=>showInAppReminder('ŻELAZO 1.5.1 — co nowego',
+      'Sylwetka 3D: przybliżanie dwoma palcami albo suwakiem po prawej (po przybliżeniu przesuwasz sylwetkę w górę i w dół), przycisk w rogu przełącza widok startu między siatką a wypełnieniem, krótsze spodenki.'), 1200);
     localStorage.setItem('zelazo_seen_rel', APP_REL);
   }
 }catch(e){}
