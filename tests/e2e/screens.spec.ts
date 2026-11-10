@@ -408,3 +408,26 @@ test('Więcej: regulamin i polityka prywatności otwierają się w języku aplik
   await page.locator('#lgPrivacy').click();
   await expect(page.locator('h1')).toContainText('Polityka prywatności');
 });
+
+test('Więcej: usunięcie konta — dwa stuknięcia, serwer usuwa konto, telefon czyści dane', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  let deleted = false;
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    if (b.action !== 'deleteAccount') return route.fallback();
+    deleted = true;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+  });
+  page.on('dialog', d => d.accept());
+  await page.goto('/users/');
+  await page.locator('.nav button[data-v="set"]').click();
+  await page.locator('[data-more="data"]').click();
+  await page.locator('#delAcc').click();
+  await expect(page.locator('#delAcc')).toHaveText(/Na pewno/);
+  expect(deleted).toBe(false);
+  await page.locator('#delAcc').click();
+  await expect.poll(() => deleted).toBe(true);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('zelazo_cloud'))).toBe(null);
+  expect(errors).toEqual([]);
+});

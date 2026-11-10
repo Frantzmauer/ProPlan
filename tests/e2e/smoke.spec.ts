@@ -68,7 +68,8 @@ test('bez zewnętrznych serwerów: czcionki, skaner i rozpoznawanie sylwetki z p
   await page.goto('/beta/');
   await page.waitForLoadState('networkidle');
   const ok = await page.evaluate(async () => {
-    const m = await import('/vendor/mediapipe/vision_bundle.mjs');
+    const url = '/vendor/mediapipe/vision_bundle.mjs';
+    const m = await import(/* @vite-ignore */ url);
     const fs = await m.FilesetResolver.forVisionTasks('/vendor/mediapipe/wasm');
     const p = await m.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: '/vendor/mediapipe/pose_landmarker_lite.task', delegate: 'CPU' }, runningMode: 'IMAGE', numPoses: 1 });
     await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/vendor/zxing/index.min.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); });

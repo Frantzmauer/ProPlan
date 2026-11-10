@@ -360,6 +360,17 @@ function doPost(e) {
       return out(withLock(function () { return adminAction(req); }));
     }
     if (!me.account) return out({ ok: false, error: 'Brak nazwy konta' });
+    // usunięcie konta przez użytkownika (RODO, Google Play): konto, liczniki i plik danych (kosz Dysku — znika po 30 dniach)
+    if (req.action === 'deleteAccount') {
+      if (me.admin) return out({ ok: false, error: 'Konta administratora nie usuwa się z aplikacji.' });
+      return out(withLock(function () {
+        PROPS.deleteProperty('user_' + me.account);
+        PROPS.deleteProperty('use_' + me.account);
+        var f = dataFile(me.account, false);
+        if (f) trashFile(f);
+        return { ok: true };
+      }));
+    }
     if (me.user) touchUser(me.account, me.user);
 
     // limity planu tylko w wersjach z cfg.enforce; wszędzie indziej dotychczasowe limity dzienne
@@ -445,7 +456,8 @@ var ERR_EN = {
   'Nieprawidłowe zdjęcie — zrób je jeszcze raz.': 'Invalid photo — please take it again.',
   'Serwer AI jest teraz przeciążony — spróbuj za chwilę.': 'The AI server is busy right now — try again in a moment.',
   'Nie udało się odczytać wyniku — spróbuj jeszcze raz.': "Couldn't read the result — please try again.",
-  'Pusty opis': 'Empty description'
+  'Pusty opis': 'Empty description',
+  'Konta administratora nie usuwa się z aplikacji.': "The administrator account can't be deleted from the app."
 };
 function errEn(m) {
   if (ERR_EN[m]) return ERR_EN[m];

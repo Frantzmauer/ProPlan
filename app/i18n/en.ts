@@ -1498,4 +1498,12 @@ export const EN: Dict = {
   "Trener AI to program komputerowy, nie lekarz ani trener personalny. Aplikacja nie stawia diagnoz.": "The AI Coach is a computer program, not a doctor or personal trainer. The app doesn't diagnose.",
   "Regulamin i prywatność": "Terms and privacy",
   "Dokumenty": "Documents",
+  // ---- Usuwanie konta ----
+  "Usuń konto": "Delete account",
+  "Usuwa konto i wszystkie dane z serwera i z tego urządzenia. Nie da się tego cofnąć.": "Deletes your account and all data from the server and this device. This can't be undone.",
+  "Usuwam…": "Deleting…",
+  "Konto i dane zostały usunięte. Dziękujemy za wspólny czas.": "Your account and data have been deleted. Thanks for training with us.",
+  "Brak internetu — konto można usunąć tylko z połączeniem.": "No internet — you can only delete your account when online.",
+  // ---- Usuwanie konta (uzup.) ----
+  "Na pewno? Stuknij jeszcze raz": "Sure? Tap again",
 };
