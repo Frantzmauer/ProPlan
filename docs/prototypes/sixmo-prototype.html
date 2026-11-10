@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SixMo v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Prototyp SixMo v2 — marka i ekrany na prawdziwej aplikacji (dawniej ŻELAZO). Telefon 375 px, przykładowe dane.
+   Zasada koloru: Żar (#FF5A1F) = „tu jesteś teraz” (bieżący miesiąc, przycisk główny, aktywna zakładka). */
+:root{
+  --bg:#0E1114; --panel:#161B20; --panel2:#1E2429; --line:#2A323A;
+  --ink:#F2EFE9; --dim:#9AA3AB; --faint:#8A949C;
+  --zar:#FF5A1F; --zar-deep:#C23A05; --zar-soft:#3A1E12;
+  --adapt:#7FB2FF; --build:#B79CFF; --peak:#FFC24B; --ok:#4EC97E; --bad:#E2543A;
+  --disp:'Space Grotesk','Inter',sans-serif; --body:'Inter',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#07090B;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+body{padding:24px 16px 60px}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--zar);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 375px;gap:40px;align-items:start}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.phone{margin:0 auto}}
+h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:18px}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:20px}
+.sec h2{font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+.hero{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.word{font-family:var(--disp);font-weight:700;letter-spacing:-.045em;line-height:.9}
+.word b{color:var(--zar);font-weight:700}
+.tag{font-size:20px;color:var(--dim);margin-top:10px}
+.why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}
+@media(max-width:700px){.why{grid-template-columns:1fr}}
+.why div{background:var(--panel2);border-radius:14px;padding:14px 16px;font-size:13.5px;color:var(--dim)}
+.why b{display:block;font-family:var(--disp);color:var(--ink);font-size:15px;margin-bottom:4px}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.chip-lbl{font-size:12px;color:var(--faint);margin-top:8px;text-align:center}
+.icon{width:96px;height:96px;display:grid;place-items:center}
+.ic-sq{border-radius:24px}.ic-ci{border-radius:50%}
+.pal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.pal{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sw{height:92px;border-radius:14px;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;font-size:12px;border:1px solid var(--line)}
+.sw b{font-size:14px}
+.type .t1{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;line-height:1}
+.type .t2{font-family:var(--disp);font-weight:500;font-size:30px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.type .t3{font-size:15px;color:#C9CED3;max-width:520px}
+.type .lbl{font-size:12px;color:var(--faint);margin:14px 0 4px}
+.rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:700px){.rules{grid-template-columns:1fr}}
+.rules div{background:var(--panel2);border-radius:14px;padding:14px 16px;font-size:13.5px;color:var(--dim)}
+.rules b{color:var(--ink)}
+
+/* telefon */
+.phone{width:375px;height:812px;border-radius:44px;border:1px solid var(--line);background:var(--bg);overflow:hidden;position:sticky;top:20px;display:flex;flex-direction:column}
+.scr{flex:1;overflow-y:auto;padding:16px 16px 18px;scrollbar-width:none}
+.scr::-webkit-scrollbar{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:21px;letter-spacing:-.03em}
+.brand b{color:var(--zar)}
+.streak{display:flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--dim)}
+.streak span{color:var(--ink)}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:14px}
+.day{border-radius:12px;padding:7px 0;text-align:center;background:var(--panel);border:1px solid var(--line);font-size:11px;color:var(--faint)}
+.day b{display:block;font-family:var(--disp);font-size:17px;color:var(--ink);font-weight:600}
+.day.on{background:var(--zar-soft);border-color:var(--zar)}
+.day.done b::after{content:'';display:block;width:5px;height:5px;border-radius:50%;background:var(--ok);margin:3px auto 0}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.h{font-family:var(--disp);font-weight:700;font-size:28px;letter-spacing:-.025em;line-height:1.05;margin:4px 0 12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.ci{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pill{font-size:12.5px;font-weight:600;border-radius:999px;padding:5px 11px;border:1px solid var(--line);color:var(--dim)}
+.pill.ph{color:var(--adapt);border-color:rgba(127,178,255,.45)}
+.ex{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.ex:last-child{border-bottom:0}
+.ex .n{font-family:var(--disp);font-weight:700;color:var(--faint);width:16px}
+.ex .t{flex:1;font-weight:500}
+.ex .t small{display:block;color:var(--faint);font-weight:400;font-size:12.5px}
+.sets{display:flex;gap:4px}
+.set{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);font-family:var(--disp);font-size:12px;font-weight:600;color:var(--faint);display:grid;place-items:center}
+.set.on{background:var(--ok);border-color:var(--ok);color:#0E1114}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:var(--zar);color:#0E1114;font-weight:700;font-size:16px;width:100%;margin-top:4px}
+.ghost{display:flex;align-items:center;justify-content:center;height:48px;border-radius:14px;border:1px dashed var(--line);color:var(--adapt);font-weight:600;width:100%}
+.macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.mac{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px 4px;text-align:center}
+.mac .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.mac .num{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.15}
+.mac .g{font-size:11px;color:var(--faint)}
+.bar{height:4px;border-radius:2px;background:var(--line);margin:6px 6px 0;overflow:hidden}.bar span{display:block;height:100%;background:var(--zar)}
+.dd{display:flex;flex-direction:column;gap:6px}
+.dd .hh{display:flex;justify-content:space-between;align-items:center}
+.dd .st{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--panel2);color:var(--dim)}
+.dd .cr{display:flex;gap:10px;font-size:12.5px;color:var(--dim)}
+.ok{color:var(--ok)}.no{color:var(--bad)}
+.dd .tip{font-size:12.5px;color:var(--peak)}
+.meal{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.meal:last-child{border-bottom:0}
+.chk{flex:none;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:grid;place-items:center;margin-top:1px}
+.chk.on{background:var(--ok);border-color:var(--ok)}
+.chk.on::after{content:'';width:10px;height:6px;border-left:2.5px solid #0E1114;border-bottom:2.5px solid #0E1114;transform:rotate(-45deg) translate(1px,-1px)}
+.meal .b{flex:1;min-width:0}
+.meal .tg{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.meal .tg span{font-family:var(--disp);font-weight:600;color:var(--zar);font-size:15px}
+.meal .tx{font-size:14px;margin-top:2px}
+.meal .kc{font-size:12px;color:var(--faint);margin-top:2px}
+.vs{display:flex;gap:4px}
+.v{min-width:30px;height:30px;padding:0 8px;border-radius:9px;border:1px solid var(--line);font-family:var(--disp);font-size:13px;font-weight:600;color:var(--faint)}
+.v.on{background:var(--zar);border-color:var(--zar);color:#0E1114}
+.prog{display:flex;gap:16px;align-items:center}
+.months{flex:1;display:flex;flex-direction:column;gap:5px}
+.mo{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim)}
+.mo i{width:4px;height:16px;border-radius:2px}
+.mo b{font-family:var(--disp);color:var(--ink);width:68px;font-weight:600}
+.mo.now b{color:var(--zar)}
+.fig{height:210px;border-radius:16px;background:radial-gradient(ellipse at 50% 35%,#1B2127 0%,var(--bg) 72%);display:grid;place-items:center;position:relative}
+.fig .leg{position:absolute;top:10px;left:12px;font-size:11px;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+.fig .leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+.chg div{background:var(--panel2);border-radius:12px;padding:7px 9px;font-size:11px;color:var(--faint)}
+.chg b{display:block;font-family:var(--disp);font-size:18px;color:var(--ink)}
+.chg b small{font-size:12px;color:var(--ok)}
+.spark{width:100%;height:70px}
+.list button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 4px;border-bottom:1px solid var(--line);text-align:left}
+.list button:last-child{border-bottom:0}
+.list .ico{width:34px;height:34px;border-radius:10px;background:var(--panel2);display:grid;place-items:center;flex:none}
+.list .ico svg{width:18px;height:18px;stroke:var(--dim);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.list span{flex:1}.list small{display:block;color:var(--faint);font-size:12.5px}
+.list .go{color:var(--faint)}
+.nav{height:70px;flex:none;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--bg);position:relative}
+.nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11.5px;font-weight:500;color:var(--faint)}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button[aria-current="page"]{color:var(--zar)}
+.fab{position:absolute;right:14px;bottom:86px;height:48px;border-radius:999px;background:var(--panel2);border:1px solid var(--zar);color:var(--ink);font-weight:600;padding:0 16px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.fab svg{width:20px;height:20px}
+.phwrap{position:relative}
+.view[hidden]{display:none}
+.note{font-size:12.5px;color:var(--faint);margin-top:12px;text-align:center}
+</style>
+</head><body>
+<div class="wrap">
+<main>
+  <h1>SixMo v2 · marka i aplikacja · prototyp</h1>
+
+  <section class="sec" aria-labelledby="s1">
+    <h2 id="s1">Logo</h2>
+    <div class="hero">
+      <span data-hex="200" data-cur="6" data-mark aria-hidden="true"></span>
+      <div>
+        <div class="word" style="font-size:112px">Six<b>Mo</b></div>
+        <div class="tag">Sześć miesięcy. Jeden plan.</div>
+      </div>
+    </div>
+    <div class="why">
+      <div><b>Sześć krawędzi</b>Sześć miesięcy planu. Krawędzie są rozdzielone — każdy miesiąc to osobny etap.</div>
+      <div><b>Żar = tu jesteś</b>Pomarańczowa krawędź zawsze znaczy „teraz”. W logo to szósta: ostatni miesiąc, finisz.</div>
+      <div><b>Ślad po Żelazie</b>Sześciokąt to nakrętka i talerz sztangi — ten sam charakter, nowa nazwa.</div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="s2">
+    <h2 id="s2">Ikona aplikacji (Android, adaptacyjna)</h2>
+    <div class="row">
+      <div><div class="icon ic-sq" style="background:var(--zar)"><span data-hex="64" data-mono="#0E1114" data-cur="6" data-curop=".38"></span></div><div class="chip-lbl">główna</div></div>
+      <div><div class="icon ic-ci" style="background:var(--zar)"><span data-hex="60" data-mono="#0E1114" data-cur="6" data-curop=".38"></span></div><div class="chip-lbl">maska koło</div></div>
+      <div><div class="icon ic-sq" style="background:#2A323A"><span data-hex="64" data-mono="#C9CED3" data-cur="6" data-curop=".38"></span></div><div class="chip-lbl">motyw systemu</div></div>
+      <div><div class="icon ic-sq" style="background:var(--bg);border:1px solid var(--line)"><span data-hex="64" data-cur="6"></span></div><div class="chip-lbl">ekran startowy</div></div>
+      <div style="display:flex;gap:10px;align-items:flex-end;padding-bottom:22px"><span data-hex="40" data-cur="6" data-thick></span><span data-hex="24" data-cur="6" data-thick></span><span data-hex="16" data-cur="6" data-thick></span></div>
+    </div>
+    <p class="note" style="text-align:left">Ikona w sklepie i na ekranie telefonu jest pomarańczowa — wyróżnia się na tle innych. Znak mieści się w bezpiecznym polu 66% (Android przycina ikony do koła lub zaokrąglonego kwadratu). Przy małych rozmiarach linie są grubsze, a cyfra 6 znika poniżej 24 px.</p>
+  </section>
+
+  <section class="sec" aria-labelledby="s3">
+    <h2 id="s3">Kolory</h2>
+    <div class="pal">
+      <div class="sw" style="background:var(--bg)"><b>Grafit</b>#0E1114 · tło</div>
+      <div class="sw" style="background:var(--panel)"><b>Kuźnia</b>#161B20 · karty</div>
+      <div class="sw" style="background:var(--line)"><b>Stal</b>#2A323A · linie, przyszłe miesiące</div>
+      <div class="sw" style="background:var(--ink);color:#0E1114"><b>Kość</b>#F2EFE9 · tekst, ukończone</div>
+      <div class="sw" style="background:var(--zar);color:#0E1114"><b>Żar</b>#FF5A1F · „teraz”, przycisk główny</div>
+      <div class="sw" style="background:var(--adapt);color:#0E1114"><b>Adaptacja</b>#7FB2FF · faza 1 (mies. 1–2)</div>
+      <div class="sw" style="background:var(--build);color:#0E1114"><b>Budowa</b>#B79CFF · faza 2 (mies. 3–4)</div>
+      <div class="sw" style="background:var(--peak);color:#0E1114"><b>Szczyt</b>#FFC24B · faza 3 (mies. 5–6)</div>
+    </div>
+    <p class="note" style="text-align:left">Zielony (#4EC97E) i czerwony (#E2543A) zostają tylko jako „zrobione” / „brakuje” — zawsze razem z ✓/✗, nie samym kolorem. Na jasnym tle tekst akcentowy to Żar głęboki #C23A05 (kontrast 4,6:1).</p>
+  </section>
+
+  <section class="sec type" aria-labelledby="s4">
+    <h2 id="s4">Typografia</h2>
+    <div class="lbl">Space Grotesk 700 · nagłówki, wordmark</div>
+    <div class="t1">Trening A, góra ciała</div>
+    <div class="lbl">Space Grotesk 500 · liczby (równej szerokości)</div>
+    <div class="t2">1883 / 2100 kcal · 105 cm · dzień 74/168</div>
+    <div class="lbl">Inter 400–600 · interfejs</div>
+    <div class="t3">Wieloczłonowe nagłówki piszemy zdaniem, nie WERSALIKAMI — Space Grotesk jest szerszy od dotychczasowej Barlow Condensed, więc długie nazwy ćwiczeń zawijają się zamiast ściskać.</div>
+  </section>
+
+  <section class="sec" aria-labelledby="s5">
+    <h2 id="s5">Zasady</h2>
+    <div class="rules">
+      <div><b>Jeden akcent.</b> Żar tylko tam, gdzie „teraz”: bieżący dzień i miesiąc, przycisk główny, aktywna zakładka. Fazy mają swoje kolory.</div>
+      <div><b>Ton.</b> Konkretnie i spokojnie: tygodnie, kroki, liczby. Bez „cudów w 30 dni”. Teksty neutralne płciowo.</div>
+      <div><b>Liczby to bohater.</b> Kcal, kg, cm, serie — zawsze Space Grotesk, równa szerokość cyfr, żeby nie skakały.</div>
+      <div><b>Dane zostają.</b> Zmiana nazwy jest tylko widoczna — zapisy w telefonie i na serwerze nie zmieniają się.</div>
+    </div>
+  </section>
+</main>
+
+<aside class="phwrap" aria-label="Podgląd aplikacji">
+  <div class="phone">
+    <div class="scr" id="scr">
+
+      <section class="view" id="v-train" aria-label="Trening">
+        <div class="top"><div class="brand"><span data-hex="28" data-cur="6" data-thick aria-hidden="true"></span><span>Six<b>Mo</b></span></div><div class="streak" aria-label="Seria: 6 dni treningowych z rzędu"><span data-hex="14" data-cur="6" data-thick aria-hidden="true"></span><span>6</span> dni</div></div>
+        <div class="days" aria-label="Tydzień 11">
+          <div class="day done">Pn<b>9</b></div><div class="day on">Wt<b>10</b></div><div class="day">Śr<b>11</b></div><div class="day">Cz<b>12</b></div><div class="day">Pt<b>13</b></div><div class="day">Sb<b>14</b></div><div class="day">Nd<b>15</b></div>
+        </div>
+        <div class="eyebrow">Dziś · tydzień 11 z 24</div>
+        <div class="h">Trening B,<br>dół ciała</div>
+        <div class="ci"><span class="pill ph">Faza 2 · Budowa</span><span class="pill">Check-in: dobrze</span><span class="pill">≈ 55 min</span></div>
+        <div class="card" role="list">
+          <div class="ex" role="listitem"><span class="n">1</span><span class="t">Hip thrust ze sztangą<small>4 × 10 · 65 kg</small></span><span class="sets" data-sets="4" data-done="2"></span></div>
+          <div class="ex" role="listitem"><span class="n">2</span><span class="t">Rumuński martwy ciąg<small>4 × 8 · 80 kg</small></span><span class="sets" data-sets="4" data-done="0"></span></div>
+          <div class="ex" role="listitem"><span class="n">3</span><span class="t">Suwnica<small>3 × 13 · 130 kg</small></span><span class="sets" data-sets="3" data-done="0"></span></div>
+          <div class="ex" role="listitem"><span class="n">4</span><span class="t">Wspięcia na palce<small>4 × 15 · 45 kg</small></span><span class="sets" data-sets="4" data-done="0"></span></div>
+        </div>
+        <button class="cta" type="button">Kontynuuj trening</button>
+      </section>
+
+      <section class="view" id="v-diet" aria-label="Dieta" hidden>
+        <div class="top"><div class="brand"><span data-hex="28" data-cur="6" data-thick aria-hidden="true"></span><span>Six<b>Mo</b></span></div><div class="streak"><span data-hex="14" data-cur="6" data-thick aria-hidden="true"></span><span>4</span> dni diety</div></div>
+        <div class="eyebrow">Jadłospis · wtorek</div>
+        <div class="h">Co dziś jesz</div>
+        <div class="macros">
+          <div class="mac"><div class="l">kcal</div><div class="num" style="color:var(--zar)">1883</div><div class="g">z 2100</div><div class="bar"><span style="width:90%"></span></div></div>
+          <div class="mac"><div class="l">Białko</div><div class="num">137</div><div class="g">z 180 g</div><div class="bar"><span style="width:76%"></span></div></div>
+          <div class="mac"><div class="l">Węgle</div><div class="num">171</div><div class="g">z 200 g</div><div class="bar"><span style="width:85%"></span></div></div>
+          <div class="mac"><div class="l">Tłuszcz</div><div class="num">62</div><div class="g">z 75 g</div><div class="bar"><span style="width:82%"></span></div></div>
+        </div>
+        <div class="card dd">
+          <div class="hh"><b>Dzień diety</b><span class="st">w toku · do północy</span></div>
+          <div class="cr"><span><b class="ok">✓</b> kcal 90% <small>(1785–2310)</small></span><span><b class="no">✗</b> białko 76% <small>(min. 144 g)</small></span></div>
+          <div class="tip">Brakuje 7 g białka — np. skyr 330 ml (~33 g).</div>
+        </div>
+        <div class="card">
+          <div class="meal"><button class="chk on" type="button" aria-label="Śniadanie zjedzone" aria-pressed="true"></button><div class="b"><div class="tg"><span>Śniadanie</span><div class="vs"><button class="v" type="button">1</button><button class="v on" type="button">2</button><button class="v" type="button">3</button></div></div><div class="tx">Płatki owsiane 80 g, WPC 40 g, jagody, orzechy</div><div class="kc">622 kcal · B 47 / W 68 / T 17</div></div></div>
+          <div class="meal"><button class="chk on" type="button" aria-label="Przekąska zjedzona" aria-pressed="true"></button><div class="b"><div class="tg"><span>Przekąska</span><span style="color:var(--adapt);font-size:12.5px;font-family:var(--body);font-weight:600">od Trenera</span></div><div class="tx">Skyr naturalny 330 ml, banan, 20 g orzechów</div><div class="kc">378 kcal · B 36 / W 38 / T 13</div></div></div>
+          <div class="meal"><button class="chk" type="button" aria-label="Obiad — odhacz" aria-pressed="false"></button><div class="b"><div class="tg"><span>Obiad</span><div class="vs"><button class="v" type="button">Zamień</button><button class="v on" type="button">1</button><button class="v" type="button">2</button></div></div><div class="tx">Łosoś 155 g, bulgur 70 g, warzywa, szparagi</div><div class="kc">616 kcal · B 42 / W 53 / T 26</div></div></div>
+        </div>
+        <button class="ghost" type="button">＋ Dodaj posiłek</button>
+      </section>
+
+      <section class="view" id="v-prog" aria-label="Postęp" hidden>
+        <div class="top"><div class="brand"><span data-hex="28" data-cur="6" data-thick aria-hidden="true"></span><span>Six<b>Mo</b></span></div><div class="streak"><span data-hex="14" data-cur="6" data-thick aria-hidden="true"></span><span>6</span> dni</div></div>
+        <div class="eyebrow">Tydzień 11 z 24</div>
+        <div class="h">Twoje 6 miesięcy</div>
+        <div class="card prog">
+          <span data-hex="128" data-progress="3" data-label="74" data-sub="dzień z 168" role="img" aria-label="Postęp: miesiąc 3 z 6, dzień 74 ze 168"></span>
+          <div class="months">
+            <div class="mo"><i style="background:var(--adapt)"></i><b>Miesiąc 1</b>Adaptacja ✓</div>
+            <div class="mo"><i style="background:var(--adapt)"></i><b>Miesiąc 2</b>Adaptacja ✓</div>
+            <div class="mo now"><i style="background:var(--build)"></i><b>Miesiąc 3</b>Budowa <span style="font-size:11px;font-weight:700;color:#0E1114;background:var(--zar);border-radius:999px;padding:1px 7px;margin-left:4px">teraz</span></div>
+            <div class="mo"><i style="background:var(--build)"></i><b>Miesiąc 4</b>Budowa</div>
+            <div class="mo"><i style="background:var(--peak)"></i><b>Miesiąc 5</b>Szczyt</div>
+            <div class="mo"><i style="background:var(--peak)"></i><b>Miesiąc 6</b>Szczyt</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="eyebrow" style="margin-bottom:8px">Sylwetka 3D <span style="text-transform:none;letter-spacing:0;font-weight:500">· w aplikacji prawdziwy model 3D</span></div>
+          <div class="fig"><div class="leg"><span><i style="background:#C9CED3"></i>10.11</span><span><i style="background:var(--adapt)"></i>start 21.08 (szac.)</span></div>
+            <svg viewBox="0 0 120 200" width="104" height="180" aria-hidden="true"><g fill="#8E959D"><circle cx="60" cy="20" r="13"/><path d="M38 40q22-8 44 0l6 50q-2 10-8 12l-2 40-6 50h-9l-3-50-3 50h-9l-6-50-2-40q-6-2-8-12z"/><path d="M38 44l-14 52 6 2 14-44zM82 44l14 52-6 2-14-44z"/></g><path d="M36 41q24-10 48 0l7 52q-2 11-9 13" fill="none" stroke="var(--adapt)" stroke-width=".8" stroke-dasharray="2 2"/><path d="M84 41l-7 52q-1 10-9 13M36 41l7 52q1 10 9 13" fill="none" stroke="var(--adapt)" stroke-width=".8" stroke-dasharray="2 2"/><rect x="44" y="96" width="32" height="22" rx="4" fill="#23292F"/></svg>
+          </div>
+          <div class="chg"><div>Pas<b>105 <small>−3,6</small></b></div><div>Biodra<b>104 <small>−2,2</small></b></div><div>Waga<b>99,8 <small>−4,6</small></b></div></div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Waga · trend</div>
+          <svg class="spark" viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--line)" stroke-width="1" points="0,62 300,62"/><polyline fill="none" stroke="var(--zar)" stroke-width="2.5" stroke-linejoin="round" points="0,10 30,14 60,18 90,22 120,25 150,31 180,36 210,40 240,43 270,47 300,50"/></svg>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint)"><span>21.08 · 104,4 kg</span><span style="font-family:var(--disp);color:var(--ink);font-weight:600">−0,5 kg / tydz.</span></div>
+        </div>
+      </section>
+
+      <section class="view" id="v-more" aria-label="Więcej" hidden>
+        <div class="top"><div class="brand"><span data-hex="28" data-cur="6" data-thick aria-hidden="true"></span><span>Six<b>Mo</b></span></div></div>
+        <div class="h">Więcej</div>
+        <div class="card list">
+          <button type="button"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span><span>Profil i plan<small>Marek · 2100 kcal · Język: Polski</small></span><span class="go">›</span></button>
+          <button type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><span>Przerwy między seriami<small>Ustawione dla 6 ćwiczeń</small></span><span class="go">›</span></button>
+          <button type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 3"/></svg></span><span>Przypomnienia<small>Trening 18:00 · posiłki po zwykłej porze</small></span><span class="go">›</span></button>
+          <button type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19 10a4 4 0 0 1-1 8z"/></svg></span><span>Synchronizacja i konta<small>Włączona · ostatnio 2 min temu</small></span><span class="go">›</span></button>
+          <button type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/></svg></span><span>Pakiet i limity AI<small>Premium · 22 z 30 pytań</small></span><span class="go">›</span></button>
+        </div>
+        <p class="note">SixMo 1.6 · dawniej ŻELAZO — Twoje dane zostały bez zmian.</p>
+      </section>
+
+    </div>
+    <button class="fab" type="button" aria-label="Zapytaj Trenera"><svg viewBox="0 0 24 24" fill="none" stroke="var(--zar)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Trener</button>
+    <nav class="nav" aria-label="Zakładki">
+      <button type="button" data-v="train" aria-current="page"><svg viewBox="0 0 24 24"><rect x="2.5" y="9" width="3" height="6" rx="1"/><rect x="18.5" y="9" width="3" height="6" rx="1"/><path d="M5.5 12h13M8 7v10M16 7v10"/></svg>Trening</button>
+      <button type="button" data-v="diet"><svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10M16 3c-1.7 0-3 2.2-3 5s1.3 4 3 4v9"/></svg>Dieta</button>
+      <button type="button" data-v="prog"><svg viewBox="0 0 24 24"><path d="M4 18l5-5 4 3 7-8"/></svg>Postęp</button>
+      <button type="button" data-v="shop"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>Zakupy</button>
+      <button type="button" data-v="more"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Więcej</button>
+    </nav>
+  </div>
+  <p class="note">Kliknij zakładki na dole · Zakupy pomijam w prototypie</p>
+</aside>
+</div>
+
+<script>
+// znak SixMo: sześć rozdzielonych krawędzi sześciokąta, od górnego wierzchołka w prawo (krawędź 1 = miesiąc 1)
+const EDGES=['M109.7 25.6L159.6 54.4','M169.3 71.2L169.3 128.8','M159.6 145.6L109.7 174.4','M90.3 174.4L40.4 145.6','M30.7 128.8L30.7 71.2','M40.4 54.4L90.3 25.6'];
+const C={ink:'#F2EFE9',zar:'#FF5A1F',line:'#2A323A'};
+function hex(el){
+  const s=+el.dataset.hex, cur=+(el.dataset.cur||0), prog=el.dataset.progress?+el.dataset.progress:null, mono=el.dataset.mono;
+  // grubsze linie przy małych rozmiarach; cyfra 6 tylko od 24 px
+  const sw = s>=120?12 : s>=48?13 : s>=24?16 : 22;
+  const edge=(i)=>{ const n=i+1;
+    if(prog!=null) return {c: n<prog?C.ink : n===prog?C.zar : C.line, o:1};
+    if(mono) return {c: mono, o: n===cur?(+el.dataset.curop||1):1};
+    return {c: n===cur?C.zar:C.ink, o:1}; };
+  let txt='';
+  if(prog!=null) txt=`<text x="100" y="110" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="56" fill="${C.ink}">${el.dataset.label}</text><text x="100" y="136" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" fill="#8A949C">${el.dataset.sub}</text>`;
+  else if(s>=24 || el.hasAttribute('data-mark')) txt=`<text x="100" y="${s>=48?129:133}" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="${s>=48?84:92}" fill="${mono||C.ink}">6</text>`;
+  el.innerHTML=`<svg viewBox="0 0 200 200" width="${s}" height="${s}" style="display:block"><g fill="none" stroke-width="${sw}" stroke-linecap="round">${EDGES.map((d,i)=>{const e=edge(i);return `<path d="${d}" stroke="${e.c}" stroke-opacity="${e.o}"/>`;}).join('')}</g>${txt}</svg>`;
+  el.style.display='inline-block'; el.style.lineHeight='0';
+}
+document.querySelectorAll('[data-hex]').forEach(hex);
+// serie do odhaczenia
+document.querySelectorAll('[data-sets]').forEach(el=>{
+  const n=+el.dataset.sets, d=+el.dataset.done;
+  el.innerHTML=Array.from({length:n},(_,i)=>`<button type="button" class="set${i<d?' on':''}" aria-pressed="${i<d}" aria-label="Seria ${i+1}">${i+1}</button>`).join('');
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.set,.chk'); if(b){ const on=!b.classList.contains('on'); b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); return; }
+  const n=e.target.closest('.nav button'); if(n && n.dataset.v!=='shop'){
+    document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!=='v-'+n.dataset.v);
+    document.querySelectorAll('.nav button').forEach(x=>x.toggleAttribute('aria-current', x===n));
+    document.querySelectorAll('.nav button[aria-current]').forEach(x=>x.setAttribute('aria-current','page'));
+    document.getElementById('scr').scrollTop=0;
+  }
+});
+</script>
+</body></html>
