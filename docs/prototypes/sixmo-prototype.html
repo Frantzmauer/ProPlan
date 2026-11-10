@@ -5,11 +5,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
 /* Prototyp SixMo v2 — marka i ekrany na prawdziwej aplikacji (dawniej ŻELAZO). Telefon 375 px, przykładowe dane.
-   Zasada koloru: Żar (#FF5A1F) = „tu jesteś teraz” (bieżący miesiąc, przycisk główny, aktywna zakładka). */
+   Zasada koloru: Żar (#FF7A1A, ten sam co w ŻELAZO) = „tu jesteś teraz” (bieżący miesiąc, przycisk główny, aktywna zakładka). */
 :root{
   --bg:#0E1114; --panel:#161B20; --panel2:#1E2429; --line:#2A323A;
   --ink:#F2EFE9; --dim:#9AA3AB; --faint:#8A949C;
-  --zar:#FF5A1F; --zar-deep:#C23A05; --zar-soft:#3A1E12;
+  --zar:#FF7A1A; --zar-deep:#B34A00; --zar-soft:#3A2410;
   --adapt:#7FB2FF; --build:#B79CFF; --peak:#FFC24B; --ok:#4EC97E; --bad:#E2543A;
   --disp:'Barlow Condensed','Inter',sans-serif; --body:'Inter',system-ui,sans-serif;
   color-scheme:dark;
@@ -174,12 +174,12 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
       <div class="sw" style="background:var(--panel)"><b>Kuźnia</b>#161B20 · karty</div>
       <div class="sw" style="background:var(--line)"><b>Stal</b>#2A323A · linie, przyszłe miesiące</div>
       <div class="sw" style="background:var(--ink);color:#0E1114"><b>Kość</b>#F2EFE9 · tekst, ukończone</div>
-      <div class="sw" style="background:var(--zar);color:#0E1114"><b>Żar</b>#FF5A1F · „teraz”, przycisk główny</div>
+      <div class="sw" style="background:var(--zar);color:#0E1114"><b>Żar</b>#FF7A1A · „teraz”, przycisk główny</div>
       <div class="sw" style="background:var(--adapt);color:#0E1114"><b>Adaptacja</b>#7FB2FF · faza 1 (mies. 1–2)</div>
       <div class="sw" style="background:var(--build);color:#0E1114"><b>Budowa</b>#B79CFF · faza 2 (mies. 3–4)</div>
       <div class="sw" style="background:var(--peak);color:#0E1114"><b>Szczyt</b>#FFC24B · faza 3 (mies. 5–6)</div>
     </div>
-    <p class="note" style="text-align:left">Zielony (#4EC97E) i czerwony (#E2543A) zostają tylko jako „zrobione” / „brakuje” — zawsze razem z ✓/✗, nie samym kolorem. Na jasnym tle tekst akcentowy to Żar głęboki #C23A05 (kontrast 4,6:1).</p>
+    <p class="note" style="text-align:left">Zielony (#4EC97E) i czerwony (#E2543A) zostają tylko jako „zrobione” / „brakuje” — zawsze razem z ✓/✗, nie samym kolorem. Na jasnym tle tekst akcentowy to Żar głęboki #B34A00 (kontrast 4,7:1).</p>
   </section>
 
   <section class="sec type" aria-labelledby="s4">
@@ -306,7 +306,7 @@ h1{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.14em;t
 <script>
 // znak SixMo: sześć rozdzielonych krawędzi sześciokąta, od górnego wierzchołka w prawo (krawędź 1 = miesiąc 1)
 const EDGES=['M109.7 25.6L159.6 54.4','M169.3 71.2L169.3 128.8','M159.6 145.6L109.7 174.4','M90.3 174.4L40.4 145.6','M30.7 128.8L30.7 71.2','M40.4 54.4L90.3 25.6'];
-const C={ink:'#F2EFE9',zar:'#FF5A1F',line:'#2A323A'};
+const C={ink:'#F2EFE9',zar:'#FF7A1A',line:'#2A323A'};
 function hex(el){
   const s=+el.dataset.hex, cur=+(el.dataset.cur||0), prog=el.dataset.progress?+el.dataset.progress:null, mono=el.dataset.mono;
   // grubsze linie przy małych rozmiarach; cyfra 6 tylko od 24 px
