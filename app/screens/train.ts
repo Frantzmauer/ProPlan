@@ -593,7 +593,7 @@ export function renderWorkout(iso, wk, dow, dayIdx, L){
         <span class="nm">${t(e.n)}</span>
         ${!exDone && !exSkip && iso>=todayISO() && swapAlts(e.n).length?`<button class="show-btn sw-btn" data-swap="${i}" aria-label="${t('Zamień ćwiczenie')}">⇄</button>`:''}
         <button class="show-btn" data-guide="${encodeURIComponent(e.n)}">${t('Pokaż')}</button>
-        <span class="scheme">${e.s}×${e.r}</span>
+        <span class="scheme">${e.s}×${t(e.r)}</span>
       </div>
       ${exSkip?'':`${prog?`<div class="ex-sub" style="color:${prog.up?'var(--amber)':'var(--ink-dim)'}">${prog.up?'⬆ ':''}${prog.hint}</div>`
             :(e.start?`<div class="ex-sub">${t('Start:')} ${startLabel(e)}</div>`:'')}

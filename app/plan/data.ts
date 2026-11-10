@@ -4,6 +4,7 @@ import { dayIndexFor, weekOf } from '../core/backup';
 import { S } from '../core/state';
 import { protFloor } from '../diet/scaling';
 import { parseISO } from '../lib/dates';
+import { isEn, t } from '../lib/i18n';
 
 export let DEFAULT_KCAL, MACRO_BASE, FOODS, DIET, SZT_FORMS, FBW_A, FBW_B, UPPER, LOWER, HOME, CARDIO_RUN_STRETCH, MOBILITY, CARDIO_RUN, CARDIO_RUN_LONG, CARDIO_HIIT, CARDIO_LONG, REST, ACTIVE, SHOP_DAY, COOK;
 
@@ -22,16 +23,17 @@ export function foodMacro(key, qty){ // qty = sztuki (unit) lub gramy
 
 // polska odmiana sztuk
 export function plForm(n, f){
-  const forms=SZT_FORMS[f]||null; if(!forms) return FOODS[f].n;
-  n=Math.abs(n); if(n===1) return forms[0];
-  const t=n%10,h=n%100; return (t>=2&&t<=4&&!(h>=12&&h<=14))?forms[1]:forms[2];
+  const forms=SZT_FORMS[f]||null; if(!forms) return t(FOODS[f].n);
+  n=Math.abs(n); if(n===1) return t(forms[0]);
+  if(isEn()) return t(forms[2]);   // po angielsku liczba mnoga jedną formą
+  const d=n%10,h=n%100; return (d>=2&&d<=4&&!(h>=12&&h<=14))?forms[1]:forms[2];
 }
 
 export function foodLabel(key, qty){
   const f=FOODS[key];
   if(f.unit==='szt') return qty+' '+plForm(qty,key);
-  if(f.unit==='porcja') return f.n;
-  return f.n+' '+Math.round(qty)+' g';
+  if(f.unit==='porcja') return t(f.n);
+  return t(f.n)+' '+Math.round(qty)+' g';
 }
 
 // skalowanie ilości: białko chronione (fProt), reszta fCF; jajka i "porcje" zawsze całe/stałe
@@ -57,7 +59,7 @@ export function mealComputed(variant, f){
     for(let i=0;i<4;i++)m[i]+=im[i];
     parts.push(foodLabel(k,sq));
   });
-  if(variant.extra) parts.push(variant.extra);
+  if(variant.extra) parts.push(t(variant.extra));
   let txt=parts.join(', '); txt=txt.charAt(0).toUpperCase()+txt.slice(1);
   return {kcal:Math.round(m[0]), p:Math.round(m[1]), c:Math.round(m[2]), f:Math.round(m[3]), txt};
 }

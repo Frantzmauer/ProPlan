@@ -4,15 +4,16 @@ import { bcClose } from '../features/scanner';
 import { voiceReset, voiceStop } from '../ui/dictation';
 import { MT, mdRepRender } from './meals';
 import { swapCue } from './train';
+import { isEn, t } from '../lib/i18n';
 
 export let GUIDE;
 
 export function openGuide(name){
   const cue = GUIDE[name] || GUIDE[name.trim()] || swapCue(name) || 'Skup się na kontrolowanym ruchu w pełnym zakresie i napięciu docelowego mięśnia.';
-  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' technika');
+  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(isEn() ? t(name.trim())+' technique' : name+' technika');
   const dlg=document.getElementById('guideDialog');
-  dlg.querySelector('#gdTitle').textContent=name;
-  dlg.querySelector('#gdCue').textContent=cue;
+  dlg.querySelector('#gdTitle').textContent=t(name.trim());
+  dlg.querySelector('#gdCue').textContent=t(cue);
   dlg.querySelector('#gdVideo').href=yt;
   dlg.classList.add('show');
 }
@@ -23,7 +24,7 @@ export function openMealDialog(iso, keepReplace?){
   if(!keepReplace) MT.replace=null;
   MT.src=null;
   const dlg=document.getElementById('mealDialog');
-  dlg.querySelector('#mdTxt').placeholder='np. duży kebab z sosem czosnkowym';
+  dlg.querySelector('#mdTxt').placeholder=t('np. duży kebab z sosem czosnkowym');
   dlg.querySelector('#mdTxt').value='';
   dlg.querySelector('#mdKcal').value='';
   dlg.querySelector('#mdP').value='';

@@ -10,6 +10,7 @@ import { effEx, log, prevSession, progStep, progressionFor, renderToday, roundLo
 import { WO, woCurSet, woRender, woSave } from '../screens/workout';
 import { ciRestPlus } from './cycle';
 import { restFor } from './rest';
+import { plural, t } from '../lib/i18n';
 
 export let SWAP_GROUPS_C, SW, swToastT;
 
@@ -104,8 +105,8 @@ export function swapCanUndo(e, iso, rec){
 export function swapNote(e, iso, rec){
   const a=e._adj; if(!a || !a.user || !a.swap) return '';
   const sp=swapSplit(e, iso), bits=[];
-  if(sp) bits.push(`Serie 1–${sp.fromSet-1}: ${esc(sp.was)}`);
-  if(swapCanUndo(e, iso, rec)) bits.push(`<button class="link-btn" data-swap-undo="${iso===todayISO()?w0Index(e, iso):''}">↺ Cofnij zamianę</button>`);
+  if(sp) bits.push(t('Serie 1–{n}: {x}', {n:sp.fromSet-1, x:esc(t(sp.was))}));
+  if(swapCanUndo(e, iso, rec)) bits.push(`<button class="link-btn" data-swap-undo="${iso===todayISO()?w0Index(e, iso):''}">${t('↺ Cofnij zamianę')}</button>`);
   return bits.length?`<div class="ex-sub">${bits.join(' · ')}</div>`:'';
 }
 
@@ -129,11 +130,11 @@ export function swapBaseKg(iso, i, e){
 export function swapSuggest(o, base, reason, iso){
   const prev=prevSession(o.n, iso), ex={n:o.n, start:o.ph?'/rękę':''};
   let kg=0, src;
-  if(prev){ kg=Math.max(...prev.sets.map(x=>x.kg)); src=`ostatnio ${prDD(prev.iso)}: ${prSetsText(o.r&&!/max/.test(o.r)?'time':(prev.sets.some(x=>x.kg>0)?'kg':'reps'), prev.sets.map(x=>({kg:x.kg, r:x.rp})))}`; }
-  else if(o.k>0 && o.base>0 && base>0){ kg=roundLoad(ex, base*o.k/o.base); src=`przeliczone z ${prFmt(base)} kg — dopasuj po 1. serii`; }
-  else if(o.k>0) src='dobierz ciężar (2 powtórzenia w zapasie)';
-  else src=/\d+\s*s\b/.test(o.r)?'na czas':'ciężar ciała';
-  if(reason==='pain' && kg>0){ kg=roundLoad(ex, kg*0.8); src+=' · −20%, bo boli'; }
+  if(prev){ kg=Math.max(...prev.sets.map(x=>x.kg)); src=`${t('ostatnio')} ${prDD(prev.iso)}: ${prSetsText(o.r&&!/max/.test(o.r)?'time':(prev.sets.some(x=>x.kg>0)?'kg':'reps'), prev.sets.map(x=>({kg:x.kg, r:x.rp})))}`; }
+  else if(o.k>0 && o.base>0 && base>0){ kg=roundLoad(ex, base*o.k/o.base); src=t('przeliczone z {kg} kg — dopasuj po 1. serii', {kg:prFmt(base)}); }
+  else if(o.k>0) src=t('dobierz ciężar (2 powtórzenia w zapasie)');
+  else src=/\d+\s*s\b/.test(o.r)?t('na czas'):t('ciężar ciała');
+  if(reason==='pain' && kg>0){ kg=roundLoad(ex, kg*0.8); src+=t(' · −20%, bo boli'); }
   return {kg, src, hist:!!prev};
 }
 
@@ -150,23 +151,23 @@ export function renderSwap(){
   Object.assign(SW, {opts, done, e, e0, ts:timedSpec(e,e0)});
   const p=opts[SW.pick]||opts[0], left=e.s-done;
   document.getElementById('swPanel').innerHTML=`<div class="eh-grab"></div>
-    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Zamień ćwiczenie</div><h2 id="swTitle">${esc(e.n)}</h2>
-      <div class="sw-grp">Te same mięśnie: ${esc(swapGroup(e.n))}</div></div><button class="eh-x" data-swclose aria-label="Zamknij">✕</button></div>
-    <div class="sw-lab">Dlaczego?</div>
-    <div class="eh-chips">${[['busy','Zajęte stanowisko'],['pain','Coś boli'],['gear','Brak sprzętu']].map(([k,l])=>`<button data-swreason="${k}" class="${SW.reason===k?'on':''}">${l}</button>`).join('')}</div>
-    ${SW.reason==='pain'?'<div class="sw-warn">Ostry albo kłujący ból — przerwij to ćwiczenie. Zamiennik dostaje ciężar o 20% niższy, a Trener zobaczy tę zamianę.</div>':''}
-    <div class="sw-lab">Na co?</div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${t('Zamień ćwiczenie')}</div><h2 id="swTitle">${esc(t(e.n))}</h2>
+      <div class="sw-grp">${t('Te same mięśnie:')} ${esc(t(swapGroup(e.n)))}</div></div><button class="eh-x" data-swclose aria-label="${t('Zamknij')}">✕</button></div>
+    <div class="sw-lab">${t('Dlaczego?')}</div>
+    <div class="eh-chips">${[['busy',t('Zajęte stanowisko')],['pain',t('Coś boli')],['gear',t('Brak sprzętu')]].map(([k,l])=>`<button data-swreason="${k}" class="${SW.reason===k?'on':''}">${l}</button>`).join('')}</div>
+    ${SW.reason==='pain'?'<div class="sw-warn">'+t('Ostry albo kłujący ból — przerwij to ćwiczenie. Zamiennik dostaje ciężar o 20% niższy, a Trener zobaczy tę zamianę.')+'</div>':''}
+    <div class="sw-lab">${t('Na co?')}</div>
     <div class="sw-opts">${opts.map((x,j)=>`<button class="sw-opt ${j===SW.pick?'on':''}" data-swpick="${j}">
-      <span class="n"><span>${esc(x.o.n)}</span><span>${x.kg?prFmt(x.kg)+' kg'+(x.o.ph?' / rękę':''):(x.o.r==='max'?'MAX':x.o.r)}</span></span>
-      <small>${x.hist?'<span class="sw-tag">ROBIŁEŚ</span>':''}${esc(x.o.eq)} · ${x.src}</small></button>`).join('')}</div>
-    <div class="sw-lab">Na jak długo?</div>
+      <span class="n"><span>${esc(t(x.o.n))}</span><span>${x.kg?prFmt(x.kg)+' kg'+(x.o.ph?t(' / rękę'):''):(x.o.r==='max'?'MAX':t(x.o.r))}</span></span>
+      <small>${x.hist?'<span class="sw-tag">'+t('ZNANE')+'</span>':''}${esc(t(x.o.eq))} · ${x.src}</small></button>`).join('')}</div>
+    <div class="sw-lab">${t('Na jak długo?')}</div>
     <div class="sw-seg">
-      <button data-swscope="today" class="${SW.scope==='today'?'on':''}"><b>Tylko dziś</b><small>następnym razem wraca ćwiczenie z planu</small></button>
-      <button data-swscope="perm" class="${SW.scope==='perm'?'on':''}"><b>Na stałe</b><small>w planie od dziś, jak zmiana od Trenera</small></button>
+      <button data-swscope="today" class="${SW.scope==='today'?'on':''}"><b>${t('Tylko dziś')}</b><small>${t('następnym razem wraca ćwiczenie z planu')}</small></button>
+      <button data-swscope="perm" class="${SW.scope==='perm'?'on':''}"><b>${t('Na stałe')}</b><small>${t('w planie od dziś, jak zmiana od Trenera')}</small></button>
     </div>
-    ${done?`<div class="sw-split">Zrobione <b>${done} ${done===1?'seria':done<5?'serie':'serii'}</b> zostają jako ${esc(e.n)}. Pozostałe <b>${left}</b> zrobisz jako ${esc(p.o.n)}. Historia i rekordy liczą się osobno.</div>`:''}
-    <button class="wo-save" data-swapply>${done?'ZAMIEŃ POZOSTAŁE SERIE':'ZAMIEŃ'}</button>
-    <button class="sw-ask" data-swask>Żadne nie pasuje? Zapytaj Trenera →</button>`;
+    ${done?`<div class="sw-split">${t('Zrobione <b>{d}</b> zostają jako {a}. Pozostałe <b>{l}</b> zrobisz jako {b}. Historia i rekordy liczą się osobno.', {d:plural(done,'{n} seria','{n} serie','{n} serii','{n} set','{n} sets'), a:esc(t(e.n)), l:left, b:esc(t(p.o.n))})}</div>`:''}
+    <button class="wo-save" data-swapply>${done?t('ZAMIEŃ POZOSTAŁE SERIE'):t('ZAMIEŃ')}</button>
+    <button class="sw-ask" data-swask>${t('Żadne nie pasuje? Zapytaj Trenera →')}</button>`;
 }
 
 export function swapApply(){
@@ -185,7 +186,7 @@ export function swapApply(){
   S.adj.ex[k]=old.filter(y=>!(y.user && y.from===iso)).concat([a]);
   S._settingsM=Date.now(); save(); closeSwap(); renderToday();
   if(WO && WO.iso===iso) woSwapRebuild(i);
-  swapToast('Zamieniono na: '+x.o.n, ()=>swapUndo(i, iso));
+  swapToast(t('Zamieniono na: ')+t(x.o.n), ()=>swapUndo(i, iso));
 }
 
 export function swapUndo(i, iso){
@@ -208,7 +209,7 @@ export function woSwapRebuild(i){
 export function woSwapLine(i){
   const e=effEx(workoutOn(WO.iso).ex[i], WO.iso), a=e._adj; if(!a || !a.user || !a.swap || a.from!==WO.iso) return '';
   const rec=log(WO.iso).ex[WO.ex[i].key];
-  return `<div class="wo-from">zamiast <b>${esc(a.was||'')}</b> · ${a.to?'tylko dziś':'na stałe od dziś'}${swapCanUndo(e, WO.iso, rec)?' · <button id="woSwapUndo">↺ cofnij</button>':''}</div>`;
+  return `<div class="wo-from">${t('zamiast')} <b>${esc(t(a.was||''))}</b> · ${a.to?t('tylko dziś'):t('na stałe od dziś')}${swapCanUndo(e, WO.iso, rec)?' · <button id="woSwapUndo">'+t('↺ cofnij')+'</button>':''}</div>`;
 }
 
 export function swapToast(msg, undo){
