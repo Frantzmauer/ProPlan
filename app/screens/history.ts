@@ -8,7 +8,7 @@ import { prAnalyze, prBest } from '../lib/records';
 import { workoutOn } from '../plan/data';
 import { esc } from './accounts';
 import { DOW_SHORT, effEx, setOk, timedSpec } from './train';
-import { locale } from '../lib/i18n';
+import { dec, locale, monthShort, plural, t } from '../lib/i18n';
 
 export let exIdxCache, IC_HIST, EH, recAll;
 export function __set_exIdxCache(v){ exIdxCache=v; return v; }
@@ -35,7 +35,7 @@ export function exIndex(){
   return exIdxCache=idx;
 }
 
-export function prFmt(x){ return String(Math.round(x*10)/10).replace('.',','); }
+export function prFmt(x){ return dec(Math.round(x*10)/10); }
 
 export function prE1(x){ return prFmt(Math.round(x*2)/2); }
 
@@ -43,9 +43,9 @@ export function prNum(x){ return Math.round(x).toLocaleString(locale()); }
 
 export function prDD(iso){ return iso.slice(8,10)+'.'+iso.slice(5,7); }
 
-export function prUnit(kind){ return kind==='kg'?'kg':kind==='time'?'s':'powt.'; }
+export function prUnit(kind){ return kind==='kg'?'kg':kind==='time'?'s':t('powt.'); }
 
-export function prName(kind,t){ return t==='top'?(kind==='kg'?'Ciężar':kind==='time'?'Czas':'Powtórzenia'):t==='e1'?'1RM szac.':t==='vol'?'Objętość':'Powtórzenia'; }
+export function prName(kind,tp){ return t(tp==='top'?(kind==='kg'?'Ciężar':kind==='time'?'Czas':'Powtórzenia'):tp==='e1'?'1RM szac.':tp==='vol'?'Objętość':'Powtórzenia'); }
 
 export function prTopText(kind,s){
   if(kind!=='kg') return prFmt(s.m.top)+' '+prUnit(kind);
@@ -61,8 +61,8 @@ export function prSetsText(kind,sets){
 // przycisk pod ćwiczeniem na karcie dnia
 export function exHistBtn(name, iso){
   const h=exIndex()[name.trim()]; if(!h) return '';
-  const an=prAnalyze(h), b=prBest(h.kind,an), t=an.find(s=>s.iso===iso), pr=t && t.prs.length;
-  return `<button class="hist-btn${pr?' new':''}" data-hist="${encodeURIComponent(h.n)}">${IC_HIST}<span>${pr?'🏆 Rekord dziś · ':''}Historia · rekord ${prTopText(h.kind,b.top)}</span></button>`;
+  const an=prAnalyze(h), b=prBest(h.kind,an), td=an.find(s=>s.iso===iso), pr=td && td.prs.length;
+  return `<button class="hist-btn${pr?' new':''}" data-hist="${encodeURIComponent(h.n)}">${IC_HIST}<span>${pr?t('🏆 Rekord dziś · '):''}${t('Historia · rekord {r}', {r:prTopText(h.kind,b.top)})}</span></button>`;
 }
 
 export function openExHist(n){ if(!exIndex()[n]) return; EH={n, metric:'top', sel:null, all:false}; renderExHist(); document.getElementById('exHist').style.display='flex'; document.getElementById('ehPanel').scrollTop=0; }
@@ -70,8 +70,8 @@ export function openExHist(n){ if(!exIndex()[n]) return; EH={n, metric:'top', se
 export function closeExHist(){ document.getElementById('exHist').style.display='none'; }
 
 export function ehMetrics(kind){
-  return kind==='kg'?[['top','Ciężar'],['e1','1RM szac.'],['vol','Objętość']]
-    : kind==='time'?[['top','Najdłużej'],['vol','Suma w treningu']] : [['top','Najlepsza seria'],['vol','Suma w treningu']];
+  return kind==='kg'?[['top',t('Ciężar')],['e1',t('1RM szac.')],['vol',t('Objętość')]]
+    : kind==='time'?[['top',t('Najdłużej')],['vol',t('Suma w treningu')]] : [['top',t('Najlepsza seria')],['vol',t('Suma w treningu')]];
 }
 
 export function ehChart(h,an){
@@ -88,9 +88,9 @@ export function ehChart(h,an){
   const X=t=>L+(t-t0)/(t1-t0)*(W-L-R), Y=y=>T+(1-(y-y0)/((y1-y0)||1))*(H-T-B);
   let g='';
   const p3=an.find((s,i)=>i>0 && s.phase3);
-  if(p3){ const px=X(parseISO(p3.iso).getTime()-864e5); g+=`<rect x="${px}" y="${T}" width="${Math.max(0,W-R-px)}" height="${H-T-B}" fill="var(--amber-soft)" opacity=".45"/><text class="ph" x="${px+5}" y="${T+12}">FAZA 3</text>`; }
+  if(p3){ const px=X(parseISO(p3.iso).getTime()-864e5); g+=`<rect x="${px}" y="${T}" width="${Math.max(0,W-R-px)}" height="${H-T-B}" fill="var(--amber-soft)" opacity=".45"/><text class="ph" x="${px+5}" y="${T+12}">${t('FAZA 3')}</text>`; }
   for(let v=y0; v<=y1+1e-9; v+=step) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+3.5}" text-anchor="end">${k==='vol'&&v>=1000?prFmt(v/1000)+'k':prFmt(v)}</text>`;
-  const MON=['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
+  const MON=monthShort();
   for(let d=new Date(t0); d.getTime()<=t1; d=new Date(d.getFullYear(),d.getMonth()+1,1)){
     const f=new Date(d.getFullYear(),d.getMonth(),1).getTime(); if(f<t0) continue;
     g+=`<line x1="${X(f)}" x2="${X(f)}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 3"/><text x="${X(f)+4}" y="${H-8}">${MON[d.getMonth()]}</text>`;
@@ -102,12 +102,12 @@ export function ehChart(h,an){
     const cx=X(p.t), cy=Y(p.y);
     g+=p.pr?`<circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--gold)" stroke="var(--bg)" stroke-width="1.5"/>`:`<circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/>`;
     if(p.i===sel) g+=`<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
-    if(p.today) g+=`<text x="${cx}" y="${cy-12}" text-anchor="end" style="fill:var(--gold);font-weight:600">dziś</text>`;
+    if(p.today) g+=`<text x="${cx}" y="${cy-12}" text-anchor="end" style="fill:var(--gold);font-weight:600">${t('dziś')}</text>`;
   });
   // pola dotyku szersze niż kropki
   const hw=Math.max(7,Math.min(20,(W-L-R)/pts.length/2));
   pts.forEach(p=>{ g+=`<rect data-ept="${p.i}" x="${X(p.t)-hw}" y="${T}" width="${hw*2}" height="${H-T-B}" fill="transparent" style="cursor:pointer"/>`; });
-  return {svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wykres: ${esc(h.n)}">${g}</svg>`, sel, skipped};
+  return {svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t('Wykres: {x}', {x:esc(t(h.n))})}">${g}</svg>`, sel, skipped};
 }
 
 export function renderExHist(){
@@ -115,38 +115,38 @@ export function renderExHist(){
   const an=prAnalyze(h), b=prBest(h.kind,an), u=prUnit(h.kind), K=h.kind;
   const {svg,sel,skipped}=ehChart(h,an), s=an[sel], today=todayISO();
   const e1note=EH.metric!=='e1'||!skipped?'':svg
-    ?`<div class="eh-note">Pominięte treningi (${skipped}): same serie powyżej 12 powtórzeń, z nich nie liczymy 1RM. Postęp przy wielu powtórzeniach widać w zakładkach Ciężar i Objętość.</div>`
-    :`<div class="eh-note">Za mało serii do 12 powtórzeń, żeby pokazać trend 1RM. Przy wielu powtórzeniach postęp widać w zakładkach Ciężar i Objętość.</div>`;
-  const val=k=>k==='e1'?(s.m.e1>0?'≈ '+prE1(s.m.e1)+' kg':'— (serie powyżej 12 powt.)'):k==='vol'?prNum(s.m.vol)+' '+(K==='kg'?'kg':u):prTopText(K,s);
+    ?`<div class="eh-note">${t('Pominięte treningi ({n}): same serie powyżej 12 powtórzeń, z nich nie liczymy 1RM. Postęp przy wielu powtórzeniach widać w zakładkach Ciężar i Objętość.', {n:skipped})}</div>`
+    :`<div class="eh-note">${t('Za mało serii do 12 powtórzeń, żeby pokazać trend 1RM. Przy wielu powtórzeniach postęp widać w zakładkach Ciężar i Objętość.')}</div>`;
+  const val=k=>k==='e1'?(s.m.e1>0?'≈ '+prE1(s.m.e1)+' kg':t('— (serie powyżej 12 powt.)')):k==='vol'?prNum(s.m.vol)+' '+(K==='kg'?'kg':u):prTopText(K,s);
   const tiles=K==='kg'
-    ?[['Najcięższa seria',prTopText(K,b.top),b.top.iso],['1RM szacowany',b.e1.m.e1?'≈ '+prE1(b.e1.m.e1)+' kg':'—',b.e1.iso],['Objętość treningu',b.vol.full?prNum(b.vol.m.vol)+' kg':'—',b.vol.full?b.vol.iso:null]]
-    :[[K==='time'?'Najdłużej':'Najlepsza seria',prTopText(K,b.top),b.top.iso],['Suma w treningu',b.vol.full?prNum(b.vol.m.vol)+' '+u:'—',b.vol.full?b.vol.iso:null],['Treningi',String(an.length),an[0].iso]];
+    ?[[t('Najcięższa seria'),prTopText(K,b.top),b.top.iso],[t('1RM szacowany'),b.e1.m.e1?'≈ '+prE1(b.e1.m.e1)+' kg':'—',b.e1.iso],[t('Objętość treningu'),b.vol.full?prNum(b.vol.m.vol)+' kg':'—',b.vol.full?b.vol.iso:null]]
+    :[[t(K==='time'?'Najdłużej':'Najlepsza seria'),prTopText(K,b.top),b.top.iso],[t('Suma w treningu'),b.vol.full?prNum(b.vol.m.vol)+' '+u:'—',b.vol.full?b.vol.iso:null],[t('Treningi'),String(an.length),an[0].iso,true]];
   let reps='';
   if(K==='kg'){
     const by={}; an.forEach(x=>x.sets.forEach(y=>{ if(y.kg>0 && (!by[y.kg]||y.r>by[y.kg].r)) by[y.kg]={r:y.r,iso:x.iso}; }));
     const kgs=Object.keys(by).map(Number).sort((a,c)=>c-a).slice(0,5);
-    if(kgs.length) reps=`<div class="eh-sec">Najwięcej powtórzeń przy ciężarze</div><table class="eh-reps">${kgs.map(kg=>`<tr><td>${prFmt(kg)} kg</td><td>${by[kg].r} powt.</td><td>${prDD(by[kg].iso)}</td></tr>`).join('')}</table>`;
+    if(kgs.length) reps=`<div class="eh-sec">${t('Najwięcej powtórzeń przy ciężarze')}</div><table class="eh-reps">${kgs.map(kg=>`<tr><td>${prFmt(kg)} kg</td><td>${t('{r} powt.', {r:by[kg].r})}</td><td>${prDD(by[kg].iso)}</td></tr>`).join('')}</table>`;
   }
   const list=[...an].reverse(), shown=EH.all?list:list.slice(0,6), p3=an.find((x,i)=>i>0&&x.phase3);
-  const chips=t=>t.map(p=>`<span class="prchip">🏆 ${prName(K,p)}</span>`).join('');
+  const chips=arr=>arr.map(p=>`<span class="prchip">🏆 ${prName(K,p)}</span>`).join('');
   document.getElementById('ehPanel').innerHTML=`<div class="eh-grab"></div>
-    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">Historia · ${an.length} ${an.length===1?'trening':an.length%10>=2&&an.length%10<=4&&(an.length%100<10||an.length%100>=20)?'treningi':'treningów'}</div><h2 id="ehTitle">${esc(h.n)}</h2></div>
-      <button class="eh-x" data-ehclose aria-label="Zamknij">✕</button></div>
+    <div class="eh-head"><div style="flex:1;min-width:0"><div class="eyebrow">${t('Historia')} · ${plural(an.length,'{n} trening','{n} treningi','{n} treningów','{n} workout','{n} workouts')}</div><h2 id="ehTitle">${esc(t(h.n))}</h2></div>
+      <button class="eh-x" data-ehclose aria-label="${t('Zamknij')}">✕</button></div>
     ${an.length>1?`<div class="eh-chips">${ehMetrics(K).map(([k,l])=>`<button data-emetric="${k}" class="${EH.metric===k?'on':''}">${l}</button>`).join('')}</div>${svg?`<div class="eh-chart">${svg}</div>`:''}${e1note}`:''}
-    <div class="eh-sel"><div class="d">${s.iso===today?'Dziś · ':''}${DOW_SHORT[parseISO(s.iso).getDay()]} ${prDD(s.iso)}</div><div><b>${prSetsText(K,s.sets)}</b></div>
+    <div class="eh-sel"><div class="d">${s.iso===today?t('Dziś · '):''}${DOW_SHORT[parseISO(s.iso).getDay()]} ${prDD(s.iso)}</div><div><b>${prSetsText(K,s.sets)}</b></div>
       <div class="m">${ehMetrics(K).filter(([k])=>k!==EH.metric).map(([k,l])=>l+': '+val(k)).join(' · ')}</div>
       ${s.prs.length?`<div class="b" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">${chips(s.prs)}</div>`:''}</div>
-    <div class="eh-tiles">${tiles.map(([l,v,iso])=>`<div><span>${l}</span><b>${v}</b><small>${iso?(l==='Treningi'?'od '+prDD(iso):prDD(iso)):''}</small></div>`).join('')}</div>
+    <div class="eh-tiles">${tiles.map(([l,v,iso,cnt])=>`<div><span>${l}</span><b>${v}</b><small>${iso?(cnt?t('od {d}', {d:prDD(iso)}):prDD(iso)):''}</small></div>`).join('')}</div>
     ${reps}
-    <div class="eh-sec">Treningi</div>
-    ${shown.map(x=>`<div class="eh-s"><div class="d">${prDD(x.iso)}</div><div class="t">${prSetsText(K,x.sets)}${p3&&x.iso===p3.iso?'<small>początek fazy 3 · −10%</small>':''}${x.full?'':'<small>niepełny trening</small>'}</div><div class="b">${chips(x.prs)}</div></div>`).join('')}
-    ${list.length>6?`<button class="eh-more" data-eall>${EH.all?'Pokaż mniej':'Pokaż wszystkie ('+list.length+')'}</button>`:''}
-    <details class="eh-how"><summary>Jak liczymy rekordy?</summary><ul>
-      <li>Liczą się tylko odhaczone serie. Pominięte ćwiczenia nie wchodzą do historii.</li>
-      <li>Pierwszy trening ćwiczenia to punkt startowy, a nie rekord.</li>
-      <li>1RM to szacunek wzorem Epleya z serii do 12 powtórzeń. Nie musisz go nigdy dźwigać.</li>
-      <li>Rekord objętości liczy się tylko wtedy, gdy zrobisz wszystkie serie z planu.</li>
-      <li>Po wymianie ćwiczenia przez Trenera historia idzie pod nową nazwą, tak jak podpowiedzi „Ostatnio”.</li>
+    <div class="eh-sec">${t('Treningi')}</div>
+    ${shown.map(x=>`<div class="eh-s"><div class="d">${prDD(x.iso)}</div><div class="t">${prSetsText(K,x.sets)}${p3&&x.iso===p3.iso?'<small>'+t('początek fazy 3 · −10%')+'</small>':''}${x.full?'':'<small>'+t('niepełny trening')+'</small>'}</div><div class="b">${chips(x.prs)}</div></div>`).join('')}
+    ${list.length>6?`<button class="eh-more" data-eall>${EH.all?t('Pokaż mniej'):t('Pokaż wszystkie ({n})', {n:list.length})}</button>`:''}
+    <details class="eh-how"><summary>${t('Jak liczymy rekordy?')}</summary><ul>
+      <li>${t('Liczą się tylko odhaczone serie. Pominięte ćwiczenia nie wchodzą do historii.')}</li>
+      <li>${t('Pierwszy trening ćwiczenia to punkt startowy, a nie rekord.')}</li>
+      <li>${t('1RM to szacunek wzorem Epleya z serii do 12 powtórzeń. Nie musisz go nigdy dźwigać.')}</li>
+      <li>${t('Rekord objętości liczy się tylko wtedy, gdy zrobisz wszystkie serie z planu.')}</li>
+      <li>${t('Po wymianie ćwiczenia przez Trenera historia idzie pod nową nazwą, tak jak podpowiedzi „Ostatnio”.')}</li>
     </ul></details>`;
 }
 
@@ -163,14 +163,14 @@ export function renderRecords(){
   const rows=Object.values(exIndex()).map(h=>{ const an=prAnalyze(h); return {h, an, b:prBest(h.kind,an), lp:[...an].reverse().find(s=>s.prs.length)}; })
     .sort((a,c)=>(c.lp?c.lp.iso:'').localeCompare(a.lp?a.lp.iso:'') || c.an.length-a.an.length);
   const fresh=rows.filter(r=>r.lp && r.lp.iso>wk).length;
-  document.getElementById('recSide').textContent=fresh?fresh+' z nowym rekordem w tym tygodniu':'';
-  if(!rows.length){ box.innerHTML='<div class="rec-empty">Tu pojawią się Twoje najlepsze wyniki. Odhaczaj serie na treningach — rekordy liczą się od drugiego treningu danego ćwiczenia.</div>'; return; }
+  document.getElementById('recSide').textContent=fresh?t('{n} z nowym rekordem w tym tygodniu', {n:fresh}):'';
+  if(!rows.length){ box.innerHTML='<div class="rec-empty">'+t('Tu pojawią się Twoje najlepsze wyniki. Odhaczaj serie na treningach — rekordy liczą się od drugiego treningu danego ćwiczenia.')+'</div>'; return; }
   const shown=recAll?rows:rows.slice(0,6);
   box.innerHTML=shown.map(({h,an,b,lp})=>{
-    const sub=h.kind==='kg'?(b.e1.m.e1?'1RM ≈ '+prE1(b.e1.m.e1)+' kg · ':'')+prDD(b.top.iso):(h.kind==='time'?'najdłużej · ':'najlepsza seria · ')+prDD(b.top.iso);
-    return `<button class="reccard" data-hist="${encodeURIComponent(h.n)}"><div class="nm"><span>${esc(h.n)}</span>${lp&&lp.iso>wk?'<span class="rec-new">Nowy</span>':''}</div>
+    const sub=h.kind==='kg'?(b.e1.m.e1?'1RM ≈ '+prE1(b.e1.m.e1)+' kg · ':'')+prDD(b.top.iso):t(h.kind==='time'?'najdłużej · ':'najlepsza seria · ')+prDD(b.top.iso);
+    return `<button class="reccard" data-hist="${encodeURIComponent(h.n)}"><div class="nm"><span>${esc(t(h.n))}</span>${lp&&lp.iso>wk?'<span class="rec-new">'+t('Nowy')+'</span>':''}</div>
       <div class="v">${prTopText(h.kind,b.top)}</div>${recSpark(h,an)}<div class="s">${sub}</div></button>`;
-  }).join('')+(rows.length>6?`<button class="eh-more" id="recMore">${recAll?'Pokaż mniej':'Pokaż wszystkie ('+rows.length+')'}</button>`:'');
+  }).join('')+(rows.length>6?`<button class="eh-more" id="recMore">${recAll?t('Pokaż mniej'):t('Pokaż wszystkie ({n})', {n:rows.length})}</button>`:'');
   box.querySelectorAll('[data-hist]').forEach(x=>x.onclick=()=>openExHist(decodeURIComponent(x.dataset.hist)));
   const m=document.getElementById('recMore'); if(m) m.onclick=()=>{ recAll=!recAll; renderRecords(); };
 }
@@ -186,10 +186,10 @@ IC_HIST = '<svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M5 15l4-4 3 3 6
 /* arkusz historii */
 EH = {n:null, metric:'top', sel:null, all:false};
 document.getElementById('exHist').addEventListener('click',e=>{
-  const t=e.target.closest('[data-ehclose],[data-emetric],[data-ept],[data-eall]'); if(!t) return;
-  if('ehclose' in t.dataset) closeExHist();
-  else if(t.dataset.emetric){ EH.metric=t.dataset.emetric; renderExHist(); }
-  else if(t.dataset.ept!=null){ EH.sel=+t.dataset.ept; renderExHist(); }
+  const tg=e.target.closest('[data-ehclose],[data-emetric],[data-ept],[data-eall]'); if(!tg) return;
+  if('ehclose' in tg.dataset) closeExHist();
+  else if(tg.dataset.emetric){ EH.metric=tg.dataset.emetric; renderExHist(); }
+  else if(tg.dataset.ept!=null){ EH.sel=+tg.dataset.ept; renderExHist(); }
   else { EH.all=!EH.all; renderExHist(); }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && document.getElementById('exHist').style.display==='flex') closeExHist(); });
