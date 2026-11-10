@@ -68,6 +68,17 @@ nav.top a{text-decoration:none}nav.top a:hover{color:var(--ink)}
 .coachb{background:var(--panel2);border-radius:12px 12px 12px 4px;padding:9px 11px;font-size:12.5px;color:var(--dim);margin-top:8px}
 .coachb b{color:var(--ink)}
 
+.mock{padding:10px}
+.mock img,.gal img{display:block;width:100%;border-radius:28px;aspect-ratio:375/812;background:var(--panel)}
+.gal{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;--gx:max(20px,calc((100vw - 1120px) / 2 + 20px));padding:6px var(--gx) 18px;scrollbar-width:thin;scroll-padding:var(--gx)}
+.gal figure{flex:0 0 232px;scroll-snap-align:start;margin:0}
+.gal .fr{border-radius:34px;border:1px solid var(--line);background:#0b0e11;padding:7px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.gal img{border-radius:27px}
+.gal figcaption{margin-top:12px;font-size:14px;color:var(--dim)}
+.gal figcaption b{display:block;color:var(--ink);font-size:15px;margin-bottom:2px}
+.galnav{display:flex;gap:8px}
+.galnav button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:20px}
+.galhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 section{padding:64px 0}
 section h2{font-size:clamp(34px,5vw,52px);margin-bottom:10px}
 section .intro{color:var(--dim);max-width:620px;margin-bottom:30px;font-size:17px}
@@ -133,6 +144,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   <a class="logo" href="#"><svg width="30" height="30" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke-width="16" stroke-linecap="round"><path d="M109.7 25.6L159.6 54.4" stroke="#f2f0ea"/><path d="M169.3 71.2L169.3 128.8" stroke="#f2f0ea"/><path d="M159.6 145.6L109.7 174.4" stroke="#f2f0ea"/><path d="M90.3 174.4L40.4 145.6" stroke="#f2f0ea"/><path d="M30.7 128.8L30.7 71.2" stroke="#f2f0ea"/><path d="M40.4 54.4L90.3 25.6" stroke="#ff7a1a"/></g><text x="100" y="133" text-anchor="middle" font-family="Barlow Condensed" font-weight="700" font-size="92" fill="#f2f0ea">6</text></svg><span>Six<b>Mo</b></span></a>
   <nav class="top">
     <a class="hide-m" href="#plan" data-t="navPlan"></a>
+    <a class="hide-m" href="#ekrany" data-t="navShots"></a>
     <a class="hide-m" href="#funkcje" data-t="navFeat"></a>
     <a class="hide-m" href="#cennik" data-t="navPrice"></a>
     <div class="lang" role="group" aria-label="Język"><button type="button" data-l="pl">PL</button><button type="button" data-l="en">EN</button></div>
@@ -149,15 +161,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
     <div class="cta"><a class="btn pri" href="#" data-t="start"></a><a class="btn sec" href="#plan" data-t="how"></a></div>
     <div class="trust"><span data-t="tr1"></span><span data-t="tr2"></span><span data-t="tr3"></span></div>
   </div>
-  <div class="mock" aria-hidden="true">
-    <div class="bar"><span>Six<b>Mo</b></span><span class="chipx" data-t="mStreak"></span></div>
-    <div class="k" data-t="mK"></div>
-    <div class="t" data-t="mT"></div>
-    <div class="mac"><div>kcal<b>1883</b></div><div><span data-t="mP"></span><b>137</b></div><div><span data-t="mC"></span><b>171</b></div><div><span data-t="mF"></span><b>62</b></div></div>
-    <div class="meal done"><b data-t="mB"></b><span data-t="mBd"></span></div>
-    <div class="meal"><b data-t="mL"></b><span data-t="mLd"></span></div>
-    <div class="coachb" data-t="mCoach" data-html></div>
-  </div>
+  <div class="mock"><img class="shot" data-shot="01-dieta" alt="" data-alt="g1"></div>
 </div></div>
 
 <section id="plan"><div class="w">
@@ -169,6 +173,13 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
     <div class="ph" style="--c:var(--ph3)"><div class="n" data-t="p3n"></div><h3 data-t="p3h"></h3><p data-t="p3p"></p><div class="track"><i style="opacity:.25"></i><i style="opacity:.25"></i><i style="opacity:.25"></i><i style="opacity:.25"></i><i></i><i></i></div></div>
   </div>
 </div></section>
+
+<section id="ekrany" style="padding-bottom:40px"><div class="w galhead">
+  <div><h2 class="disp" data-t="galH"></h2><p class="intro" data-t="galP" style="margin-bottom:18px"></p></div>
+  <div class="galnav"><button type="button" data-gal="-1" aria-label="Poprzednie">‹</button><button type="button" data-gal="1" aria-label="Następne">›</button></div>
+</div>
+<div class="gal" id="gal"></div>
+</section>
 
 <section id="funkcje" style="background:#12161a;border-block:1px solid var(--line)"><div class="w">
   <h2 class="disp" data-t="featH"></h2>
@@ -225,7 +236,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 
 <script>
 const T = {
-  navPlan:{pl:'Plan',en:'Plan'}, navFeat:{pl:'Funkcje',en:'Features'}, navPrice:{pl:'Cennik',en:'Pricing'},
+  navPlan:{pl:'Plan',en:'Plan'}, navFeat:{pl:'Funkcje',en:'Features'}, navShots:{pl:'Ekrany',en:'Screens'}, navPrice:{pl:'Cennik',en:'Pricing'},
   signIn:{pl:'Zaloguj',en:'Sign in'},
   eyebrow:{pl:'Trening · dieta · Trener AI',en:'Training · nutrition · AI Coach'},
   h1:{pl:'Sześć miesięcy.<br><em>Jeden plan.</em>',en:'Six months.<br><em>One plan.</em>'},
@@ -243,6 +254,18 @@ const T = {
   p1n:{pl:'Miesiące 1–2',en:'Months 1–2'}, p1h:{pl:'Adaptacja',en:'Adaptation'}, p1p:{pl:'Siła bazowa na wolnych ciężarach, technika, redukcja tkanki tłuszczowej.',en:'Base strength with free weights, technique, fat loss.'},
   p2n:{pl:'Miesiące 3–4',en:'Months 3–4'}, p2h:{pl:'Hipertrofia',en:'Hypertrophy'}, p2p:{pl:'Podział góra/dół, więcej objętości, budowa mięśni.',en:'Upper/lower split, more volume, building muscle.'},
   p3n:{pl:'Miesiące 5–6',en:'Months 5–6'}, p3h:{pl:'Rzeźba',en:'Definition'}, p3p:{pl:'Więcej powtórzeń, cardio po sesjach, wyraźna sylwetka.',en:'Higher reps, cardio after sessions, a defined physique.'},
+  galH:{pl:'Zajrzyj do środka',en:'Take a look inside'},
+  galP:{pl:'Prawdziwe ekrany aplikacji (przykładowe dane, 11. tydzień planu).',en:'Real app screens (sample data, week 11 of the plan).'},
+  g1:{pl:'Dieta|Jadłospis na dziś, makro i „Dzień diety” — co jeszcze dojeść, żeby dzień się liczył.',en:'Nutrition|Today’s meals, macros and the diet-day check — what’s left to make the day count.'},
+  g2:{pl:'Rozmowa z Trenerem|Pytasz własnymi słowami — Trener odpowiada na podstawie Twoich treningów i wagi.',en:'Chat with the Coach|Ask in your own words — the Coach answers from your workouts and weight.'},
+  g9:{pl:'Propozycja zmian|Nowe ciężary i lżejsza kolacja — zatwierdzasz jednym stuknięciem.',en:'Suggested changes|New weights and a lighter dinner — approve with one tap.'},
+  g3:{pl:'Trening dnia|Plan na dziś z podpowiedzią ciężaru na podstawie ostatniego razu.',en:'Today’s workout|The plan for today with a weight suggestion based on last time.'},
+  g4:{pl:'Tryb treningu|Duże liczby, przerwa z zegarem, rekord i ostatni wynik pod ręką.',en:'Workout mode|Big numbers, rest timer, your record and last result at hand.'},
+  g5:{pl:'Waga i trend|Trend zamiast dziennych skoków; kalorie liczone z Twoich danych.',en:'Weight trend|The trend, not daily noise; calories calculated from your data.'},
+  g6:{pl:'Rekordy|Nowe rekordy w tygodniu — ciężar, szacowany 1RM, objętość.',en:'Records|This week’s PRs — weight, estimated 1RM, volume.'},
+  g7:{pl:'Historia ćwiczenia|Każdy trening na wykresie, od pierwszego tygodnia.',en:'Exercise history|Every session on a chart, from week one.'},
+  g8:{pl:'Sylwetka 3D|Model z Twoich obwodów: teraz w porównaniu ze startem.',en:'3D body model|A model from your measurements: now versus day one.'},
+  g10:{pl:'Lista zakupów|Z jadłospisu na cały tydzień, pogrupowana według działów.',en:'Shopping list|From your meal plan for the whole week, grouped by aisle.'},
   featH:{pl:'Wszystko w jednym miejscu',en:'Everything in one place'},
   featP:{pl:'Bez pięciu aplikacji i arkusza kalkulacyjnego.',en:'No more five apps and a spreadsheet.'},
   f1h:{pl:'Jadłospis z zamiennikami',en:'Meal plan with swaps'}, f1p:{pl:'Warianty posiłków, „Zamień”, makro liczone same. Dzień diety zaliczony przy 85–110% kalorii i 80% białka.',en:'Meal variants, one-tap swaps, macros calculated for you. A diet day counts at 85–110% of calories and 80% of protein.'},
@@ -272,11 +295,20 @@ const T = {
   finalP:{pl:'Za pół roku będziesz w innym miejscu. Pierwszy krok zajmie 2 minuty.',en:'Six months from now you’ll be somewhere else. The first step takes 2 minutes.'},
   privacy:{pl:'Polityka prywatności',en:'Privacy Policy'}, terms:{pl:'Regulamin',en:'Terms'}, contact:{pl:'Kontakt',en:'Contact'},
 };
+const SHOTS=[['01-dieta','g1'],['02-trener-rozmowa','g2'],['09-trener-propozycja','g9'],['03-trening','g3'],['04-trening-aktywny','g4'],['05-postep','g5'],['06-rekordy','g6'],['07-historia-cwiczenia','g7'],['08-sylwetka-3d','g8'],['10-zakupy','g10']];
+// zrzuty w języku strony; angielskich jeszcze nie ma — wtedy polskie
+const shotSrc=n=>`shots/${L}/${n}.png`;
+function renderShots(){
+  document.getElementById('gal').innerHTML=SHOTS.map(([n,k])=>{ const [h,d]=(T[k][L]||'').split('|'); return `<figure><div class="fr"><img loading="lazy" src="${shotSrc(n)}" alt="${h}" onerror="this.onerror=null;this.src='shots/pl/${n}.png'"></div><figcaption><b>${h}</b>${d}</figcaption></figure>`; }).join('');
+  document.querySelectorAll('img[data-shot]').forEach(img=>{ img.onerror=()=>{ img.onerror=null; img.src='shots/pl/'+img.dataset.shot+'.png'; }; img.src=shotSrc(img.dataset.shot); img.alt=(T[img.dataset.alt][L]||'').split('|')[0]; });
+}
+document.addEventListener('click',e=>{ const g=e.target.closest('[data-gal]'); if(g){ const el=document.getElementById('gal'); el.scrollBy({left:+g.dataset.gal*250,behavior:'smooth'}); } });
 let L = (navigator.language||'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
 function render(){
   document.documentElement.lang=L;
   document.querySelectorAll('[data-t]').forEach(el=>{ const v=(T[el.dataset.t]||{})[L]; if(v!=null) el[el.hasAttribute('data-html')?'innerHTML':'textContent']=v; });
   document.querySelectorAll('[data-l]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.l===L));
+  renderShots();
 }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-l]'); if(b){ L=b.dataset.l; render(); } });
 render();
