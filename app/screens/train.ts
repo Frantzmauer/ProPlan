@@ -18,6 +18,7 @@ import { showView } from './more';
 import { renderHabits, renderWater } from './steps';
 import { updateStreak } from './streak';
 import { WO, fmtDur, hasSession, startToday, woCanReset, woRebuildSession, woResetAsk, woStart, woStartLabel } from './workout';
+import { dayNames, dayShort, dec, monthShort, plural, t } from '../lib/i18n';
 
 export let DOW_PL, MON_PL, DOW_SHORT, dmy, dowOf, wIcon, mvUndoState, mvToastTimer, PLAN_REF_KG, isLowerEx, TMR, tmrTick, tmrAudio, tmrWake, TMR_PLAY, TMR_PAUSE, TMR_RESET;
 export function __set_tmrAudio(v){ tmrAudio=v; return v; }
@@ -33,9 +34,9 @@ export function daySummary(iso){
   let w = (di>=1&&di<=168) ? workoutOn(iso) : REST;
   if(di===0) w=COOK; else if(di===-1) w=SHOP_DAY;
   if(w.type==='cardio'){ const d=!!(L.ex&&L.ex[iso+'_cardio']); return {train:'cardio '+(d?'✓':'<b>0/1</b>'), trainDone:d?1:0, trainAll:1, meals}; }
-  if(w.type!=='lift') return {train:di<1?'przed startem':'odpoczynek', trainDone:0, trainAll:0, meals};
+  if(w.type!=='lift') return {train:di<1?t('przed startem'):t('odpoczynek'), trainDone:0, trainAll:0, meals};
   const done=w.ex.filter((e0,i)=>okCount(L.ex&&L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s).length;
-  return {train:'trening <b>'+done+'/'+w.ex.length+'</b>', trainDone:done, trainAll:w.ex.length, meals};
+  return {train:t('trening')+' <b>'+done+'/'+w.ex.length+'</b>', trainDone:done, trainAll:w.ex.length, meals};
 }
 
 // karta „Gdzie jesteś w planie” w Postępie — zawsze dla dzisiejszego dnia
@@ -47,18 +48,18 @@ export function renderPhaseCard(){
   if(dayIdx<1){
     const stD=parseISO(S.startDate);
     document.getElementById('dayNum').textContent = dayIdx===0?'🍳':(dayIdx===-1?'🛒':'—');
-    document.getElementById('phaseWeek').textContent = dayIdx===0?'jutro start':(dayIdx===-1?'pojutrze start':'przed startem');
-    document.getElementById('phaseName').textContent = dayIdx===0?'Dziś gotujesz — przygotowanie':(dayIdx===-1?'Dziś zakupy — przygotowanie':('Plan startuje '+stD.getDate()+' '+MON_PL[stD.getMonth()]));
+    document.getElementById('phaseWeek').textContent = t(dayIdx===0?'jutro start':(dayIdx===-1?'pojutrze start':'przed startem'));
+    document.getElementById('phaseName').textContent = dayIdx===0?t('Dziś gotujesz — przygotowanie'):(dayIdx===-1?t('Dziś zakupy — przygotowanie'):t('Plan startuje {d}', {d:stD.getDate()+' '+MON_PL[stD.getMonth()]}));
     document.getElementById('phaseBar').style.width='0%';
   } else if(dayIdx>168){
     document.getElementById('dayNum').textContent='✓';
-    document.getElementById('phaseWeek').textContent='ukończono';
-    document.getElementById('phaseName').textContent='6 miesięcy za Tobą — brawo!';
+    document.getElementById('phaseWeek').textContent=t('ukończono');
+    document.getElementById('phaseName').textContent=t('6 miesięcy za Tobą — brawo!');
     document.getElementById('phaseBar').style.width='100%';
   } else {
     document.getElementById('dayNum').textContent=String(dayIdx);
-    document.getElementById('phaseWeek').textContent='tydzień '+wk+'/24';
-    document.getElementById('phaseName').textContent=phaseInfo(wk).name;
+    document.getElementById('phaseWeek').textContent=t('tydzień {n}/24', {n:wk});
+    document.getElementById('phaseName').textContent=t(phaseInfo(wk).name);
     document.getElementById('phaseBar').style.width=(dayIdx/168*100)+'%';
   }
 }
@@ -73,7 +74,7 @@ export function canMove(iso, w, L){
 
 export function movedBar(iso){
   const from=planSrc(iso); if(from===iso) return '';
-  return `<div class="moved-bar"><span>↪ Z planu na ${dowOf(from)} ${dmy(from)}</span><button data-restore="${iso}">Przywróć</button></div>`;
+  return `<div class="moved-bar"><span>${t('↪ Z planu na {d}', {d:dowOf(from)+' '+dmy(from)})}</span><button data-restore="${iso}">${t('Przywróć')}</button></div>`;
 }
 
 // nowe przypisania: map[dzień] = dzień, którego OBECNY trening ma się tu odbyć
@@ -96,29 +97,29 @@ export function setMoves(next, msg){
 export function restoreGroup(iso){
   const next=Object.assign({}, (S.adj&&S.adj.moves)||{}); let k=iso, n=0;
   while(next[k] && n++<14){ const f=next[k]; delete next[k]; k=f; }
-  setMoves(next, 'Przywrócono plan z kalendarza');
+  setMoves(next, t('Przywrócono plan z kalendarza'));
 }
 
 export function openMove(src){
   const w=workoutOn(src), today=todayISO();
-  document.getElementById('mvSub').innerHTML=`<b>${esc(w.title)}</b> z dnia ${dowOf(src)} ${dmy(src)}. Wybierz dzień:`;
+  document.getElementById('mvSub').innerHTML=t('<b>{w}</b> z dnia {d}. Wybierz dzień:', {w:esc(t(w.title)), d:dowOf(src)+' '+dmy(src)});
   let h='';
   for(let i=0;i<=7;i++){
     const k=addDays(today,i), di=dayIndexFor(k); if(k===src || di<1 || di>168) continue;
     const q=workoutOn(k), swap=q.type!=='rest', started=dayStarted(k);
     // podpowiedź: siłownia dzień obok
     const nb=[addDays(k,-1), addDays(k,1)].filter(x=>x!==src).some(x=>workoutOn(x).type==='lift');
-    const warn= w.type==='lift' && nb ? '<span class="warn">⚠ Siłownia dzień obok — mniej regeneracji</span>' : '';
+    const warn= w.type==='lift' && nb ? '<span class="warn">'+t('⚠ Siłownia dzień obok — mniej regeneracji')+'</span>' : '';
     h+=`<button class="mv-opt" data-to="${k}" ${started?'disabled style="opacity:.45"':''}>
-      <span class="when"><b>${dowOf(k)} ${dmy(k)}</b><small>${i===0?'dziś':i===1?'jutro':'za '+i+' dni'}</small></span>
-      <span class="what">${wIcon(q)} ${esc(q.title)}${swap?`<small>przejdzie na ${dowOf(src)} ${dmy(src)}</small>`:''}${started?'<small>już zacząłeś ten dzień</small>':''}${warn}</span>
-      <span class="act ${swap?'swap':'move'}">${swap?'ZAMIEŃ':'PRZESUŃ'}</span></button>`;
+      <span class="when"><b>${dowOf(k)} ${dmy(k)}</b><small>${i===0?t('dziś'):i===1?t('jutro'):t('za {n} dni', {n:i})}</small></span>
+      <span class="what">${wIcon(q)} ${esc(t(q.title))}${swap?`<small>${t('przejdzie na {d}', {d:dowOf(src)+' '+dmy(src)})}</small>`:''}${started?'<small>'+t('ten dzień jest już zaczęty')+'</small>':''}${warn}</span>
+      <span class="act ${swap?'swap':'move'}">${swap?t('ZAMIEŃ'):t('PRZESUŃ')}</span></button>`;
   }
-  const list=document.getElementById('mvList'); list.innerHTML=h||'<div class="md-hint">Brak dni, na które można przesunąć.</div>';
+  const list=document.getElementById('mvList'); list.innerHTML=h||'<div class="md-hint">'+t('Brak dni, na które można przesunąć.')+'</div>';
   list.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>{
     const to=b.dataset.to, swap=workoutOn(to).type!=='rest';
     document.getElementById('moveDialog').classList.remove('show');
-    setMoves(nextMoves({[to]:src, [src]:to}), (swap?'Zamieniono':'Przesunięto')+`: ${dowOf(src)} ${dmy(src)} → ${dowOf(to)} ${dmy(to)}`);
+    setMoves(nextMoves({[to]:src, [src]:to}), (swap?t('Zamieniono'):t('Przesunięto'))+`: ${dowOf(src)} ${dmy(src)} → ${dowOf(to)} ${dmy(to)}`);
     __set_viewOffset(Math.round((+parseISO(to) - +parseISO(today))/864e5)); renderToday();
   });
   document.getElementById('moveDialog').classList.add('show');
@@ -136,7 +137,7 @@ export function renderWeekStrip(iso){
   for(let i=0;i<7;i++){
     const k=addDays(mon,i), di=dayIndexFor(k), w=(di>=1&&di<=168)?workoutOn(k):null;
     const L=S.log[k], done=!!(L && Object.values(L.ex||{}).some(exAny));
-    h+=`<button class="wd ${k===today?'today':''} ${k===iso?'sel':''} ${k<today?'past':''}" data-wd="${k}" aria-label="${DOW_PL[parseISO(k).getDay()]} ${dmy(k)}${w?': '+w.title:''}">
+    h+=`<button class="wd ${k===today?'today':''} ${k===iso?'sel':''} ${k<today?'past':''}" data-wd="${k}" aria-label="${DOW_PL[parseISO(k).getDay()]} ${dmy(k)}${w?': '+t(w.title):''}">
       ${planSrc(k)!==k?'<span class="mv">↪</span>':''}${done?'<span class="ok">✓</span>':''}
       <span class="n">${dowOf(k)}</span><span class="ic">${w?wIcon(w):'·'}</span><span class="dt">${parseISO(k).getDate()}</span></button>`;
   }
@@ -154,18 +155,18 @@ export function renderToday(){
   const L=log(iso);
 
   // pasek dnia: dzień tygodnia + podsumowanie dnia (trening, posiłki)
-  document.getElementById('dowName').innerHTML = DOW_PL[dow] + (viewOffset===0?' <span class="today-pill">DZIŚ</span>':'');
+  document.getElementById('dowName').innerHTML = DOW_PL[dow] + (viewOffset===0?' <span class="today-pill">'+t('DZIŚ')+'</span>':'');
   const ds=daySummary(iso);
-  document.getElementById('dateLabel').innerHTML = dObj.getDate()+' '+MON_PL[dObj.getMonth()]+' · '+ds.train+' · posiłki <b>'+ds.meals+'/4</b>';
+  document.getElementById('dateLabel').innerHTML = dObj.getDate()+' '+MON_PL[dObj.getMonth()]+' · '+ds.train+' · '+t('posiłki')+' <b>'+ds.meals+'/4</b>';
   const mid=document.getElementById('dayMid');
-  mid.textContent = viewOffset===0 ? 'DZIŚ' : '↩ DZIŚ';
-  mid.setAttribute('aria-label', viewOffset===0 ? 'Dzisiaj' : 'Wróć do dzisiaj');
+  mid.textContent = viewOffset===0 ? t('DZIŚ') : t('↩ DZIŚ');
+  mid.setAttribute('aria-label', viewOffset===0 ? t('Dzisiaj') : t('Wróć do dzisiaj'));
   mid.classList.toggle('away', viewOffset!==0);
   document.getElementById('dotTrain').className='nav-dot'+(ds.trainAll?(ds.trainDone>=ds.trainAll?' ok':' todo'):'');
   document.getElementById('dotDiet').className='nav-dot'+(ds.meals>=4?' ok':' todo');
 
   // faza: krótka linia w Treningu (oglądany dzień), karta w Postępie (dziś)
-  document.getElementById('phaseLine').textContent = dayIdx<1 ? 'Przed startem planu' : dayIdx>168 ? 'Plan ukończony' : phaseInfo(wk).name+' · tydzień '+wk+'/24';
+  document.getElementById('phaseLine').textContent = dayIdx<1 ? t('Przed startem planu') : dayIdx>168 ? t('Plan ukończony') : t(phaseInfo(wk).name)+' · '+t('tydzień {n}/24', {n:wk});
   renderPhaseCard();
   renderWeekStrip(iso);
 
@@ -308,33 +309,33 @@ export function scaledStart(e){
 export function startLabel(e){
   if(!e.start) return '';
   const f=strengthFactor(e);
-  if(f===1 || !(e.w>0)) return e.start;
+  if(f===1 || !(e.w>0)) return t(e.start);
   const kg=scaledStart(e);
   // podmień liczbę planu na dopasowaną, zostaw dopiski typu „/rękę”, „(Hack)”
-  return e.start.replace(/\d+(?:[.,]\d+)?(?=\s*kg)/, String(kg).replace('.',','))+' · dopasowane do Ciebie';
+  return t(e.start).replace(/\d+(?:[.,]\d+)?(?=\s*kg)/, dec(kg))+t(' · dopasowane do Ciebie');
 }
 
 // zwraca {kg: ciężar do wpisania w pola, hint: tekst podpowiedzi}
 export function progressionFor(e, iso, targetR, phase3){
   const prev=prevSession(e.n, iso);
   if(!prev) return null;
-  const fmt=x=>String(Math.round(x*2)/2).replace('.',',');
+  const fmt=x=>dec(Math.round(x*2)/2);
   const lastKg=Math.max(...prev.sets.map(s=>s.kg));
   const when=prev.iso.slice(8,10)+'.'+prev.iso.slice(5,7);
-  const was=prev.sets.map(s=>(s.kg?fmt(s.kg)+'×':'')+s.rp).join(', ')+(prev.sets.length<e.s?` (${prev.sets.length} z ${e.s} serii)`:'');
+  const was=prev.sets.map(s=>(s.kg?fmt(s.kg)+'×':'')+s.rp).join(', ')+(prev.sets.length<e.s?' '+t('({a} z {b} serii)', {a:prev.sets.length, b:e.s}):'');
   const allHit=prev.sets.length>=e.s && prev.sets.every(s=>s.rp>=targetR);
   if(phase3 && !prev.phase3 && lastKg>0){
     const kg=Math.round(lastKg*0.9*2)/2;
-    return {kg, hint:`Ostatnio (${when}): ${was}. Faza 3: start od ${fmt(kg)} kg (−10%), celuj w ${targetR} powt.`};
+    return {kg, hint:t('Ostatnio ({d}): {was}. Faza 3: start od {kg} kg (−10%), celuj w {r} powt.', {d:when, was, kg:fmt(kg), r:targetR})};
   }
   if(!lastKg){
-    return {kg:0, hint:`Ostatnio (${when}): ${was}.`+(allHit?' Pełny zakres — dodaj 1–2 powtórzenia albo obciążenie.':'')};
+    return {kg:0, hint:t('Ostatnio ({d}): {was}.', {d:when, was})+(allHit?t(' Pełny zakres — dodaj 1–2 powtórzenia albo obciążenie.'):'')};
   }
   if(allHit){
     const next=lastKg+progStep(e);
-    return {kg:lastKg, up:true, hint:`Ostatnio (${when}): ${was}. Pełny zakres ✅ — dziś spróbuj ${fmt(next)} kg (wpisz w pola).`};
+    return {kg:lastKg, up:true, hint:t('Ostatnio ({d}): {was}. Pełny zakres ✅ — dziś spróbuj {kg} kg (wpisz w pola).', {d:when, was, kg:fmt(next)})};
   }
-  return {kg:lastKg, hint:`Ostatnio (${when}): ${was}. Zostań przy ${fmt(lastKg)} kg i celuj w ${targetR} powt. w każdej serii.`};
+  return {kg:lastKg, hint:t('Ostatnio ({d}): {was}. Zostań przy {kg} kg i celuj w {r} powt. w każdej serii.', {d:when, was, kg:fmt(lastKg), r:targetR})};
 }
 
 /* ---- serie odhaczane pojedynczo: L.ex[k].ok = {1:true, 3:true}; done = wszystkie serie odhaczone ----
@@ -404,16 +405,16 @@ export function tmrState(key, spec, n, r, iso){
 export function tmrBox(key){ return document.querySelector(`.tmr[data-tmr="${key}"]`); }
 
 export function tmrPaint(key){
-  const t=TMR[key], box=tmrBox(key); if(!t||!box) return;
-  const all=t.set>t.n;
-  let lbl = all ? 'Wszystkie serie zrobione 💪' : `Seria ${t.set} z ${t.n}`;
-  if(!all && t.sides>1) lbl+= t.side===1?' · lewa strona':' · prawa strona';
-  if(!all && t.up) lbl+=' · trzymaj, ile dasz radę';
-  box.querySelector('.time').textContent = t.up ? fmtSec(t.el, true) : fmtSec(t.left);
+  const tm=TMR[key], box=tmrBox(key); if(!tm||!box) return;
+  const all=tm.set>tm.n;
+  let lbl = all ? t('Wszystkie serie zrobione 💪') : t('Seria {a} z {b}', {a:tm.set, b:tm.n});
+  if(!all && tm.sides>1) lbl+= tm.side===1?t(' · lewa strona'):t(' · prawa strona');
+  if(!all && tm.up) lbl+=t(' · trzymaj, ile dasz radę');
+  box.querySelector('.time').textContent = tm.up ? fmtSec(tm.el, true) : fmtSec(tm.left);
   box.querySelector('.lbl').textContent = lbl;
-  box.querySelector('.bar').style.width = (t.up||!t.secs) ? '0' : ((1-t.left/t.secs)*100)+'%';
-  const go=box.querySelector('.go'); go.innerHTML=t.run?TMR_PAUSE:TMR_PLAY; go.setAttribute('aria-label', t.run?'Pauza':'Start');
-  box.classList.toggle('run', t.run);
+  box.querySelector('.bar').style.width = (tm.up||!tm.secs) ? '0' : ((1-tm.left/tm.secs)*100)+'%';
+  const go=box.querySelector('.go'); go.innerHTML=tm.run?TMR_PAUSE:TMR_PLAY; go.setAttribute('aria-label', tm.run?t('Pauza'):t('Start'));
+  box.classList.toggle('run', tm.run);
 }
 
 // koniec odliczania = bieżąca seria odhaczona z tym czasem
@@ -493,13 +494,13 @@ export function renderWorkout(iso, wk, dow, dayIdx, L){
   if(dayIdx===0) w=COOK;        // niedziela przed startem
   else if(dayIdx===-1) w=SHOP_DAY; // sobota przed startem
 
-  const mvBar=movedBar(iso), mvBtn=canMove(iso, w, L) ? `<button class="move-btn" data-move="${iso}" aria-label="Przesuń trening na inny dzień"><svg viewBox="0 0 24 24"><path d="M4 12h14M13 6l6 6-6 6"/></svg>Przesuń</button>` : '';
+  const mvBar=movedBar(iso), mvBtn=canMove(iso, w, L) ? `<button class="move-btn" data-move="${iso}" aria-label="${t('Przesuń trening na inny dzień')}"><svg viewBox="0 0 24 24"><path d="M4 12h14M13 6l6 6-6 6"/></svg>${t('Przesuń')}</button>` : '';
   if(w.type==='rest'){
     card.innerHTML=`<div class="restday">${mvBar}
       <div class="ico">${w.ico||(w.active?'🚶':'😴')}</div>
-      <h3>${w.title}</h3>
-      <p>${w.note||'Dziś regenerujesz się. Mięśnie rosną w odpoczynku — śpij 7–8 h i pij wodę.'}</p>
-      <button class="go-diet" data-go-diet>Zobacz dietę na ten dzień →</button>
+      <h3>${t(w.title)}</h3>
+      <p>${w.note?t(w.note):t('Dziś regenerujesz się. Mięśnie rosną w odpoczynku — śpij 7–8 h i pij wodę.')}</p>
+      <button class="go-diet" data-go-diet>${t('Zobacz dietę na ten dzień →')}</button>
     </div>`;
     card.querySelector('[data-go-diet]').onclick=()=>showView('diet');
     bindMoveUi(card);
@@ -508,12 +509,12 @@ export function renderWorkout(iso, wk, dow, dayIdx, L){
   if(w.type==='cardio'){
     const done=!!L.ex[iso+'_cardio'];
     card.innerHTML=`${mvBar}
-      <div class="wk-head"><span class="badge cardio">CARDIO</span><span class="t">${w.title}</span>${mvBtn}</div>
+      <div class="wk-head"><span class="badge cardio">CARDIO</span><span class="t">${t(w.title)}</span>${mvBtn}</div>
       <div class="ex ${done?'done':''}">
-        <div class="ex-sub" style="margin-left:0;font-size:13px;color:var(--ink-dim)">${w.note}</div>
+        <div class="ex-sub" style="margin-left:0;font-size:13px;color:var(--ink-dim)">${t(w.note)}</div>
         <div class="ex-check" style="margin-left:0" data-cardio="1">
           <span class="mini ${done?'on':''}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
-          <span>${done?'Zrobione — dobra robota':'Odznacz po sesji'}</span>
+          <span>${done?t('Zrobione — dobra robota'):t('Odznacz po sesji')}</span>
         </div>
       </div>`;
     card.querySelector('[data-cardio]').onclick=()=>{L.ex[iso+'_cardio']=!L.ex[iso+'_cardio'];mark(L,'ex:'+iso+'_cardio');touch(L);save();renderToday()};
@@ -523,22 +524,22 @@ export function renderWorkout(iso, wk, dow, dayIdx, L){
 
   // lifting
   let badge = w.title.split(' ')[0]; // FBW / UPPER / LOWER
-  let html=`${mvBar}<div class="wk-head"><span class="badge">${badge}</span><span class="t">${w.title}</span>${mvBtn}</div>`;
+  let html=`${mvBar}<div class="wk-head"><span class="badge">${badge}</span><span class="t">${t(w.title)}</span>${mvBtn}</div>`;
   // tryb treningu: tylko dziś; po zapisanej sesji krótkie podsumowanie
   // stara sesja nadpisana przez „Wznów” (sprzed zapisywania listy serii): odtwórz cały trening z godzin odhaczenia
   if(hasSession(L) && !L.session.log && iso>=addDays(todayISO(),-7)){ const rs=woRebuildSession(iso); if(rs){ L.session=rs; touch(L); save(); } }
   if(L.checkin) html+=ciChip(L, iso);
-  if(hasSession(L)) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · praca ${fmtDur(L.session.work)} · przerwy śr. ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' (plan '+fmtDur(L.session.avgRestPlan)+')':''} · serie ${L.session.done}/${L.session.total}${L.session.paused-(L.session.gap||0)>0?' · pauzy '+fmtDur(L.session.paused-(L.session.gap||0)):''}${L.session.parts>1?' · dokończony po przerwie '+fmtDur(L.session.gap):''}${(L.session.prs||[]).length?' · 🏆 rekordy: '+L.session.prs.length:''}</div>`;
+  if(hasSession(L)) html+=`<div class="wo-saved">⏱ ${fmtDur(L.session.dur)} · ${t('praca')} ${fmtDur(L.session.work)} · ${t('przerwy śr.')} ${fmtDur(L.session.avgRest)}${L.session.avgRestPlan?' ('+t('plan')+' '+fmtDur(L.session.avgRestPlan)+')':''} · ${t('serie')} ${L.session.done}/${L.session.total}${L.session.paused-(L.session.gap||0)>0?' · '+t('pauzy')+' '+fmtDur(L.session.paused-(L.session.gap||0)):''}${L.session.parts>1?' · '+t('dokończony po przerwie')+' '+fmtDur(L.session.gap):''}${(L.session.prs||[]).length?' · 🏆 '+t('rekordy:')+' '+L.session.prs.length:''}</div>`;
   const allDone=w.ex.every((e0,i)=>okCount(L.ex[iso+'_e'+i], effEx(e0,iso).s)===effEx(e0,iso).s);
   // przyszły (do 7 dni) albo pominięty (ostatnie 7 dni, nic nieodhaczone) trening: zamień z dzisiejszym dniem i od razu zacznij
   const tdy=todayISO(), missed=iso<tdy;
   const nearby= missed ? iso>=addDays(tdy,-7) : (iso>tdy && iso<=addDays(tdy,7));
   if(nearby && dayIdx>=1 && !dayStarted(iso) && !dayStarted(tdy) && dayIndexFor(tdy)>=1){
-    if(missed) html+=`<div class="wo-saved">Ten trening nie został zrobiony. Możesz go odrobić dziś zamiast dzisiejszego planu (${esc(workoutOn(tdy).title)}).</div>`;
-    html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>ZACZNIJ DZIŚ</button>`;
+    if(missed) html+=`<div class="wo-saved">${t('Ten trening nie został zrobiony. Możesz go odrobić dziś zamiast dzisiejszego planu ({w}).', {w:esc(t(workoutOn(tdy).title))})}</div>`;
+    html+=`<button class="wo-start" data-wo-today><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${t('ZACZNIJ DZIŚ')}</button>`;
   }
   if(iso===todayISO() && !allDone && L.checkin && L.checkin.plan==='move') html+=cyMoveHtml();
-  else if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${woStartLabel(iso,w,L)}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="Resetuj dzisiejszy trening"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>${hasSession(L)&&!(WO&&WO.iso===iso)?`<div class="wo-cont">Czas liczy się dalej od ${fmtDur(L.session.dur)} — przerwa do teraz się nie wlicza.</div>`:''}`;
+  else if(iso===todayISO() && !allDone) html+=`<div class="wo-row"><button class="wo-start" data-wo-start><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>${woStartLabel(iso,w,L)}</button>${woCanReset(iso,w,L)?`<button class="wo-reset" data-wo-reset aria-label="${t('Resetuj dzisiejszy trening')}"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/></svg></button>`:''}</div>${hasSession(L)&&!(WO&&WO.iso===iso)?`<div class="wo-cont">${t('Czas liczy się dalej od {d} — przerwa do teraz się nie wlicza.', {d:fmtDur(L.session.dur)})}</div>`:''}`;
   w.ex.forEach((e0,i)=>{
     const e=effEx(e0, iso);   // zmiany od Trenera (zaakceptowane) obowiązują od swojej daty
     const key=iso+'_e'+i;
@@ -559,9 +560,9 @@ export function renderWorkout(iso, wk, dow, dayIdx, L){
       // dopóki nie ma sesji od dnia zmiany, obowiązuje to, co zaakceptowałeś od Trenera
       const prev=prevSession(e.n, iso);
       if(!prev || prev.iso < e._adj.from){
-        const fmt=x=>String(x).replace('.',',');
-        const who=e._adj.user?(e._adj.to?'Zamiana na dziś':`Twoja zamiana (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)})`):`Trener (od ${e._adj.from.slice(8,10)}.${e._adj.from.slice(5,7)})`, was=e._adj.was||e._from;
-        prog={kg:e._adj.w, up:true, hint:`${who}${was?' zamiast „'+was+'”':''}: ${e._adj.w>0?fmt(e._adj.w)+' kg'+(e._adj.ph?'/rękę':'')+' · ':''}${e.s}×${e.r==='max'?'max':e.rp}`};
+        const fmt=x=>dec(x), fd=e._adj.from.slice(8,10)+'.'+e._adj.from.slice(5,7);
+        const who=e._adj.user?(e._adj.to?t('Zamiana na dziś'):t('Twoja zamiana (od {d})', {d:fd})):t('Trener (od {d})', {d:fd}), was=e._adj.was||e._from;
+        prog={kg:e._adj.w, up:true, hint:`${who}${was?t(' zamiast „{x}”', {x:t(was)}):''}: ${e._adj.w>0?fmt(e._adj.w)+' kg'+(e._adj.ph?t('/rękę'):'')+' · ':''}${e.s}×${e.r==='max'?'max':e.rp}`};
       }
     }
     if(prog && prog.kg>0) recW=prog.kg;
@@ -575,48 +576,48 @@ export function renderWorkout(iso, wk, dow, dayIdx, L){
       const rv = (savedR!==undefined && savedR!=='') ? savedR : (recR||'');
       const ok=setOk(rec,s), isCur=!exDone && s===first, st=ts?5:1;
       setsHtml+=`<div class="set-row ${ok?'ok':''} ${isCur?'cur':''}">
-        <button class="set-chk" data-tick="${s}" aria-pressed="${ok}" aria-label="Seria ${s} ${ok?'zrobiona — cofnij':'zrobiona'}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></button>
+        <button class="set-chk" data-tick="${s}" aria-pressed="${ok}" aria-label="${ok?t('Seria {n} zrobiona — cofnij', {n:s}):t('Seria {n} zrobiona', {n:s})}"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></button>
         <div class="set">
           <span class="si">${s}</span>
-          ${bw?'':`<input type="number" inputmode="decimal" placeholder="kg" value="${wv}" data-k="${key}" data-s="w${s}" aria-label="Ciężar serii ${s}"><span class="u">kg</span>
+          ${bw?'':`<input type="number" inputmode="decimal" placeholder="kg" value="${wv}" data-k="${key}" data-s="w${s}" aria-label="${t('Ciężar serii {n}', {n:s})}"><span class="u">kg</span>
           <span class="x">×</span>`}
-          <input type="number" inputmode="numeric" placeholder="${ts?'s':'powt'}" value="${rv}" data-k="${key}" data-s="r${s}" aria-label="${ts?'Sekundy':'Powtórzenia'} serii ${s}"><span class="u">${ts?'s':'p'}</span>
+          <input type="number" inputmode="numeric" placeholder="${ts?'s':t('powt')}" value="${rv}" data-k="${key}" data-s="r${s}" aria-label="${ts?t('Sekundy serii {n}', {n:s}):t('Powtórzenia serii {n}', {n:s})}"><span class="u">${ts?'s':t('p')}</span>
         </div>
-        ${isCur?`<div class="set-step"><button data-step="${-st}" data-s="${s}" aria-label="Mniej">−</button><button data-step="${st}" data-s="${s}" aria-label="Więcej">+</button></div>`:''}
+        ${isCur?`<div class="set-step"><button data-step="${-st}" data-s="${s}" aria-label="${t('Mniej')}">−</button><button data-step="${st}" data-s="${s}" aria-label="${t('Więcej')}">+</button></div>`:''}
       </div>`;
     }
     if(ts && !exSkip) tmrState(key, ts, e.s, rec, iso);
     html+=`<div class="ex ${exDone?'done':''} ${exSkip?'skipped':''}" data-k="${key}" data-n="${e.s}">
       <div class="ex-top">
         <span class="num">${i+1}</span>
-        <span class="nm">${e.n}</span>
-        ${!exDone && !exSkip && iso>=todayISO() && swapAlts(e.n).length?`<button class="show-btn sw-btn" data-swap="${i}" aria-label="Zamień ćwiczenie">⇄</button>`:''}
-        <button class="show-btn" data-guide="${encodeURIComponent(e.n)}">Pokaż</button>
+        <span class="nm">${t(e.n)}</span>
+        ${!exDone && !exSkip && iso>=todayISO() && swapAlts(e.n).length?`<button class="show-btn sw-btn" data-swap="${i}" aria-label="${t('Zamień ćwiczenie')}">⇄</button>`:''}
+        <button class="show-btn" data-guide="${encodeURIComponent(e.n)}">${t('Pokaż')}</button>
         <span class="scheme">${e.s}×${e.r}</span>
       </div>
       ${exSkip?'':`${prog?`<div class="ex-sub" style="color:${prog.up?'var(--amber)':'var(--ink-dim)'}">${prog.up?'⬆ ':''}${prog.hint}</div>`
-            :(e.start?`<div class="ex-sub">Start: ${startLabel(e)}</div>`:'')}
+            :(e.start?`<div class="ex-sub">${t('Start:')} ${startLabel(e)}</div>`:'')}
       ${swapNote(e, iso, rec)}
       ${exHistBtn(e.n, iso)}
       ${ts && !exDone?timerHtml(key):''}
       <div class="sets per-set">${setsHtml}</div>`}
       <div class="ex-acts">
-        ${exSkip?`<span class="ex-check">Pominięte dziś</span>
-        <button class="skip-btn" data-skip="${key}">Cofnij</button>`
-        :exDone?`<span class="ex-status">✓ Ćwiczenie zaliczone</span>
-        <button class="link-btn" data-untick="${key}">Cofnij serie</button>`
-        :`${nOk?`<span class="ex-count">${nOk} z ${e.s} serii</span>`:''}
-        <button class="all-btn" data-all="${key}">✓ ${nOk?`Pozostałe ${e.s-nOk} wg planu`:'Wszystkie serie wg planu'}</button>
-        ${nOk?'':`<button class="skip-btn" data-skip="${key}">Pomiń</button>`}`}
+        ${exSkip?`<span class="ex-check">${t('Pominięte dziś')}</span>
+        <button class="skip-btn" data-skip="${key}">${t('Cofnij')}</button>`
+        :exDone?`<span class="ex-status">${t('✓ Ćwiczenie zaliczone')}</span>
+        <button class="link-btn" data-untick="${key}">${t('Cofnij serie')}</button>`
+        :`${nOk?`<span class="ex-count">${t('{a} z {b} serii', {a:nOk, b:e.s})}</span>`:''}
+        <button class="all-btn" data-all="${key}">✓ ${nOk?t('Pozostałe {n} wg planu', {n:e.s-nOk}):t('Wszystkie serie wg planu')}</button>
+        ${nOk?'':`<button class="skip-btn" data-skip="${key}">${t('Pomiń')}</button>`}`}
       </div>
     </div>`;
   });
-  html+=`<button class="link-btn rest-link" data-rest-list>⏱ Przerwy między seriami — Twoje ustawienia</button>`;
+  html+=`<button class="link-btn rest-link" data-rest-list>${t('⏱ Przerwy między seriami — Twoje ustawienia')}</button>`;
   // tip per phase
   if(w.phase3){
-    html+=`<div class="tip"><span>⚡</span><div><b>Faza 3.</b> Zmniejsz ciężar o 10%, dodaj 2–4 powtórzenia. Po sztandze 20 min rowerka/orbitreka.</div></div>`;
+    html+=`<div class="tip"><span>⚡</span><div>${t('<b>Faza 3.</b> Zmniejsz ciężar o 10%, dodaj 2–4 powtórzenia. Po sztandze 20 min rowerka/orbitreka.')}</div></div>`;
   } else {
-    html+=`<div class="tip"><span>⚡</span><div><b>RIR 2.</b> Dobierz ciężar tak, by zostały Ci ~2 powtórzenia w zapasie. Pobiłeś górny zakres? Następnym razem +1–2.5 kg.</div></div>`;
+    html+=`<div class="tip"><span>⚡</span><div>${t('<b>RIR 2.</b> Dobierz ciężar tak, by zostały Ci ~2 powtórzenia w zapasie. Górny zakres pobity? Następnym razem +1–2.5 kg.')}</div></div>`;
   }
   card.innerHTML=html;
   bindMoveUi(card);
@@ -708,10 +709,10 @@ export function __init_4(){
 /* ============================================================
    RENDER — DZIŚ
    ============================================================ */
-DOW_PL = ["Niedziela","Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota"];
-MON_PL = ["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
+DOW_PL = dayNames();   // nazwy w języku aplikacji (zmienne mają historyczne nazwy)
+MON_PL = monthShort();
 /* ---- przesuwanie treningów ---- */
-DOW_SHORT = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+DOW_SHORT = dayShort();
 dmy = iso=>iso.slice(8,10)+'.'+iso.slice(5,7);
 dowOf = iso=>DOW_SHORT[parseISO(iso).getDay()];
 wIcon = w=>w.type==='lift'?'🏋️':w.type==='cardio'?'🏃':(w.ico||(w.active?'🚶':'😴'));

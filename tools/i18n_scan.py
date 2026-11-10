@@ -33,7 +33,9 @@ def scan(path):
     res = []
     for m in LIT.finditer(s):
         txt = next(g for g in m.groups() if g is not None) if any(g is not None for g in m.groups()) else ''
-        if len(txt) < 2 or not PL.search(txt): continue
+        # tekst wewnątrz t('…')/plural(…) w szablonie jest już tłumaczony
+        bare = re.sub(r"\b(t|tr|plural)\(\s*('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")(\s*,\s*('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"))*", '', txt)
+        if len(txt) < 2 or not PL.search(bare): continue
         before = s[max(0, m.start() - 12):m.start()]
         if WRAP.search(before): continue
         line = s.count('\n', 0, m.start()) + 1
