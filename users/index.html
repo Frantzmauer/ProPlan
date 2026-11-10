@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="SixMo U">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-C1v-oGB-.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CBm--Eqr.css">
+  <script type="module" crossorigin src="./assets/index-BvMeNTFG.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BsdSu1Qm.css">
 </head>
 <body>
 
@@ -230,8 +230,8 @@
     <button data-more="adm" id="mmAdmBtn" style="display:none"><span class="ic">🛡️</span><span class="tx"><b>Konta i plany</b><small id="mmAdm">Administrator · plany, limity, funkcje</small></span><span class="go">›</span></button>
     <button data-more="sync"><span class="ic">☁️</span><span class="tx"><b>Synchronizacja i konta</b><small id="mmSync"></small></span><span class="go">›</span></button>
     <button data-more="rem"><span class="ic">🔔</span><span class="tx"><b>Przypomnienia</b><small id="mmRem"></small></span><span class="go">›</span></button>
-    <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Eksport, import, plik, czyszczenie</small></span><span class="go">›</span></button>
-    <button data-more="ver"><span class="ic">🧪</span><span class="tx"><b>Wersja aplikacji</b><small id="mmVer"></small></span><span class="go">›</span></button>
+    <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Pobierz dane · usuń dane z urządzenia</small></span><span class="go">›</span></button>
+    <button data-more="ver" data-tech><span class="ic">🧪</span><span class="tx"><b>Wersja aplikacji</b><small id="mmVer"></small></span><span class="go">›</span></button>
   </nav>
 
   <div class="section" style="margin-top:14px" data-grp="cw">
@@ -298,24 +298,24 @@
     <div class="panel">
       <div class="settings-row">
         <div class="l"><div class="t">Automatyczna synchronizacja</div><div class="s" id="cloudState">Wyłączona</div></div>
-        <div class="tgl" id="cloudToggle"></div>
+        <div class="tgl" id="cloudToggle" data-tech></div>
       </div>
       <div style="padding:4px 16px 8px">
-        <label class="md-lab">URL skryptu (Web App)</label>
-        <input type="text" class="md-in" id="cloudUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
-        <label class="md-lab">Token dostępu</label>
-        <input type="text" class="md-in" id="cloudToken" placeholder="wspólne hasło do skryptu" autocomplete="off" spellcheck="false">
-        <label class="md-lab">Nazwa konta (Twoja, np. „marek")</label>
-        <input type="text" class="md-in" id="cloudAccount" placeholder="np. marek" autocomplete="off" spellcheck="false">
+        <label class="md-lab" data-tech>URL skryptu (Web App)</label>
+        <input type="text" class="md-in" data-tech id="cloudUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+        <label class="md-lab" data-tech>Token dostępu</label>
+        <input type="text" class="md-in" data-tech id="cloudToken" placeholder="wspólne hasło do skryptu" autocomplete="off" spellcheck="false">
+        <label class="md-lab" data-tech>Nazwa konta (Twoja, np. „marek")</label>
+        <input type="text" class="md-in" data-tech id="cloudAccount" placeholder="np. marek" autocomplete="off" spellcheck="false">
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-          <button class="btn ghost" id="cloudTestBtn" style="flex:1;font-size:13px;padding:10px;min-width:90px">Test połączenia</button>
+          <button class="btn ghost" data-tech id="cloudTestBtn" style="flex:1;font-size:13px;padding:10px;min-width:90px">Test połączenia</button>
           <button class="btn" id="cloudSyncBtn" style="flex:1;font-size:13px;padding:10px;min-width:90px">Synchronizuj teraz</button>
         </div>
       </div>
     </div>
-    <div class="note" id="cloudInfo">Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Na drugim urządzeniu wpisz <b>to samo konto i ten sam token</b>. Nowe osoby dołączają przez <b>link zaproszenia</b> — każda ma własny token i widzi tylko swoje dane.</div>
+    <div class="note" id="cloudInfo" data-tech>Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Na drugim urządzeniu wpisz <b>to samo konto i ten sam token</b>. Nowe osoby dołączają przez <b>link zaproszenia</b> — każda ma własny token i widzi tylko swoje dane.</div>
 
-    <div id="usageSection" style="display:none;margin-top:16px">
+    <div id="usageSection" data-tech style="display:none;margin-top:16px">
       <div class="eyebrow">Zużycie AI · Twoje konto</div>
       <div class="panel panel-pad" id="usageBox"></div>
     </div>
@@ -343,7 +343,7 @@
         <div id="admRotateOut" style="display:none;margin-top:10px"></div>
       </div>
     </div>
-    <details class="panel" style="margin-top:10px">
+    <details class="panel" data-tech style="margin-top:10px">
       <summary style="padding:14px 16px;cursor:pointer;font-family:var(--font-disp);font-size:16px;color:var(--amber);letter-spacing:.04em">JAK TO USTAWIĆ — INSTRUKCJA KROK PO KROKU</summary>
       <div style="padding:0 16px 16px;font-size:13px;color:var(--ink-dim);line-height:1.7">
         <b style="color:var(--ink)">Robisz to raz, na swoim koncie Google:</b><br>
@@ -360,20 +360,20 @@
   </div>
 
   <div class="section" data-grp="data">
-    <div class="eyebrow">Kopia i eksport (zapasowo)</div>
+    <div class="eyebrow">Twoje dane</div>
     <div class="panel">
       <div class="settings-row">
-        <div class="l"><div class="t">Zapisz kopię (JSON)</div><div class="s" id="lastExport">Ostatni eksport: —</div></div>
-        <button class="btn" id="btnExport" style="font-size:14px;padding:9px 14px">Eksport</button>
+        <div class="l"><div class="t">Pobierz moje dane</div><div class="s" id="lastExport">Ostatni eksport: —</div></div>
+        <button class="btn" id="btnExport" style="font-size:14px;padding:9px 14px">Pobierz</button>
       </div>
-      <div class="settings-row">
+      <div class="settings-row" data-tech>
         <div class="l"><div class="t">Wczytaj i scal</div><div class="s" id="lastImport">Ostatni import: —</div></div>
         <button class="btn ghost" id="btnImport" style="font-size:14px;padding:9px 14px">Import</button>
       </div>
     </div>
 
     <!-- File System Access: auto-zapis do pliku (desktop) -->
-    <div class="panel" id="fsBox" style="margin-top:10px;display:none">
+    <div class="panel" id="fsBox" data-tech style="margin-top:10px;display:none">
       <div id="fsUnlinked">
         <div class="settings-row">
           <div class="l"><div class="t">Auto-zapis do pliku na Dysku</div><div class="s">Podłącz plik JSON w folderze Google Drive — zmiany zapisują się same</div></div>
@@ -390,9 +390,9 @@
         </div>
       </div>
     </div>
-    <div class="note" id="fsUnsup" style="display:none">Auto-zapis do pliku działa w Chrome/Edge na komputerze. Na telefonie użyj Eksportu/Importu.</div>
+    <div class="note" id="fsUnsup" data-tech style="display:none">Auto-zapis do pliku działa w Chrome/Edge na komputerze. Na telefonie użyj Eksportu/Importu.</div>
 
-    <div class="panel" style="margin-top:10px">
+    <div class="panel" data-tech style="margin-top:10px">
       <div style="padding:14px 16px">
         <div style="font-family:var(--font-disp);font-size:16px;color:var(--amber);letter-spacing:.04em;margin-bottom:8px">JAK SYNCHRONIZOWAĆ PRZEZ GOOGLE DRIVE</div>
         <div style="font-size:13px;color:var(--ink-dim);line-height:1.65">
@@ -403,14 +403,14 @@
         </div>
       </div>
     </div>
-    <div class="note">Chcesz w pełni automatyczną synchronizację też na telefonie (bez eksportu)? To wymaga postawienia aplikacji pod adresem https i logowania Google — mogę przygotować taką wersję osobno.</div>
+    <div class="note" data-tech>Chcesz w pełni automatyczną synchronizację też na telefonie (bez eksportu)? To wymaga postawienia aplikacji pod adresem https i logowania Google — mogę przygotować taką wersję osobno.</div>
   </div>
 
   <div class="section" data-grp="prof">
     <div class="eyebrow">Profil</div>
     <div class="panel">
       <div class="settings-row">
-        <div class="l"><div class="t">Imię</div><div class="s">Czyja to wersja</div></div>
+        <div class="l"><div class="t">Imię</div></div>
         <input type="text" class="time-in" id="pfName" placeholder="np. Marek" style="width:130px">
       </div>
       <div class="settings-row">
@@ -489,11 +489,11 @@
     <div class="eyebrow">Dane</div>
     <div class="panel">
       <div class="settings-row">
-        <div class="l"><div class="t">Wyczyść wszystko</div><div class="s">Usuwa cały postęp z tego urządzenia</div></div>
-        <button class="btn ghost" id="wipe" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Reset</button>
+        <div class="l"><div class="t">Usuń dane z tego urządzenia</div><div class="s">Czyści postęp zapisany na tym telefonie</div></div>
+        <button class="btn ghost" id="wipe" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Usuń</button>
       </div>
     </div>
-    <div class="note">Twoje dane są zapisywane lokalnie w tej przeglądarce. Nic nie jest wysyłane na serwer — kopie i synchronizacja idą wyłącznie przez plik, który sam kontrolujesz.</div>
+    <div class="note">Dane są zapisywane na tym telefonie, a przy włączonej synchronizacji także na serwerze aplikacji — dzięki temu działają na innych urządzeniach. Do Trenera AI (Claude, Anthropic) trafiają tylko razem z Twoim pytaniem, zdjęciem albo nagraniem.</div>
   </div>
 </div>
 

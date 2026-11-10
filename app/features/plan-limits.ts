@@ -13,6 +13,16 @@ import { monthNames, t } from '../lib/i18n';
 
 export let EA_SHORT, EA_LOCAL, PLAN, QUOTA, vqOk;
 
+/* ---- ustawienia techniczne (adres skryptu, token, zużycie AI w $, pliki na Dysku, import, wybór wersji) ----
+   widzą je tylko administrator i plan Tester — oraz urządzenie bez skonfigurowanej synchronizacji (żeby dało się ją ustawić).
+   Elementy oznaczone w index.html atrybutem data-tech; administrator zapamiętany z ostatniej odpowiedzi serwera. */
+export function techUi(admin?){
+  if(admin!==undefined){ try{ localStorage.setItem('zelazo_admin', admin?'1':'0'); }catch(e){} }
+  let adm=false; try{ adm=localStorage.getItem('zelazo_admin')==='1'; }catch(e){}
+  const on = adm || (!!PLAN && PLAN.plan==='tester') || !(CLOUD.url && CLOUD.token && CLOUD.account);
+  document.body.classList.toggle('tech', on);
+}
+
 export function planEnforced(){ return planEnforcedFor(PLAN, appChannel()); }
 
 export function featOn(k){ return featureOn(PLAN, k); }
@@ -21,7 +31,7 @@ export function planSet(j){
   const p=planFromServer(j); if(!p) return;   // stary serwer bez planów
   PLAN=p; writeJSON(KEYS.plan(appChannel()), PLAN);
   if(j.quota) quotaSet(j.quota); else quotaUi();
-  applyFeatures();
+  applyFeatures(); techUi();
 }
 
 // pokaż albo ukryj elementy według planu i wyłącznika awaryjnego
@@ -131,6 +141,7 @@ export function __init_18(){
 EA_SHORT = /^\s*(dzięki|dziękuję|dziekuje|dzieki|thx|thanks|thank you|ty|ok|okej|okay|super|spoko|jasne|git|cool|great|👍|💪|🙏)[\s!.]*$/i;
 EA_LOCAL = COACH_UI.pl.local;   // odpowiedź w języku konta wybiera Trener (coach.ts)
 PLAN = readJSON(KEYS.plan(appChannel()), null);
+techUi();
 QUOTA = readJSON(KEYS.QUOTA, null);
 document.getElementById('coachQuota').onclick=()=>{
   document.getElementById('coachClose').click();

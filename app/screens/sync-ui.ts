@@ -4,6 +4,7 @@ import { FS_SUPPORTED, exportJSON, fileHandle, importJSONFile, linkExistingFile,
 import { CLOUD, S, cloudPull, cloudPush, cloudTest, saveCloud } from '../core/state';
 import { checkAdmin } from './admin';
 import { locale, t as tt } from '../lib/i18n';
+import { techUi } from '../features/plan-limits';
 
 export let cloudUrl, cloudToken, cloudAccount;
 
@@ -13,7 +14,7 @@ export function readCloudInputs(){ CLOUD.url=cloudUrl.value.trim(); CLOUD.token=
 export function updateSyncWarn(){ const b=document.getElementById('syncWarn'); if(b) b.style.display=(CLOUD.on && CLOUD.lastError)?'inline-flex':'none'; }
 
 export function refreshCloudUI(statusOverride?){
-  updateSyncWarn();
+  updateSyncWarn(); techUi();
   const tgl=document.getElementById('cloudToggle');
   tgl.classList.toggle('on',!!CLOUD.on);
   const el=document.getElementById('cloudState');

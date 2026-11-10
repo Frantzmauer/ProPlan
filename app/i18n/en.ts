@@ -1480,4 +1480,12 @@ export const EN: Dict = {
   "Ostatnio ({d}):": "Last time ({d}):",
   "Rekord:": "Record:",
   "To będzie rekord:": "This will be a record:",
+  // ---- Więcej: dane i prywatność ----
+  "Twoje dane": "Your data",
+  "Pobierz moje dane": "Download my data",
+  "Pobierz": "Download",
+  "Usuń dane z tego urządzenia": "Delete data from this device",
+  "Czyści postęp zapisany na tym telefonie": "Clears the progress saved on this phone",
+  "Dane są zapisywane na tym telefonie, a przy włączonej synchronizacji także na serwerze aplikacji — dzięki temu działają na innych urządzeniach. Do Trenera AI (Claude, Anthropic) trafiają tylko razem z Twoim pytaniem, zdjęciem albo nagraniem.": "Your data is saved on this phone and, with sync on, also on the app's server — so it works on your other devices. It goes to the AI Coach (Claude, Anthropic) only together with your question, photo or video.",
+  "Pobierz dane · usuń dane z urządzenia": "Download data · delete data from device",
 };

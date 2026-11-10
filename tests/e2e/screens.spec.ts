@@ -370,3 +370,29 @@ test('limit Trenera wykorzystany: bez wysyłania do AI, oferta Premium i pakietu
   expect(asked).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test('Więcej: ustawienia techniczne tylko dla administratora', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true });
+  await page.goto('/users/');
+  await page.locator('.nav button[data-v="set"]').click();
+  await expect(page.locator('[data-more="ver"]')).toBeHidden();
+  await page.locator('[data-more="sync"]').click();
+  await expect(page.locator('#cloudSyncBtn')).toBeVisible();
+  for (const id of ['#cloudUrl', '#cloudToken', '#cloudAccount', '#cloudTestBtn', '#cloudToggle']) await expect(page.locator(id)).toBeHidden();
+  await page.locator('#moreBack').click(); await page.locator('[data-more="data"]').click();
+  await expect(page.locator('#btnExport')).toBeVisible();
+  await expect(page.locator('#btnImport')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('Więcej: administrator widzi ustawienia techniczne', async ({ page }) => {
+  const errors = watch(page);
+  await seed(page, { cloud: true, admin: true });
+  await page.goto('/users/');
+  await page.locator('.nav button[data-v="set"]').click();
+  await expect(page.locator('[data-more="ver"]')).toBeVisible();
+  await page.locator('[data-more="sync"]').click();
+  await expect(page.locator('#cloudUrl')).toBeVisible();
+  expect(errors).toEqual([]);
+});

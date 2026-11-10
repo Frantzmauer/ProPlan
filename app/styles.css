@@ -1056,3 +1056,6 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 .b3-ghost svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
 .b3-ghost[aria-pressed="true"]{background:rgba(95,168,211,.25);border-color:var(--steel)}
 .b3-ghost[aria-pressed="true"] svg{fill:rgba(95,168,211,.45)}
+
+/* ustawienia techniczne tylko dla administratora i testerów (features/plan-limits.ts → techUi) */
+body:not(.tech) [data-tech]{display:none!important}
