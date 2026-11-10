@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SixMo</string>
+    <string name="title_activity_main">SixMo</string>
+    <string name="package_name">app.sixmo</string>
+    <string name="custom_url_scheme">app.sixmo</string>
+</resources>

@@ -1,6 +1,6 @@
 {
-  "appId": "pl.zelazo.app",
-  "appName": "ŻELAZO",
+  "appId": "app.sixmo",
+  "appName": "SixMo",
   "webDir": "native/www",
   "android": {
     "backgroundColor": "#0e1114"

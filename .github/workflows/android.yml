@@ -1,0 +1,47 @@
+# ŻELAZO — aplikacja Android (Capacitor) budowana na serwerach GitHuba: testy, paczka webowa, debug APK.
+# Nie zależy od komputera właściciela (laptop z macOS 12 może przestać być wspierany przez Android Studio).
+# APK do pobrania: zakładka Actions → ostatnie uruchomienie → Artifacts → zelazo-debug-apk.
+# Wersja do Google Play (podpisana) — osobny krok, gdy będzie klucz podpisu (sekrety repozytorium, nigdy w repo).
+name: Android (debug APK)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'android/**'
+      - 'models/**'
+      - 'icons/**'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tools/build.py'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run check
+      - run: python3 tools/build.py native
+      - run: npx cap sync android
+      - name: Gradle — debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zelazo-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
