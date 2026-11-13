@@ -88,6 +88,12 @@ Dlatego stary adres nie może po prostu przekierować — musi **przekazać** te
 - `inviteLink` (`app/screens/accounts.ts`) usuwa z adresu tylko `beta/`/`zeta/` — zaproszenie wysłane z USERS albo Early Access
   prowadzi do tej wersji zamiast do stabilnej. Poprawić na wszystkie wersje.
 - Manifesty: `id` aplikacji na nowej domenie (instalacja z nowego adresu = nowa aplikacja na telefonie — to oczekiwane).
+- **Supabase i Google OAuth** (konfiguracja z 13 listopada 2026 wskazuje jeszcze na `github.io`):
+  - Supabase → Authentication → URL Configuration: Site URL na `https://app.sixmo.app` (Redirect URLs dla `sixmo.app` już są).
+  - Google Auth Platform → Branding: strona główna `https://sixmo.app/`, polityka `https://sixmo.app/legal/polityka-prywatnosci.html`,
+    regulamin `https://sixmo.app/legal/regulamin.html`; własność `sixmo.app` potwierdzona w Google Search Console (rekord TXT w DNS).
+  - Clients → Authorized JavaScript origins: `https://app.sixmo.app`. Potem Audience: Testing → **Publish**.
+  Ustawienia w panelach zmienia właściciel; Claude podaje dokładne wartości.
 
 ### B7. Sprawdzenie i raport
 - Nowy adres: wszystkie wersje się ładują (375 px), logowanie z linku zaproszenia, synchronizacja z serwerem, Trener, skaner.

@@ -29,3 +29,6 @@ native/
 *.keystore
 keystore.properties
 android/key.properties
+
+# adres i klucz publiczny Supabase przekazane przez właściciela (trafią do kodu w etapie 2)
+supabase.public.txt
