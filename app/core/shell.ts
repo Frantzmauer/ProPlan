@@ -9,7 +9,7 @@ import { refreshSyncUI } from '../screens/sync-ui';
 import { renderToday } from '../screens/train';
 import { WO } from '../screens/workout';
 import { __set_fileHandle, __set_viewOffset, delHandle, fileHandle, viewOffset } from './backup';
-import { CLOUD, LS, S, __set_S, appChannel, cloudCall, cloudPush, load } from './state';
+import { CLOUD, hasCred, LS, S, __set_S, appChannel, cloudCall, cloudPush, load, wipeKeys } from './state';
 import { KEYS } from '../lib/storage';
 import { t } from '../lib/i18n';
 
@@ -94,13 +94,13 @@ document.getElementById('wipe').onclick=()=>{
 // usunięcie konta: dwa stuknięcia, serwer usuwa konto i dane, potem czyścimy wszystko na tym urządzeniu
 { const btn=document.getElementById('delAcc'), row=document.getElementById('delAccRow'), txt=document.getElementById('delAccTxt');
   let armed=0;
-  row.style.display=(CLOUD.url && CLOUD.token && CLOUD.account) ? '' : 'none';
+  row.style.display=(CLOUD.url && hasCred() && CLOUD.account) ? '' : 'none';
   btn.onclick=async()=>{
     if(Date.now()-armed>5000){ armed=Date.now(); btn.textContent=t('Na pewno? Stuknij jeszcze raz'); setTimeout(()=>{ if(Date.now()-armed>=5000) btn.textContent=t('Usuń konto'); }, 5100); return; }
     btn.disabled=true; btn.textContent=t('Usuwam…');
     try{
       await cloudCall('deleteAccount', {});
-      [LS, KEYS.CLOUD, KEYS.CYCLE, KEYS.QUOTA, KEYS.plan(appChannel()), 'zelazo_admin'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+      wipeKeys();
       alert(t('Konto i dane zostały usunięte. Dziękujemy za wspólny czas.'));
       location.reload();
     }catch(e){

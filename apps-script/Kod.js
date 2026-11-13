@@ -134,7 +134,7 @@ function offError(k, label, req) {
 
 // same NAZWY właściwości (bez wartości, bez danych kont i zaproszeń) — do diagnozy literówek
 function propNames() {
-  var n = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use)_/.test(k) && k !== 'DATA_FOLDER_ID'; });
+  var n = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use|sbu)_/.test(k) && k !== 'DATA_FOLDER_ID'; });
   return 'Skrypt widzi właściwości: ' + (n.length ? n.join(', ') : '(żadnych)') + '.';
 }
 function sha(s) {
@@ -158,6 +158,7 @@ function cleanAccount(s) { return (s || '').toString().trim().toLowerCase(); }
 function accountTaken(acc) { return !!(getJSON('user_' + acc) || dataFile(acc, false)); }
 
 function auth(req) {
+  if (req.sb) return sbAuth(req.sb);
   var account = cleanAccount(req.account), token = (req.token || '').toString();
   if (!token) return null;
   if (sameStr(token, prop('SECRET'))) return { admin: true, account: account };
@@ -166,6 +167,99 @@ function auth(req) {
   if (!u || u.disabled || !u.h || !sameStr(sha(token), u.h)) return null;
   return { admin: false, account: account, user: u };
 }
+// ============================================================
+// LOGOWANIE SUPABASE (Google / kod z e-maila)
+//   Aplikacja wysyła token dostępu Supabase (req.sb); sprawdza go serwer Supabase (/auth/v1/user),
+//   wynik trzymamy w pamięci podręcznej do 5 min (nie dłużej niż ważność tokenu).
+//   sbu_<id użytkownika Supabase> = {account, admin?, at} — połączenie logowania z kontem SixMo;
+//   user_<konto>.sb / .email — to samo od strony konta. Adres i klucz publiczny są jawne z założenia.
+//   SB_SECRET (opcjonalnie, tylko we Właściwościach skryptu) — usuwanie użytkownika Supabase razem z kontem.
+// ============================================================
+var SB_URL = 'https://jrospbidwuxqaaknepfh.supabase.co';
+var SB_KEY = 'sb_publishable_y7gt9FZSaSP8PKLitLFOdw_-c8ZIz9B';
+function jwtExp(tok) {
+  try {
+    var p = tok.split('.')[1]; p += '===='.slice(p.length % 4 || 4);
+    return +JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(p)).getDataAsString()).exp || 0;
+  } catch (e) { return 0; }
+}
+function sbUser(tok) {
+  tok = String(tok || '');
+  if (tok.length > 4096 || !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(tok)) return null;
+  var ttl = Math.min(300, jwtExp(tok) - Math.floor(Date.now() / 1000));
+  if (ttl <= 0) return null;
+  var c = CacheService.getScriptCache(), k = 'sbt_' + sha(tok), hit = c.get(k);
+  if (hit) return hit === '-' ? null : JSON.parse(hit);
+  var r = UrlFetchApp.fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }, muteHttpExceptions: true });
+  var code = r.getResponseCode();
+  if (code === 401 || code === 403) { c.put(k, '-', ttl); return null; }
+  if (code !== 200) throw new Error('Serwer logowania nie odpowiada (' + code + ')');
+  var j = JSON.parse(r.getContentText());
+  if (!j || !j.id) return null;
+  var u = { id: String(j.id), email: String(j.email || '').toLowerCase() };
+  c.put(k, JSON.stringify(u), ttl);
+  return u;
+}
+function sbAuth(tok) {
+  var su = sbUser(tok);
+  if (!su) return null;
+  var link = getJSON('sbu_' + su.id);
+  if (!link) return { admin: false, account: '', sb: su, unlinked: true };
+  if (link.admin) return { admin: true, account: link.account, sb: su };
+  var u = getJSON('user_' + link.account);
+  if (!u || u.disabled) return null;
+  return { admin: false, account: link.account, user: u, sb: su };
+}
+// zalogowany starym tokenem łączy konto z logowaniem Supabase (dane zostają na tym samym koncie)
+function sbLink(req) {
+  var su = sbUser(req.sb);
+  if (!su) return { ok: false, error: 'Sesja logowania wygasła — zaloguj się ponownie' };
+  var old = auth({ token: req.token, account: req.account });
+  if (!old || !old.account) return { ok: false, error: 'Zły token' };
+  return withLock(function () {
+    var link = getJSON('sbu_' + su.id);
+    if (link && link.account !== old.account) return { ok: false, taken: link.account, error: 'To logowanie jest już połączone z innym kontem SixMo.' };
+    var u = old.user ? getJSON('user_' + old.account) : null;
+    if (u && u.sb && u.sb !== su.id) return { ok: false, error: 'To konto jest już połączone z innym logowaniem.' };
+    setJSON('sbu_' + su.id, old.admin ? { account: old.account, admin: true, at: Date.now() } : { account: old.account, at: Date.now() });
+    if (u) { u.sb = su.id; u.email = su.email; setJSON('user_' + old.account, u); }
+    return { ok: true, account: old.account, admin: !!old.admin };
+  });
+}
+// zalogowany przez Supabase otwiera link zaproszenia → nowe konto (albo odzyskane przy resecie) połączone z logowaniem
+function sbJoin(req, me) {
+  var code = (req.code || '').toString().trim();
+  if (!/^[a-zA-Z0-9]{16,64}$/.test(code)) return { ok: false, error: 'Nieprawidłowy link zaproszenia' };
+  return withLock(function () {
+    if (getJSON('sbu_' + me.sb.id)) return { ok: false, error: 'To logowanie ma już konto SixMo.' };
+    var inv = getJSON('inv_' + code);
+    if (!inv) return { ok: false, error: 'Zaproszenie nie istnieje albo zostało już użyte' };
+    if (Date.now() > inv.expires) { PROPS.deleteProperty('inv_' + code); return { ok: false, error: 'Zaproszenie wygasło — poproś o nowe' }; }
+    var acc = cleanAccount(inv.account || req.name);
+    if (!ACCOUNT_RE.test(acc)) return { ok: false, error: ACCOUNT_RULE };
+    var u = getJSON('user_' + acc);
+    if (inv.reset) { if (!u && !dataFile(acc, false)) return { ok: false, error: 'To konto już nie istnieje' }; }
+    else if (accountTaken(acc)) return { ok: false, error: 'Ta nazwa konta jest zajęta — wybierz inną' };
+    if (u && u.sb && getJSON('sbu_' + u.sb)) PROPS.deleteProperty('sbu_' + u.sb);   // reset: poprzednie logowanie odłączone
+    u = u || { created: Date.now() };
+    u.sb = me.sb.id; u.email = me.sb.email; u.disabled = false; u.lastSeen = Date.now();
+    setJSON('user_' + acc, u);
+    setJSON('sbu_' + me.sb.id, { account: acc, at: Date.now() });
+    PROPS.deleteProperty('inv_' + code);
+    return { ok: true, account: acc };
+  });
+}
+// usunięcie konta: połączenie z logowaniem, a z SB_SECRET także sam użytkownik Supabase (adres e-mail)
+function sbUnlink(acc, u, sbId) {
+  var ids = [sbId, u && u.sb].filter(function (x, i, a) { return x && a.indexOf(x) === i; });
+  ids.forEach(function (id) {
+    var l = getJSON('sbu_' + id);
+    if (l && l.account === acc) PROPS.deleteProperty('sbu_' + id);
+    var k = prop('SB_SECRET');
+    if (k) UrlFetchApp.fetch(SB_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'delete', headers: { apikey: k }, muteHttpExceptions: true });
+  });
+}
+
 function touchUser(acc, u) {
   if (Date.now() - (u.lastSeen || 0) > 10 * 60 * 1000) { u.lastSeen = Date.now(); setJSON('user_' + acc, u); }
 }
@@ -223,7 +317,7 @@ function adminAction(req) {
     Object.keys(all).forEach(function (k) {
       if (k.indexOf('user_') === 0) {
         var u = JSON.parse(all[k]);
-        users.push(Object.assign({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h, plan: u.plan || '' }, langView(u)));
+        users.push(Object.assign({ account: k.slice(5), created: u.created, lastSeen: u.lastSeen || 0, disabled: !!u.disabled, pending: !u.h && !u.sb, email: u.email || '', plan: u.plan || '' }, langView(u)));
       } else if (k.indexOf('inv_') === 0) {
         var i = JSON.parse(all[k]);
         if (now > i.expires) { PROPS.deleteProperty(k); return; }
@@ -300,6 +394,7 @@ function adminAction(req) {
     return { ok: true, code: rc, account: target, expires: rexp };
   }
   if (a === 'adminDelete') {
+    sbUnlink(target, u, '');
     PROPS.deleteProperty('user_' + target);
     PROPS.deleteProperty('use_' + target);
     var f = dataFile(target, false);
@@ -343,17 +438,24 @@ function doPost(e) {
     OUT_LANG = req.lang === 'en' ? 'en' : 'pl';
     if (!prop('SECRET')) {
       // same nazwy (bez wartości, bez danych kont) — żeby było widać, co skrypt faktycznie ma
-      var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use)_/.test(k); });
+      var names = PROPS.getKeys().filter(function (k) { return !/^(acct|user|inv|use|sbu)_/.test(k); });
       return out({ ok: false, error: 'Brak SECRET we Właściwościach skryptu. Widzę: ' +
         (names.length ? names.join(', ') : '(brak właściwości — sprawdź, czy to ten sam projekt)') });
     }
     if (req.action === 'redeem') return out(redeem(req));
+    if (req.action === 'sbLink') return out(sbLink(req));
 
     var me = auth(req);
-    if (!me) return out({ ok: false, error: 'Zły token' });
+    if (!me) return out({ ok: false, error: req.sb ? 'Sesja logowania wygasła — zaloguj się ponownie' : 'Zły token', auth: true });
+    // zalogowany przez Supabase, ale bez konta SixMo: tylko dołączenie z zaproszenia
+    if (me.unlinked) {
+      if (req.action === 'sbJoin') return out(sbJoin(req, me));
+      return out({ ok: false, unlinked: true, error: 'Ten adres e-mail nie ma jeszcze konta SixMo. Rejestracja ruszy wkrótce — do tego czasu konto zakłada się z linku zaproszenia.' });
+    }
+    if (req.action === 'sbJoin') return out({ ok: false, error: 'To logowanie ma już konto SixMo.' });
     if (me.user) accountLang(me, req);
     // ping: język od administratora (nowszy niż na urządzeniu) — aplikacja go przejmie
-    if (req.action === 'ping') return out(Object.assign({ ok: true, pong: true, admin: me.admin },
+    if (req.action === 'ping') return out(Object.assign({ ok: true, pong: true, admin: me.admin, account: me.account },
       me.user && me.user.lang && (me.user.langAt || 0) > (+req.langAt || 0) ? { lang: me.user.lang, langAt: me.user.langAt } : {}, planView(me, req)));
     if (String(req.action).indexOf('admin') === 0) {
       if (!me.admin) return out({ ok: false, error: 'Brak uprawnień' });
@@ -364,6 +466,7 @@ function doPost(e) {
     if (req.action === 'deleteAccount') {
       if (me.admin) return out({ ok: false, error: 'Konta administratora nie usuwa się z aplikacji.' });
       return out(withLock(function () {
+        sbUnlink(me.account, getJSON('user_' + me.account), me.sb && me.sb.id);
         PROPS.deleteProperty('user_' + me.account);
         PROPS.deleteProperty('use_' + me.account);
         var f = dataFile(me.account, false);
@@ -441,6 +544,11 @@ function doGet() {
 // komunikaty dla użytkownika po angielsku, gdy konto ma język angielski (techniczne i administracyjne zostają po polsku)
 var OUT_LANG = 'pl';
 var ERR_EN = {
+  'Sesja logowania wygasła — zaloguj się ponownie': 'Your sign-in session has expired — please sign in again',
+  'To logowanie jest już połączone z innym kontem SixMo.': 'This sign-in is already linked to another SixMo account.',
+  'To konto jest już połączone z innym logowaniem.': 'This account is already linked to a different sign-in.',
+  'To logowanie ma już konto SixMo.': 'This sign-in already has a SixMo account.',
+  'Ten adres e-mail nie ma jeszcze konta SixMo. Rejestracja ruszy wkrótce — do tego czasu konto zakłada się z linku zaproszenia.': "This email doesn't have a SixMo account yet. Sign-up opens soon — until then, accounts are created from an invite link.",
   'Nieprawidłowy link zaproszenia': 'Invalid invite link',
   'Zaproszenie nie istnieje albo zostało już użyte': "This invite doesn't exist or has already been used",
   'Zaproszenie wygasło — poproś o nowe': 'The invite has expired — ask for a new one',

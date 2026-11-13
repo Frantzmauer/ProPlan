@@ -1,7 +1,7 @@
 // ŻELAZO — Ocena techniki z nagrania, biblioteka ćwiczeń, wzorce ruchu.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { restoreHandle } from '../core/backup';
-import { CLOUD, S, cloudCall, vendorUrl } from '../core/state';
+import { CLOUD, hasCred, S, cloudCall, vendorUrl } from '../core/state';
 import { todayISO } from '../lib/dates';
 import { workoutFor } from '../plan/data';
 import { esc } from '../screens/accounts';
@@ -37,7 +37,7 @@ export function openFormCheck(name, setInfo, opts?){
   const head=lib ? `${cue?`<div class="fc-cue">${esc(t(cue))}</div>`:''}<a class="fc-yt" href="${yt}" target="_blank" rel="noopener">${t('▶ Filmy z techniką (YouTube)')}</a>` : '';
   const hist=formHistory(name);
   const histHtml= lib && hist.length ? `<div class="fc-sec"><h4>${t('Twoje oceny ({n})', {n:hist.length})}</h4><div class="fc-hist">`+hist.slice(0,8).map(m=>`<button data-fh="${esc(m.id)}"><span>${new Date(m.t).toLocaleDateString(locale(),{day:'2-digit',month:'2-digit'})}</span><b class="g${FC_GRADE[m.grade]??3}">${esc(t(m.grade||''))}</b><span class="fx">${esc((m.fix||'').slice(0,60))}</span><span class="go">›</span></button>`).join('')+`</div></div>` : '';
-  if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
+  if(!(CLOUD.on && CLOUD.url && hasCred())){
     fcShow(`${lib?`<p class="fc-sub"><b>${esc(t(name))}</b></p>`+head:''}<p class="fc-sub">${t('Ocena techniki z nagrania korzysta z Trenera, więc potrzebuje włączonej synchronizacji (Więcej → Synchronizacja).')}</p><div class="fc-btns"><button class="fc-btn ghost" data-fc-close>${t('Zamknij')}</button></div>`);
     document.querySelector('[data-fc-close]').onclick=fcClose; return;
   }

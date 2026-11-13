@@ -19,6 +19,8 @@ import { renderToday } from './train';
 import { bodyRefresh } from '../features/body3d';
 import { dec, isEn, plural, t } from '../lib/i18n';
 import { legalUrl, renderConsentStatus } from '../features/consent';
+import { accountStatus, renderAccount } from './account';
+import { sbSession } from '../core/sb';
 
 export let MORE_TITLES, sd, kcalSlider, pf;
 
@@ -32,6 +34,7 @@ export function moreOpen(sec, fromHistory?){
   if(sec==='plan'){ renderPlanQuota(); quotaLoad(); }
   if(sec==='adm') apLoad();
   if(sec==='legal') renderConsentStatus();
+  if(sec==='acc') renderAccount();
   if(!sec) moreStatus();
   // jeden wpis w historii na podsekcję: „wstecz” zawsze wraca do menu
   try{ if(sec && !fromHistory){ if(history.state&&history.state.more) history.replaceState({more:sec},''); else history.pushState({more:sec},''); }
@@ -43,6 +46,7 @@ export function moreStatus(){
   const set=(id,t,warn?)=>{ const e=document.getElementById(id); if(e){ e.textContent=t; e.classList.toggle('warn',!!warn); } };
   const p=S.profile||{}, st=parseISO(S.startDate);
   set('mmProf', `${p.name||t('bez imienia')} · ${S.kcalGoal||DEFAULT_KCAL} kcal · ${t('start')} ${st.getDate()}.${String(st.getMonth()+1).padStart(2,'0')}`);
+  set('mmAcc', accountStatus(), !!(CLOUD.sb && !sbSession()));
   set('mmSync', !CLOUD.on ? t('Wyłączona') : CLOUD.lastError ? t('⚠ Ostatnia synchronizacja nieudana') : t('Włączona · konto {a}', {a:CLOUD.account||'—'}), CLOUD.on&&CLOUD.lastError);
   set('mmRem', S.reminders&&S.reminders.on ? t('Włączone · trening {h}', {h:S.reminders.workout}) : t('Wyłączone'));
   set('mmVer', ({stable:t('Stabilna · v1.6'), early:'Early Access', users:'USERS'})[APP_VER] || 'Beta');
@@ -135,7 +139,7 @@ export function __init_13(){
    ============================================================ */
 // Trening i Dieta pokazują ten sam dzień; pasek dnia i przełącznik tylko w nich
 /* ---- menu Więcej: podsekcja zamiast długiego przewijania; „wstecz” w telefonie wraca do menu ---- */
-MORE_TITLES = {cw:[t('Ćwiczenia'),t('Nauka techniki')],prof:[t('Profil i plan'),t('Profil · kalorie · start')],sync:[t('Synchronizacja'),t('Chmura · zużycie AI · konta')],
+MORE_TITLES = {acc:[t('Konto'),t('Logowanie · urządzenia')],cw:[t('Ćwiczenia'),t('Nauka techniki')],prof:[t('Profil i plan'),t('Profil · kalorie · start')],sync:[t('Synchronizacja'),t('Chmura · zużycie AI · konta')],
   rem:[t('Przypomnienia'),t('Powiadomienia')],data:[t('Kopia i dane'),t('Eksport · import · plik')],ver:[t('Wersja aplikacji'),t('Stabilna, beta albo poprzednia')],
   plan:[t('Pakiet i limity'),t('Twój plan · Trener AI')], adm:[t('Konta i plany'),t('Administrator · USERS')],
   legal:[t('Regulamin i prywatność'),t('Dokumenty')]};

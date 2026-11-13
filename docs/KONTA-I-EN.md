@@ -31,6 +31,24 @@ Prototypy: `docs/prototypes/sixmo-konta.html` (logowanie, język i zgody, konto 
    przed otwarciem rejestracji dla wszystkich), strona usuwania konta.
 4. **Otwarcie rejestracji** — dopiero po etapach 1–3 i przeglądzie dokumentów; linki z zaproszeniami wyłączone.
 
+## Stan etapu 2 (13 listopada 2026)
+Zrobione — **Więcej → Konto** we wszystkich wersjach:
+- Logowanie „Kontynuuj z Google” (przekierowanie z PKCE) i kodem z e-maila — `app/lib/sbauth.ts` (bez supabase-js, z testami),
+  sesja w `localStorage` (`sixmo_sb`), odświeżana przed wygaśnięciem (`app/core/sb.ts`), ekran `app/screens/account.ts`.
+- **Konto z zaproszenia → logowanie:** zalogowanie na urządzeniu ze starym kontem łączy je z adresem e-mail (`sbLink`);
+  dane zostają na tym samym koncie, token z urządzenia znika. Stary token działa dalej na innych urządzeniach, dopóki
+  się na nich nie zalogujesz.
+- Serwer (`Kod.js`): token Supabase sprawdzany przez `/auth/v1/user` (pamięć podręczna ≤ 5 min), połączenie
+  `sbu_<id>` ↔ `user_<konto>.sb`; konto administratora łączy się tak samo (zalogowane starym tokenem SECRET).
+- Logowanie bez konta SixMo → komunikat „rejestracja ruszy wkrótce” (otwarcie rejestracji to etap 4).
+  `sbJoin` (zaproszenie dla zalogowanego) jest na serwerze, w aplikacji jeszcze nieużywany.
+- Wyloguj (dane zapisane na koncie, potem usunięte z urządzenia) i „Wyloguj ze wszystkich innych urządzeń” (`scope=others`).
+- Usunięcie konta usuwa też połączenie; z `SB_SECRET` we Właściwościach skryptu także użytkownika w Supabase (nieprzetestowane).
+
+Do zrobienia: lista urządzeń (Supabase nie udostępnia jej bez klucza administratora — przez serwer z `SB_SECRET`),
+dołączanie z zaproszenia przez logowanie, własne e-maile (Resend + domena), język e-maili, logowanie w aplikacji Android
+(Capacitor: przekierowanie do aplikacji zamiast strony).
+
 ## Co robi właściciel (Claude nie zakłada kont i nie wpisuje haseł ani kluczy)
 - Konto **Supabase** (https://supabase.com), projekt w regionie **Frankfurt (eu-central-1)**, logowanie dwuskładnikowe.
   Do aplikacji trafiają tylko **adres projektu i klucz publiczny (anon/publishable)** — są jawne z założenia.

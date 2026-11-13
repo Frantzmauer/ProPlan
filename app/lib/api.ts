@@ -10,7 +10,10 @@ export function channelFromPath(pathname: string): Channel {
   return (m ? m[1] : 'stable') as Channel;
 }
 
-export interface CloudConfig { url: string; token: string; account: string; on: boolean; lastSync: number; lastError: string; pending?: boolean }
+// sb: konto połączone z logowaniem Supabase — serwer rozpoznaje je po tokenie Supabase, a nie po token/account
+export interface CloudConfig { url: string; token: string; account: string; on: boolean; lastSync: number; lastError: string; pending?: boolean; sb?: boolean }
+/** Serwer SixMo (wdrożenie „FitApp” w Apps Script) — dla kont zakładanych przez logowanie, bez linku z adresem serwera. */
+export const DEFAULT_SERVER = 'https://script.google.com/macros/s/AKfycbwsxpGIEAqfHREYVGNESHZkM-Xu96n3XQm14KG13NDO4LQJl9NK7s6e80N6XkpHOVw/exec';
 export const EMPTY_CLOUD: CloudConfig = { url: '', token: '', account: '', on: false, lastSync: 0, lastError: '' };
 
 /** Błąd z serwera; data = cała odpowiedź (np. limit planu i stan licznika). */

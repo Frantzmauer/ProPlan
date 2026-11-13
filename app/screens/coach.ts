@@ -2,7 +2,7 @@
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { dayIndexFor, weekOf } from '../core/backup';
 import { netDown } from '../core/shell';
-import { CLOUD, S, cloudCall, save } from '../core/state';
+import { CLOUD, hasCred, S, cloudCall, save } from '../core/state';
 import { cyCoachContext } from '../features/cycle';
 import { fcGet, fcIssues, fcRenderFrame } from '../features/formcheck';
 import { EA_SHORT, featOn, planEnforced, quotaLeft, quotaLoad, quotaSet, quotaUi } from '../features/plan-limits';
@@ -234,7 +234,7 @@ export function coachMd(t){
 
 export function renderCoach(){
   const box=document.getElementById('coachMsgs'), h=loadCoach();
-  const ready=CLOUD.on&&CLOUD.url&&CLOUD.token;
+  const ready=CLOUD.on&&CLOUD.url&&hasCred();
   document.getElementById('coachSetup').style.display=ready?'none':'block';
   const ui=COACH_UI[langOf(S.profile)], chips=document.getElementById('coachChips');
   chips.style.display=(ready&&!h.length)?'flex':'none';

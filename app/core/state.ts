@@ -18,6 +18,8 @@ import { refreshCloudUI } from '../screens/sync-ui';
 import { renderToday } from '../screens/train';
 import { fileHandle, scheduleFileWrite, upcomingMondayISO } from './backup';
 import { netDown, updateNetPill } from './shell';
+import { sbAccess } from './sb';
+import { SESSION_KEY } from '../lib/sbauth';
 
 export let LS, S, CLOUD_LS, CLOUD, SYNC, pendingRefresh;
 export function __set_S(v){ S=v; return v; }
@@ -48,9 +50,19 @@ export function vendorUrl(p){ return new URL((appChannel()==='stable'?'':'../')+
 
 // lang: język konta — Trener, ocena techniki i szacowanie AI odpowiadają w nim (serwer: langOf / accountLang w Kod.js)
 // langAt: kiedy ustawiony; język od administratora wygrywa tylko, gdy jest nowszy (wybór sprzed tej zmiany = 1)
-export function cloudCall(action, payload){
+// konto z logowaniem Supabase: każde wywołanie niesie świeży token dostępu (odświeżany przed wygaśnięciem)
+export async function cloudCall(action, payload){
   const p=S.profile||{};
-  return apiCall(CLOUD, appChannel(), action, Object.assign({lang:langOf(p), langAt:p.langAt||(p.lang?1:0)}, payload||{}));
+  const sb=CLOUD.sb ? {sb:await sbAccess()} : {};
+  return apiCall(CLOUD, appChannel(), action, Object.assign({lang:langOf(p), langAt:p.langAt||(p.lang?1:0)}, sb, payload||{}));
+}
+
+// czy to urządzenie ma czym się przedstawić serwerowi: token z zaproszenia albo logowanie Supabase
+export function hasCred(){ return !!(CLOUD.token || CLOUD.sb); }
+
+// wszystko, co aplikacja trzyma o osobie na tym urządzeniu (usunięcie konta, wylogowanie)
+export function wipeKeys(){
+  [LS, KEYS.CLOUD, KEYS.CYCLE, KEYS.QUOTA, KEYS.plan(appChannel()), 'zelazo_admin', SESSION_KEY].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
 }
 
 // ping: administrator zmienił język tego konta — przejmij go (zapisze się w profilu i zsynchronizuje)

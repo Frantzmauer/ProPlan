@@ -220,6 +220,7 @@
 
   <!-- menu Więcej: każda pozycja otwiera tylko swoją część ustawień -->
   <nav class="more-menu" id="moreMenu" aria-label="Ustawienia">
+    <button data-more="acc"><span class="ic">🔐</span><span class="tx"><b>Konto</b><small id="mmAcc"></small></span><span class="go">›</span></button>
     <button data-more="cw"><span class="ic">🎥</span><span class="tx"><b>Ćwiczenia · nauka techniki</b><small id="mmCw"></small></span><span class="go">›</span></button>
     <button data-cycle id="mmCycleBtn"><span class="ic">🌙</span><span class="tx"><b>Cykl i samopoczucie</b><small id="mmCycle"></small></span><span class="go">›</span></button>
     <button data-rest-list><span class="ic">⏱</span><span class="tx"><b>Przerwy między seriami</b><small id="mmRest"></small></span><span class="go">›</span></button>
@@ -238,6 +239,35 @@
     <p class="lib-hint">Wszystkie ćwiczenia z planu. Wejdź w ćwiczenie, nagraj serię (np. z lekkim ciężarem) i dostań ocenę Trenera — niezależnie od treningu.</p>
     <input type="search" class="md-in lib-search" id="libSearch" placeholder="Szukaj ćwiczenia…" autocomplete="off">
     <div id="exLib" class="lib"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px" data-grp="acc">
+    <div id="accOut" class="panel panel-pad">
+      <div class="acc-h" id="accOutH">Zaloguj się</div>
+      <div class="acc-p" id="accOutTxt"></div>
+      <button class="btn acc-google" id="accGoogle" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Kontynuuj z Google</button>
+      <button class="btn ghost acc-mail" id="accEmailBtn" type="button">Kontynuuj z e-mailem</button>
+      <div class="acc-fine">Logując się, akceptujesz <a href="../legal/regulamin.html" target="_blank" rel="noopener" data-legal="terms">Regulamin</a> i <a href="../legal/polityka-prywatnosci.html" target="_blank" rel="noopener" data-legal="privacy">Politykę prywatności</a>.</div>
+    </div>
+    <div id="accIn" style="display:none">
+      <div class="panel">
+        <div class="settings-row"><div class="l"><div class="t">E-mail</div><div class="s" id="accEmail">—</div></div></div>
+        <div class="settings-row"><div class="l"><div class="t">Logowanie</div><div class="s" id="accMethod">—</div></div></div>
+        <div class="settings-row"><div class="l"><div class="t">Konto SixMo</div><div class="s" id="accName">—</div></div></div>
+      </div>
+      <div class="panel" style="margin-top:10px">
+        <div class="settings-row">
+          <div class="l"><div class="t">Wyloguj ze wszystkich innych urządzeń</div><div class="s">Np. po zgubieniu telefonu. To urządzenie zostaje zalogowane.</div></div>
+          <button class="btn ghost" id="accLogoutAll" type="button" style="font-size:13px;padding:8px 12px">Wyloguj</button>
+        </div>
+        <div class="settings-row">
+          <div class="l"><div class="t">Wyloguj</div><div class="s">Dane zapiszą się na koncie i znikną z tego urządzenia</div></div>
+          <button class="btn ghost" id="accLogout" type="button" style="font-size:13px;padding:8px 12px">Wyloguj</button>
+        </div>
+      </div>
+      <div class="note">Pobranie danych i usunięcie konta: Więcej → Kopia i dane.</div>
+    </div>
+    <div class="md-hint" id="accMsg" style="display:none"></div>
   </div>
 
   <div class="section" style="margin-top:14px" data-grp="adm">
@@ -522,6 +552,27 @@
     <div id="gdCue" style="font-size:14.5px;line-height:1.6;color:var(--ink)"></div>
     <a id="gdVideo" href="#" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px;padding:13px">▶ Zobacz wideo (YouTube)</a>
     <button class="btn ghost" id="gdClose" style="width:100%;margin-top:10px;padding:12px">Zamknij</button>
+  </div>
+</div>
+
+<!-- logowanie kodem z e-maila: adres → 6-cyfrowy kod -->
+<div id="sbDialog" role="dialog" aria-modal="true" aria-labelledby="sbTitle">
+  <div class="md-card">
+    <div data-sbv="email">
+      <div class="md-title" id="sbTitle">Twój e-mail</div>
+      <div class="acc-p">Wyślemy jednorazowy kod. Bez hasła — kod wpisujesz tylko na nowym urządzeniu.</div>
+      <label class="md-lab" for="sbEmail">Adres e-mail</label>
+      <input type="email" class="md-in" id="sbEmail" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="np. ola@example.com">
+      <div class="md-btns"><button class="btn ghost" data-sb-close type="button" style="flex:1">Anuluj</button><button class="btn" id="sbSend" type="button" style="flex:2">Wyślij kod</button></div>
+    </div>
+    <div data-sbv="code" hidden>
+      <div class="md-title">Wpisz kod</div>
+      <div class="acc-p">Wysłaliśmy 6-cyfrowy kod na <b id="sbEmailShow"></b>. Sprawdź też folder Spam. Kod jest ważny 10 minut.</div>
+      <input class="md-in sb-code" id="sbCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="Kod z e-maila">
+      <button class="sb-resend" id="sbResend" type="button">Wyślij ponownie</button>
+      <div class="md-btns"><button class="btn ghost" id="sbBack" type="button" style="flex:1">Wstecz</button><button class="btn" id="sbVerify" type="button" style="flex:2" disabled>Zaloguj</button></div>
+    </div>
+    <div class="md-hint" id="sbMsg" style="display:none"></div>
   </div>
 </div>
 

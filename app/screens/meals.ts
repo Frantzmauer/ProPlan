@@ -2,7 +2,7 @@
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { dayIndexFor, weekOf } from '../core/backup';
 import { netDown } from '../core/shell';
-import { CLOUD, S, cloudCall, save } from '../core/state';
+import { CLOUD, hasCred, S, cloudCall, save } from '../core/state';
 import { cyDiff } from '../features/cycle';
 import { bindOffer, limitOffer, quotaCur, quotaLeft, quotaReset, quotaSet } from '../features/plan-limits';
 import { fireReminder, notifTimers, setupReminders } from '../features/reminders';
@@ -185,7 +185,7 @@ export function renderMealHabits(){
 }
 
 export function phOpen(){
-  if(!(CLOUD.on && CLOUD.url && CLOUD.token)){ const m=document.getElementById('mdEstMsg'); m.style.display='block'; m.style.color='var(--red)'; m.textContent=t('Szacowanie ze zdjęcia korzysta z serwera — włącz synchronizację (Więcej → Synchronizacja).'); return; }
+  if(!(CLOUD.on && CLOUD.url && hasCred())){ const m=document.getElementById('mdEstMsg'); m.style.display='block'; m.style.color='var(--red)'; m.textContent=t('Szacowanie ze zdjęcia korzysta z serwera — włącz synchronizację (Więcej → Synchronizacja).'); return; }
   if(quotaLeft('est')===0){ const m=document.getElementById('mdEstMsg'); m.style.display='block'; m.style.color='var(--red)'; m.innerHTML=t('Limit {n} szacowań w tym miesiącu wykorzystany. Nowe od {d}.', {n:quotaCur().est.max, d:quotaReset()})+limitOffer('est'); bindOffer(m); return; }
   const f=document.getElementById('phFile'); f.value=''; f.click();
 }

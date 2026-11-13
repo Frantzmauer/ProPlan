@@ -72,10 +72,10 @@ a{color:var(--steel)}
 .add-kcal{display:flex;gap:8px}
 .add-kcal input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:16px;padding:12px 14px;font-family:var(--font-disp);font-weight:600}
 .add-kcal input:focus{outline:none;border-color:var(--amber)}
-#mealDialog,#guideDialog,#joinDialog,#profileDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;padding:0}
-#mealDialog.show,#guideDialog.show,#joinDialog.show,#profileDialog.show{display:flex}
-#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card,#profileDialog .md-card{max-height:92vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:slideUp .28s cubic-bezier(.2,.8,.2,1)}
-@media(min-width:620px){#mealDialog,#guideDialog,#joinDialog,#profileDialog{align-items:center}#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card,#profileDialog .md-card{border-radius:18px}}
+#mealDialog,#guideDialog,#joinDialog,#profileDialog,#sbDialog{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;padding:0}
+#mealDialog.show,#guideDialog.show,#joinDialog.show,#profileDialog.show,#sbDialog.show{display:flex}
+#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card,#profileDialog .md-card,#sbDialog .md-card{max-height:92vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:600px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:slideUp .28s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:620px){#mealDialog,#guideDialog,#joinDialog,#profileDialog,#sbDialog{align-items:center}#mealDialog .md-card,#guideDialog .md-card,#joinDialog .md-card,#profileDialog .md-card,#sbDialog .md-card{border-radius:18px}}
 .show-btn{background:var(--panel2);border:1px solid var(--line);color:var(--steel);font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:7px;font-family:var(--font-body);white-space:nowrap}
 .show-btn:active{transform:scale(.95)}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
@@ -563,7 +563,7 @@ body.daily #coachFab{bottom:calc(72px + env(safe-area-inset-bottom));right:max(1
 #v-set [data-grp]{display:none}
 #v-set[data-sec="cw"] [data-grp="cw"],#v-set[data-sec="prof"] [data-grp="prof"],#v-set[data-sec="sync"] [data-grp="sync"],
 #v-set[data-sec="rem"] [data-grp="rem"],#v-set[data-sec="data"] [data-grp="data"],#v-set[data-sec="ver"] [data-grp="ver"],#v-set[data-sec="plan"] [data-grp="plan"]{display:block}
-#v-set[data-sec="adm"] [data-grp="adm"],#v-set[data-sec="legal"] [data-grp="legal"]{display:block}
+#v-set[data-sec="adm"] [data-grp="adm"],#v-set[data-sec="legal"] [data-grp="legal"],#v-set[data-sec="acc"] [data-grp="acc"]{display:block}
 .legal-link{text-decoration:none;color:inherit}
 .legal-link .go{color:var(--ink-faint);font-size:20px}
 /* panel administratora (USERS): konta z planami, plany, ustawienia */
@@ -1074,3 +1074,16 @@ body:not(.tech) [data-tech]{display:none!important}
 #csOk{width:100%;margin-top:10px}
 #csOk:disabled{opacity:.4}
 .cs-note{font-size:12.5px;color:var(--ink-faint);margin-top:10px;line-height:1.5}
+
+/* Konto: logowanie przez Supabase (Google / kod z e-maila) */
+.acc-h{font-family:var(--font-disp);font-size:22px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.acc-p{font-size:14px;line-height:1.55;color:var(--ink-dim);margin-bottom:14px}
+.acc-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;background:#fff;color:#1f1f1f;border-color:#dadce0}
+.acc-google svg{width:18px;height:18px;flex:none}
+.acc-mail{width:100%;margin-top:10px;padding:13px}
+.acc-fine{font-size:12px;line-height:1.5;color:var(--ink-dim);margin-top:12px;text-align:center}
+.acc-fine a{color:var(--steel)}
+#accMsg{margin-top:12px}
+.sb-code{font-size:28px;letter-spacing:.5em;text-align:center;font-variant-numeric:tabular-nums;padding:12px 8px}
+.sb-resend{background:none;border:0;color:var(--steel);font-size:13.5px;padding:10px 0;cursor:pointer}
+.sb-resend:disabled{opacity:.5;cursor:default}

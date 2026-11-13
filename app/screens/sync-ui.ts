@@ -1,7 +1,7 @@
 // ŻELAZO — Ekran synchronizacji i jego przyciski.
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { FS_SUPPORTED, exportJSON, fileHandle, importJSONFile, linkExistingFile, linkNewFile, unlinkFile } from '../core/backup';
-import { CLOUD, S, cloudPull, cloudPush, cloudTest, saveCloud } from '../core/state';
+import { CLOUD, hasCred, S, cloudPull, cloudPush, cloudTest, saveCloud } from '../core/state';
 import { checkAdmin } from './admin';
 import { locale, t as tt } from '../lib/i18n';
 import { techUi } from '../features/plan-limits';
@@ -54,7 +54,7 @@ cloudUrl.value=CLOUD.url||''; cloudToken.value=CLOUD.token||''; cloudAccount.val
 document.getElementById('cloudToggle').onclick=async()=>{
   readCloudInputs();
   if(CLOUD.on){ CLOUD.on=false; saveCloud(); refreshCloudUI(); return; }
-  if(!CLOUD.url||!CLOUD.token||!CLOUD.account){ alert(tt('Uzupełnij URL, token i nazwę konta.')); return; }
+  if(!CLOUD.url||!hasCred()||!CLOUD.account){ alert(tt('Uzupełnij URL, token i nazwę konta.')); return; }
   CLOUD.on=true; saveCloud(); refreshCloudUI();
   await cloudPull({silent:true}); // przy włączeniu od razu pobierz i scal
   cloudPush();

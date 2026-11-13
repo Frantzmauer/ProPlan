@@ -1,6 +1,6 @@
 // ŻELAZO — Plan konta, funkcje i miesięczne limity na ekranie (licznik, okno głosowe, pakiet).
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
-import { CLOUD, appChannel, cloudCall } from '../core/state';
+import { CLOUD, hasCred, appChannel, cloudCall } from '../core/state';
 import { todayISO } from '../lib/dates';
 import { currentQuota, featureOn, planEnforcedFor, planFromServer, quotaLeftOf, resetLabel } from '../lib/plan';
 import { KEYS, readJSON, writeJSON } from '../lib/storage';
@@ -19,7 +19,7 @@ export let EA_SHORT, EA_LOCAL, PLAN, QUOTA, vqOk;
 export function techUi(admin?){
   if(admin!==undefined){ try{ localStorage.setItem('zelazo_admin', admin?'1':'0'); }catch(e){} }
   let adm=false; try{ adm=localStorage.getItem('zelazo_admin')==='1'; }catch(e){}
-  const on = adm || (!!PLAN && PLAN.plan==='tester') || !(CLOUD.url && CLOUD.token && CLOUD.account);
+  const on = adm || (!!PLAN && PLAN.plan==='tester') || !(CLOUD.url && hasCred() && CLOUD.account);
   document.body.classList.toggle('tech', on);
 }
 
@@ -58,7 +58,7 @@ export function quotaSet(q){
 }
 
 export async function quotaLoad(){
-  if(!(CLOUD.on && CLOUD.url && CLOUD.token) || !navigator.onLine || !planEnforced()) return;
+  if(!(CLOUD.on && CLOUD.url && hasCred()) || !navigator.onLine || !planEnforced()) return;
   try{ planSet(await cloudCall('usage', {})); }catch(e){}
 }
 
@@ -97,7 +97,7 @@ export function bindOffer(root){
 
 export function renderPlanQuota(){
   const box=document.getElementById('planBox'); if(!box) return;
-  if(!(CLOUD.on && CLOUD.url && CLOUD.token)){
+  if(!(CLOUD.on && CLOUD.url && hasCred())){
     box.innerHTML='<div class="md-hint" style="margin:0">'+t('Limity Trenera liczy serwer — włącz synchronizację (Więcej → Synchronizacja i konta), żeby je zobaczyć.')+'</div>'; return;
   }
   const q=quotaCur();

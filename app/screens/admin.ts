@@ -1,7 +1,7 @@
 // ŻELAZO — Zużycie AI i panel administratora (konta, plany, ustawienia).
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
 import { APP_VER, verVisible } from '../core/shell';
-import { CLOUD, S, applyAccountLang, cloudCall, save, saveCloud } from '../core/state';
+import { CLOUD, hasCred, S, applyAccountLang, cloudCall, save, saveCloud } from '../core/state';
 import { planEnforced, planSet, techUi } from '../features/plan-limits';
 import { setupReminders, showInAppReminder } from '../features/reminders';
 import { todayISO } from '../lib/dates';
@@ -17,7 +17,7 @@ export function usageTxt(u){ if(!u) return '—'; return fmtUsd(u.usd)+' w tym m
 
 export async function loadUsage(){
   const sec=document.getElementById('usageSection');
-  if(!CLOUD.on||!CLOUD.url||!CLOUD.token){ sec.style.display='none'; return; }
+  if(!CLOUD.on||!CLOUD.url||!hasCred()){ sec.style.display='none'; return; }
   try{
     const u=(await cloudCall('usage',{})).usage;
     sec.style.display='block';
@@ -34,7 +34,7 @@ export async function loadUsage(){
 
 // ---- panel administratora (widoczny tylko z tokenem administratora) ----
 export async function checkAdmin(){
-  if(!CLOUD.url||!CLOUD.token) return;
+  if(!CLOUD.url||!hasCred()) return;
   try{ const j=await cloudCall('ping',{}); setAdmin(!!j.admin); planSet(j); applyAccountLang(j); }catch(e){ setAdmin(false); }
 }
 

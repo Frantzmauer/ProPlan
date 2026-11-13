@@ -1,6 +1,6 @@
 // ŻELAZO — Skaner kodów kreskowych (Open Food Facts).
 // Moduł zawiera tylko deklaracje; kod startowy jest w __init_N, wywoływanych przez main.js w stałej kolejności.
-import { CLOUD, cloudCall, vendorUrl } from '../core/state';
+import { CLOUD, hasCred, cloudCall, vendorUrl } from '../core/state';
 import { esc } from '../screens/accounts';
 import { closeGuide, closeMealDialog } from '../screens/guide';
 import { saveMealDialog } from '../ui/dictation';
@@ -178,7 +178,7 @@ document.getElementById('mdEstimate').onclick=async()=>{
   const desc=document.getElementById('mdTxt').value.trim();
   const msg=document.getElementById('mdEstMsg');
   if(!desc){ document.getElementById('mdTxt').focus(); return; }
-  if(!CLOUD.url||!CLOUD.token){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent=t('Najpierw włącz synchronizację w chmurze (Więcej → Synchronizacja).'); return; }
+  if(!CLOUD.url||!hasCred()){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent=t('Najpierw włącz synchronizację w chmurze (Więcej → Synchronizacja).'); return; }
   if(quotaLeft('est')===0){   // plan z limitami: miesięczny limit szacowań
     msg.style.display='block'; msg.style.color='var(--red)';
     msg.innerHTML=t('Limit {n} szacowań w tym miesiącu wykorzystany. Nowe od {d}.', {n:quotaCur().est.max, d:quotaReset()})+' '+t('Kalorie i makro możesz wpisać ręcznie.')+limitOffer('est'); bindOffer(msg); return;
