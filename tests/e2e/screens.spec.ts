@@ -428,7 +428,8 @@ test('Więcej: usunięcie konta — dwa stuknięcia, serwer usuwa konto, telefon
   expect(deleted).toBe(false);
   await page.locator('#delAcc').click();
   await expect.poll(() => deleted).toBe(true);
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('zelazo_cloud'))).toBe(null);
+  // po usunięciu strona się przeładowuje — odczyt w trakcie przeładowania próbujemy ponownie
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('zelazo_cloud')).catch(() => 'przeładowanie')).toBe(null);
   expect(errors).toEqual([]);
 });
 

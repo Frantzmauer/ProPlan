@@ -85,3 +85,21 @@ test('logowanie bez konta SixMo: komunikat i brak półzalogowanego stanu', asyn
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('zelazo_cloud') || '{}').sb)).toBeFalsy();
   expect(errors).toEqual([]);
 });
+
+test('link z e-maila wraca do aplikacji z tokenami: logowanie kończy się samo, tokeny znikają z adresu', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  await seed(page, { url: SERVER, token: 'tok', account: 'test', on: true, lastSync: 0, lastError: '' });
+  await page.route(SB + '/auth/v1/user', route => route.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: 'u-1', email: 'ola@example.com', app_metadata: { provider: 'email' } }) }));
+  await page.route(SERVER, async route => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    const res = b.action === 'sbLink' ? { ok: true, account: 'test' } : b.action === 'pull' || b.action === 'push' ? { ok: true, data: null } : { ok: true, pong: true, account: 'test' };
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(res) });
+  });
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  await page.goto(`/beta/#access_token=h.p.s&expires_at=${exp}&expires_in=3600&refresh_token=r&token_type=bearer&type=magiclink`);
+  await expect(page.locator('#accIn')).toBeVisible();
+  await expect(page.locator('#accEmail')).toHaveText('ola@example.com');
+  expect(page.url()).not.toContain('access_token');
+  expect(errors).toEqual([]);
+});

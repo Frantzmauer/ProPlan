@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   SB_URL, SESSION_KEY, SbError, challengeOf, exchangeCode, freshSession, googleUrl, isValidEmail, readSession, saveSession,
-  sendEmailCode, signOut, toSession, verifyEmailCode, type KV, type SbSession,
+  sendEmailCode, sessionFromHash, signOut, toSession, verifyEmailCode, type KV, type SbSession,
 } from '../../app/lib/sbauth';
 
 function memKV(): KV & { m: Map<string, string> } {
@@ -45,14 +45,23 @@ describe('logowanie Supabase', () => {
 
   it('kod e-mail: wysłanie i weryfikacja (adres małymi literami, klucz publiczny w nagłówku)', async () => {
     const { f, calls } = fakeFetch(url => ({ json: url.endsWith('/verify') ? apiSession() : {} }));
-    await sendEmailCode(' Ola@Example.com', f);
+    await sendEmailCode(' Ola@Example.com', 'https://app.test/beta/', f);
     const s = await verifyEmailCode('Ola@Example.com', ' 123456 ', f);
-    expect(calls[0].url).toBe(SB_URL + '/auth/v1/otp');
+    expect(calls[0].url).toBe(SB_URL + '/auth/v1/otp?redirect_to=' + encodeURIComponent('https://app.test/beta/'));
     expect(calls[0].body).toEqual({ email: 'ola@example.com', create_user: true });
     expect(calls[0].headers.apikey).toMatch(/^sb_publishable_/);
     expect(calls[0].headers.Authorization).toBeUndefined();
     expect(calls[1].body).toEqual({ type: 'email', email: 'ola@example.com', token: '123456' });
     expect(s.user.id).toBe('u-1');
+  });
+
+  it('link z e-maila: tokeny z adresu → sesja z użytkownikiem; inny adres → null', async () => {
+    const { f, calls } = fakeFetch(() => ({ json: { id: 'u-2', email: 'ola@example.com', app_metadata: { provider: 'email' } } }));
+    const s = await sessionFromHash('#access_token=h.p.s&expires_at=2000&expires_in=3600&refresh_token=rr&token_type=bearer&type=signup', f);
+    expect(calls[0].url).toBe(SB_URL + '/auth/v1/user');
+    expect(calls[0].headers.Authorization).toBe('Bearer h.p.s');
+    expect(s).toEqual({ access_token: 'h.p.s', refresh_token: 'rr', expires_at: 2000e3, user: { id: 'u-2', email: 'ola@example.com', provider: 'email' } });
+    expect(await sessionFromHash('#invite=abc', f)).toBeNull();
   });
 
   it('zły kod → błąd z kodem i statusem', async () => {

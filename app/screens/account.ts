@@ -7,7 +7,7 @@ import { KV_LS, sbSession } from '../core/sb';
 import { netDown } from '../core/shell';
 import { DEFAULT_SERVER, apiCall } from '../lib/api';
 import { t } from '../lib/i18n';
-import { exchangeCode, googleUrl, isValidEmail, saveSession, sendEmailCode, signOut, verifyEmailCode, type SbSession } from '../lib/sbauth';
+import { exchangeCode, googleUrl, isValidEmail, saveSession, sendEmailCode, sessionFromHash, signOut, verifyEmailCode, type SbSession } from '../lib/sbauth';
 import { legalUrl } from '../features/consent';
 import { setAdmin } from './admin';
 import { openProfileSetup } from './accounts';
@@ -104,7 +104,7 @@ async function sendCode(){
   if (!isValidEmail(email)) { msg('sbMsg', t('Wpisz poprawny adres e-mail.')); inp.focus(); return; }
   const b = el('sbSend') as HTMLButtonElement; b.disabled = true;
   try {
-    await sendEmailCode(email);
+    await sendEmailCode(email, location.origin + location.pathname);
     sbEmailAddr = email; el('sbEmailShow').textContent = email;
     (el('sbCode') as HTMLInputElement).value = ''; (el('sbVerify') as HTMLButtonElement).disabled = true;
     sbView('code');
@@ -134,15 +134,15 @@ async function google(){
   catch (e) { msg('accMsg', (e as Error).message); }
 }
 
-// powrót z Google: ?code=… (albo błąd) w adresie
+// powrót z Google (?code=…) albo z linku w e-mailu (#access_token=…), także z błędem
 async function handleRedirect(){
   const q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.slice(1));
-  const code = q.get('code'), err = q.get('error_description') || h.get('error_description');
-  if (!code && !err) return;
-  history.replaceState(null, '', location.pathname);
+  const code = q.get('code'), link = h.get('access_token') ? location.hash : '', err = q.get('error_description') || h.get('error_description');
+  if (!code && !link && !err) return;
+  history.replaceState(null, '', location.pathname);   // tokeny nie zostają w adresie ani w historii
   openAccount();
   if (err) { msg('accMsg', t('Logowanie przerwane: ') + err); return; }
-  try { await afterSignIn(await exchangeCode(code as string, KV_LS)); }
+  try { await afterSignIn(link ? await sessionFromHash(link) as SbSession : await exchangeCode(code as string, KV_LS)); }
   catch (e) { msg('accMsg', netDown(e) ? t('Brak internetu — spróbuj ponownie.') : t('Logowanie nie powiodło się: ') + (e as Error).message); }
 }
 

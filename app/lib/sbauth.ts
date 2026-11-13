@@ -22,10 +22,10 @@ export class SbError extends Error {
 
 type Fetch = typeof fetch;
 
-async function call(f: Fetch, path: string, body?: unknown, access?: string): Promise<any> {
+async function call(f: Fetch, path: string, body?: unknown, access?: string, method = 'POST'): Promise<any> {
   const headers: Record<string, string> = { apikey: SB_KEY, 'Content-Type': 'application/json' };
   if (access) headers.Authorization = 'Bearer ' + access;
-  const res = await f(SB_URL + path, { method: 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const res = await f(SB_URL + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   const txt = await res.text();
   let j: any = null;
   try { j = txt ? JSON.parse(txt) : {}; } catch { j = {}; }
@@ -43,9 +43,19 @@ export function toSession(j: any, now: number = Date.now()): SbSession {
 
 export function isValidEmail(s: string): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim()); }
 
-/** Kod na e-mail (konto zakłada się przy pierwszym kodzie). */
-export function sendEmailCode(email: string, f: Fetch = fetch): Promise<unknown> {
-  return call(f, '/auth/v1/otp', { email: email.trim().toLowerCase(), create_user: true });
+/** Kod na e-mail (konto zakłada się przy pierwszym kodzie). redirectTo: dokąd prowadzi link z e-maila
+ *  (domyślne szablony Supabase zawierają link zamiast kodu — wtedy powrót obsługuje sessionFromHash). */
+export function sendEmailCode(email: string, redirectTo = '', f: Fetch = fetch): Promise<unknown> {
+  return call(f, '/auth/v1/otp' + (redirectTo ? '?redirect_to=' + encodeURIComponent(redirectTo) : ''), { email: email.trim().toLowerCase(), create_user: true });
+}
+
+/** Powrót z linku w e-mailu: #access_token=…&refresh_token=… → sesja (użytkownik z /auth/v1/user). null = to nie ten adres. */
+export async function sessionFromHash(hash: string, f: Fetch = fetch, now: number = Date.now()): Promise<SbSession | null> {
+  const h = new URLSearchParams(hash.replace(/^#/, ''));
+  const access = h.get('access_token'), refreshTok = h.get('refresh_token');
+  if (!access || !refreshTok) return null;
+  const user = await call(f, '/auth/v1/user', undefined, access, 'GET');
+  return toSession({ access_token: access, refresh_token: refreshTok, expires_at: +(h.get('expires_at') || 0) || undefined, expires_in: +(h.get('expires_in') || 0) || undefined, user }, now);
 }
 
 export async function verifyEmailCode(email: string, code: string, f: Fetch = fetch): Promise<SbSession> {
