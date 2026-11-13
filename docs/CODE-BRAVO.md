@@ -94,6 +94,8 @@ Dlatego stary adres nie może po prostu przekierować — musi **przekazać** te
     regulamin `https://sixmo.app/legal/regulamin.html`; własność `sixmo.app` potwierdzona w Google Search Console (rekord TXT w DNS).
   - Clients → Authorized JavaScript origins: `https://app.sixmo.app`. Potem Audience: Testing → **Publish**.
   Ustawienia w panelach zmienia właściciel; Claude podaje dokładne wartości.
+- **Poczta (Resend):** rekordy DNS Resend dla `sixmo.app` (MX/TXT `send`, DKIM `resend._domainkey`, DMARC) dodane w OVH —
+  przy przenosinach serwerów DNS do Cloudflare sprawdzić, że Cloudflare je przejął (skan rekordów), inaczej e-maile z kodem przestaną dochodzić.
 
 ### B7. Sprawdzenie i raport
 - Nowy adres: wszystkie wersje się ładują (375 px), logowanie z linku zaproszenia, synchronizacja z serwerem, Trener, skaner.
