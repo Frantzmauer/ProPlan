@@ -92,7 +92,7 @@ export async function loadAdmin(){
         <button class="btn ghost" data-adm="${u.disabled?'adminEnable':'adminDisable'}" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">${u.disabled?'Odblokuj':'Zablokuj'}</button>
         <button class="btn ghost" data-adm="adminReset" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px">Nowy link</button>
         <button class="btn ghost" data-adm="adminDelete" data-t="${esc(u.account)}" style="font-size:12px;padding:7px 10px;color:var(--red)">Usuń</button>
-      </div></div>`).join(''):'<div class="md-hint">Nikogo jeszcze nie zaprosiłeś.</div>');
+      </div></div>`).join(''):'<div class="md-hint">Brak zaproszeń.</div>');
   document.getElementById('admInvites').innerHTML=j.invites.length?j.invites.map(i=>`<div class="settings-row" style="padding:8px 0">
       <div class="l"><div class="t" style="font-size:14px">${i.account?esc(i.account):'<i>dowolna nazwa</i>'}${i.reset?' · nowy token':''}</div><div class="s">ważne do ${esc(fmtDate(i.expires))}</div></div>
       <div style="display:flex;gap:6px"><button class="btn ghost" data-inv-show="${esc(i.code)}" data-a="${esc(i.account)}" data-e="${i.expires}" style="font-size:12px;padding:7px 10px">Link</button>
