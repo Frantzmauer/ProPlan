@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="SixMo EA">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <script type="module" crossorigin src="./assets/index-ceg1dyLo.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CT4IEHkL.css">
+  <script type="module" crossorigin src="./assets/index-Byu_WERz.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B48qCVOG.css">
 </head>
 <body>
 
@@ -35,7 +35,7 @@
 <div class="wrap">
 
 <!-- ============ TRENING ============ -->
-<div class="view on" id="v-train">
+<div class="view" id="v-train">
   <div class="week" id="weekStrip" aria-label="Tydzień"></div>
   <div class="phase-line" id="phaseLine"></div>
   <div class="cy-box" id="cyBox"></div>
@@ -46,7 +46,7 @@
 </div>
 
 <!-- ============ DIETA ============ -->
-<div class="view" id="v-diet">
+<div class="view on" id="v-diet">
 
   <!-- meals of the day -->
   <div class="section">
@@ -162,7 +162,7 @@
       <div id="msTable" style="margin-top:14px"></div>
       <canvas class="chart" id="msChart"></canvas>
       <div id="msHist"></div>
-      <div class="empty" id="msEmpty">Zapisz pierwszy pomiar — wystarczy wpisać to, co zmierzyłeś.</div>
+      <div class="empty" id="msEmpty">Zapisz pierwszy pomiar — wystarczy wpisać wynik.</div>
     </div>
   </div>
   <div class="section">
@@ -222,6 +222,7 @@
 
   <!-- menu Więcej: każda pozycja otwiera tylko swoją część ustawień -->
   <nav class="more-menu" id="moreMenu" aria-label="Ustawienia">
+    <button data-more="acc"><span class="ic">🔐</span><span class="tx"><b>Konto</b><small id="mmAcc"></small></span><span class="go">›</span></button>
     <button data-more="cw"><span class="ic">🎥</span><span class="tx"><b>Ćwiczenia · nauka techniki</b><small id="mmCw"></small></span><span class="go">›</span></button>
     <button data-cycle id="mmCycleBtn"><span class="ic">🌙</span><span class="tx"><b>Cykl i samopoczucie</b><small id="mmCycle"></small></span><span class="go">›</span></button>
     <button data-rest-list><span class="ic">⏱</span><span class="tx"><b>Przerwy między seriami</b><small id="mmRest"></small></span><span class="go">›</span></button>
@@ -230,8 +231,9 @@
     <button data-more="adm" id="mmAdmBtn" style="display:none"><span class="ic">🛡️</span><span class="tx"><b>Konta i plany</b><small id="mmAdm">Administrator · plany, limity, funkcje</small></span><span class="go">›</span></button>
     <button data-more="sync"><span class="ic">☁️</span><span class="tx"><b>Synchronizacja i konta</b><small id="mmSync"></small></span><span class="go">›</span></button>
     <button data-more="rem"><span class="ic">🔔</span><span class="tx"><b>Przypomnienia</b><small id="mmRem"></small></span><span class="go">›</span></button>
-    <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Eksport, import, plik, czyszczenie</small></span><span class="go">›</span></button>
-    <button data-more="ver"><span class="ic">🧪</span><span class="tx"><b>Wersja aplikacji</b><small id="mmVer"></small></span><span class="go">›</span></button>
+    <button data-more="data"><span class="ic">💾</span><span class="tx"><b>Kopia i dane</b><small>Pobierz dane · usuń dane z urządzenia</small></span><span class="go">›</span></button>
+    <button data-more="legal"><span class="ic">📄</span><span class="tx"><b>Regulamin i polityka prywatności</b><small>Zasady korzystania · Twoje dane</small></span><span class="go">›</span></button>
+    <button data-more="ver" data-tech><span class="ic">🧪</span><span class="tx"><b>Wersja aplikacji</b><small id="mmVer"></small></span><span class="go">›</span></button>
   </nav>
 
   <div class="section" style="margin-top:14px" data-grp="cw">
@@ -241,12 +243,54 @@
     <div id="exLib" class="lib"></div>
   </div>
 
+  <div class="section" style="margin-top:14px" data-grp="acc">
+    <div id="accOut" class="panel panel-pad">
+      <div class="acc-h" id="accOutH">Zaloguj się</div>
+      <div class="acc-p" id="accOutTxt"></div>
+      <button class="btn acc-google" id="accGoogle" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Kontynuuj z Google</button>
+      <button class="btn ghost acc-mail" id="accEmailBtn" type="button">Kontynuuj z e-mailem</button>
+      <div class="acc-fine">Logując się, akceptujesz <a href="../legal/regulamin.html" target="_blank" rel="noopener" data-legal="terms">Regulamin</a> i <a href="../legal/polityka-prywatnosci.html" target="_blank" rel="noopener" data-legal="privacy">Politykę prywatności</a>.</div>
+    </div>
+    <div id="accIn" style="display:none">
+      <div class="panel">
+        <div class="settings-row"><div class="l"><div class="t">E-mail</div><div class="s" id="accEmail">—</div></div></div>
+        <div class="settings-row"><div class="l"><div class="t">Logowanie</div><div class="s" id="accMethod">—</div></div></div>
+        <div class="settings-row"><div class="l"><div class="t">Konto SixMo</div><div class="s" id="accName">—</div></div></div>
+      </div>
+      <div class="panel" style="margin-top:10px">
+        <div class="settings-row">
+          <div class="l"><div class="t">Wyloguj ze wszystkich innych urządzeń</div><div class="s">Np. po zgubieniu telefonu. To urządzenie zostaje zalogowane.</div></div>
+          <button class="btn ghost" id="accLogoutAll" type="button" style="font-size:13px;padding:8px 12px">Wyloguj</button>
+        </div>
+        <div class="settings-row">
+          <div class="l"><div class="t">Wyloguj</div><div class="s">Dane zapiszą się na koncie i znikną z tego urządzenia</div></div>
+          <button class="btn ghost" id="accLogout" type="button" style="font-size:13px;padding:8px 12px">Wyloguj</button>
+        </div>
+      </div>
+      <div class="note">Pobranie danych i usunięcie konta: Więcej → Kopia i dane.</div>
+    </div>
+    <div class="md-hint" id="accMsg" style="display:none"></div>
+  </div>
+
   <div class="section" style="margin-top:14px" data-grp="adm">
     <div class="ap" id="apBox"><div class="md-hint">Ładowanie…</div></div>
   </div>
 
   <div class="section" style="margin-top:14px" data-grp="plan">
     <div class="panel panel-pad pq" id="planBox"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px" data-grp="legal">
+    <div class="panel">
+      <a class="settings-row legal-link" id="lgTerms" href="../legal/regulamin.html"><div class="l"><div class="t">Regulamin</div><div class="s">Zasady korzystania, plany i płatności, Trener AI, reklamacje</div></div><span class="go">›</span></a>
+      <a class="settings-row legal-link" id="lgPrivacy" href="../legal/polityka-prywatnosci.html"><div class="l"><div class="t">Polityka prywatności</div><div class="s">Jakie dane, gdzie są przechowywane, Twoje prawa</div></div><span class="go">›</span></a>
+    </div>
+    <div class="panel" style="margin-top:10px">
+      <div class="settings-row"><div class="l"><div class="t">Zgoda na dane o zdrowiu</div><div class="s" id="csStatus">—</div></div>
+        <button class="btn ghost" id="csWithdraw" type="button" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Wycofaj zgodę</button></div>
+    </div>
+    <div class="note">Po wycofaniu zgody aplikacja poprosi o nią ponownie — bez niej nie może prowadzić planu. Możesz też usunąć konto (Więcej → Twoje dane).</div>
+    <div class="note">Trener AI to program komputerowy, nie lekarz ani trener personalny. Aplikacja nie stawia diagnoz.</div>
   </div>
 
   <div class="section" style="margin-top:14px" data-grp="ver">
@@ -298,24 +342,24 @@
     <div class="panel">
       <div class="settings-row">
         <div class="l"><div class="t">Automatyczna synchronizacja</div><div class="s" id="cloudState">Wyłączona</div></div>
-        <div class="tgl" id="cloudToggle"></div>
+        <div class="tgl" id="cloudToggle" data-tech></div>
       </div>
       <div style="padding:4px 16px 8px">
-        <label class="md-lab">URL skryptu (Web App)</label>
-        <input type="text" class="md-in" id="cloudUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
-        <label class="md-lab">Token dostępu</label>
-        <input type="text" class="md-in" id="cloudToken" placeholder="wspólne hasło do skryptu" autocomplete="off" spellcheck="false">
-        <label class="md-lab">Nazwa konta (Twoja, np. „marek")</label>
-        <input type="text" class="md-in" id="cloudAccount" placeholder="np. marek" autocomplete="off" spellcheck="false">
+        <label class="md-lab" data-tech>URL skryptu (Web App)</label>
+        <input type="text" class="md-in" data-tech id="cloudUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+        <label class="md-lab" data-tech>Token dostępu</label>
+        <input type="text" class="md-in" data-tech id="cloudToken" placeholder="wspólne hasło do skryptu" autocomplete="off" spellcheck="false">
+        <label class="md-lab" data-tech>Nazwa konta (Twoja, np. „marek")</label>
+        <input type="text" class="md-in" data-tech id="cloudAccount" placeholder="np. marek" autocomplete="off" spellcheck="false">
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-          <button class="btn ghost" id="cloudTestBtn" style="flex:1;font-size:13px;padding:10px;min-width:90px">Test połączenia</button>
+          <button class="btn ghost" data-tech id="cloudTestBtn" style="flex:1;font-size:13px;padding:10px;min-width:90px">Test połączenia</button>
           <button class="btn" id="cloudSyncBtn" style="flex:1;font-size:13px;padding:10px;min-width:90px">Synchronizuj teraz</button>
         </div>
       </div>
     </div>
-    <div class="note" id="cloudInfo">Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Na drugim urządzeniu wpisz <b>to samo konto i ten sam token</b>. Nowe osoby dołączają przez <b>link zaproszenia</b> — każda ma własny token i widzi tylko swoje dane.</div>
+    <div class="note" id="cloudInfo" data-tech>Po włączeniu każda zmiana zapisuje się automatycznie w chmurze, a przy starcie aplikacja pobiera najnowsze dane. Na drugim urządzeniu wpisz <b>to samo konto i ten sam token</b>. Nowe osoby dołączają przez <b>link zaproszenia</b> — każda ma własny token i widzi tylko swoje dane.</div>
 
-    <div id="usageSection" style="display:none;margin-top:16px">
+    <div id="usageSection" data-tech style="display:none;margin-top:16px">
       <div class="eyebrow">Zużycie AI · Twoje konto</div>
       <div class="panel panel-pad" id="usageBox"></div>
     </div>
@@ -343,7 +387,7 @@
         <div id="admRotateOut" style="display:none;margin-top:10px"></div>
       </div>
     </div>
-    <details class="panel" style="margin-top:10px">
+    <details class="panel" data-tech style="margin-top:10px">
       <summary style="padding:14px 16px;cursor:pointer;font-family:var(--font-disp);font-size:16px;color:var(--amber);letter-spacing:.04em">JAK TO USTAWIĆ — INSTRUKCJA KROK PO KROKU</summary>
       <div style="padding:0 16px 16px;font-size:13px;color:var(--ink-dim);line-height:1.7">
         <b style="color:var(--ink)">Robisz to raz, na swoim koncie Google:</b><br>
@@ -360,20 +404,20 @@
   </div>
 
   <div class="section" data-grp="data">
-    <div class="eyebrow">Kopia i eksport (zapasowo)</div>
+    <div class="eyebrow">Twoje dane</div>
     <div class="panel">
       <div class="settings-row">
-        <div class="l"><div class="t">Zapisz kopię (JSON)</div><div class="s" id="lastExport">Ostatni eksport: —</div></div>
-        <button class="btn" id="btnExport" style="font-size:14px;padding:9px 14px">Eksport</button>
+        <div class="l"><div class="t">Pobierz moje dane</div><div class="s" id="lastExport">Ostatni eksport: —</div></div>
+        <button class="btn" id="btnExport" style="font-size:14px;padding:9px 14px">Pobierz</button>
       </div>
-      <div class="settings-row">
+      <div class="settings-row" data-tech>
         <div class="l"><div class="t">Wczytaj i scal</div><div class="s" id="lastImport">Ostatni import: —</div></div>
         <button class="btn ghost" id="btnImport" style="font-size:14px;padding:9px 14px">Import</button>
       </div>
     </div>
 
     <!-- File System Access: auto-zapis do pliku (desktop) -->
-    <div class="panel" id="fsBox" style="margin-top:10px;display:none">
+    <div class="panel" id="fsBox" data-tech style="margin-top:10px;display:none">
       <div id="fsUnlinked">
         <div class="settings-row">
           <div class="l"><div class="t">Auto-zapis do pliku na Dysku</div><div class="s">Podłącz plik JSON w folderze Google Drive — zmiany zapisują się same</div></div>
@@ -390,9 +434,9 @@
         </div>
       </div>
     </div>
-    <div class="note" id="fsUnsup" style="display:none">Auto-zapis do pliku działa w Chrome/Edge na komputerze. Na telefonie użyj Eksportu/Importu.</div>
+    <div class="note" id="fsUnsup" data-tech style="display:none">Auto-zapis do pliku działa w Chrome/Edge na komputerze. Na telefonie użyj Eksportu/Importu.</div>
 
-    <div class="panel" style="margin-top:10px">
+    <div class="panel" data-tech style="margin-top:10px">
       <div style="padding:14px 16px">
         <div style="font-family:var(--font-disp);font-size:16px;color:var(--amber);letter-spacing:.04em;margin-bottom:8px">JAK SYNCHRONIZOWAĆ PRZEZ GOOGLE DRIVE</div>
         <div style="font-size:13px;color:var(--ink-dim);line-height:1.65">
@@ -403,14 +447,14 @@
         </div>
       </div>
     </div>
-    <div class="note">Chcesz w pełni automatyczną synchronizację też na telefonie (bez eksportu)? To wymaga postawienia aplikacji pod adresem https i logowania Google — mogę przygotować taką wersję osobno.</div>
+    <div class="note" data-tech>Chcesz w pełni automatyczną synchronizację też na telefonie (bez eksportu)? To wymaga postawienia aplikacji pod adresem https i logowania Google — mogę przygotować taką wersję osobno.</div>
   </div>
 
   <div class="section" data-grp="prof">
     <div class="eyebrow">Profil</div>
     <div class="panel">
       <div class="settings-row">
-        <div class="l"><div class="t">Imię</div><div class="s">Czyja to wersja</div></div>
+        <div class="l"><div class="t">Imię</div></div>
         <input type="text" class="time-in" id="pfName" placeholder="np. Marek" style="width:130px">
       </div>
       <div class="settings-row">
@@ -488,12 +532,16 @@
   <div class="section" data-grp="data">
     <div class="eyebrow">Dane</div>
     <div class="panel">
+      <div class="settings-row" id="delAccRow">
+        <div class="l"><div class="t">Usuń konto</div><div class="s" id="delAccTxt">Usuwa konto i wszystkie dane z serwera i z tego urządzenia. Nie da się tego cofnąć.</div></div>
+        <button class="btn ghost" id="delAcc" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Usuń konto</button>
+      </div>
       <div class="settings-row">
-        <div class="l"><div class="t">Wyczyść wszystko</div><div class="s">Usuwa cały postęp z tego urządzenia</div></div>
-        <button class="btn ghost" id="wipe" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Reset</button>
+        <div class="l"><div class="t">Usuń dane z tego urządzenia</div><div class="s">Czyści postęp zapisany na tym telefonie</div></div>
+        <button class="btn ghost" id="wipe" style="font-size:13px;padding:8px 12px;color:var(--red);border-color:rgba(226,84,58,.4)">Usuń</button>
       </div>
     </div>
-    <div class="note">Twoje dane są zapisywane lokalnie w tej przeglądarce. Nic nie jest wysyłane na serwer — kopie i synchronizacja idą wyłącznie przez plik, który sam kontrolujesz.</div>
+    <div class="note">Dane są zapisywane na tym telefonie, a przy włączonej synchronizacji także na serwerze aplikacji — dzięki temu działają na innych urządzeniach. Do Trenera AI (Claude, Anthropic) trafiają tylko razem z Twoim pytaniem, zdjęciem albo nagraniem.</div>
   </div>
 </div>
 
@@ -509,11 +557,32 @@
   </div>
 </div>
 
+<!-- logowanie kodem z e-maila: adres → 6-cyfrowy kod -->
+<div id="sbDialog" role="dialog" aria-modal="true" aria-labelledby="sbTitle">
+  <div class="md-card">
+    <div data-sbv="email">
+      <div class="md-title" id="sbTitle">Twój e-mail</div>
+      <div class="acc-p">Wyślemy jednorazowy kod. Bez hasła — kod wpisujesz tylko na nowym urządzeniu.</div>
+      <label class="md-lab" for="sbEmail">Adres e-mail</label>
+      <input type="email" class="md-in" id="sbEmail" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="np. ola@example.com">
+      <div class="md-btns"><button class="btn ghost" data-sb-close type="button" style="flex:1">Anuluj</button><button class="btn" id="sbSend" type="button" style="flex:2">Wyślij kod</button></div>
+    </div>
+    <div data-sbv="code" hidden>
+      <div class="md-title">Wpisz kod</div>
+      <div class="acc-p">Wysłaliśmy 6-cyfrowy kod na <b id="sbEmailShow"></b>. Sprawdź też folder Spam. Kod jest ważny 10 minut.</div>
+      <input class="md-in sb-code" id="sbCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="Kod z e-maila">
+      <button class="sb-resend" id="sbResend" type="button">Wyślij ponownie</button>
+      <div class="md-btns"><button class="btn ghost" id="sbBack" type="button" style="flex:1">Wstecz</button><button class="btn" id="sbVerify" type="button" style="flex:2" disabled>Zaloguj</button></div>
+    </div>
+    <div class="md-hint" id="sbMsg" style="display:none"></div>
+  </div>
+</div>
+
 <!-- okno dołączania z linku zaproszenia -->
 <div id="joinDialog">
   <div class="md-card">
     <div class="md-title">Dołącz do SixMo 💪</div>
-    <div style="font-size:14.5px;line-height:1.6;color:var(--ink-dim)">Dostałeś zaproszenie. Wybierz nazwę konta — po niej aplikacja rozpozna Twoje dane na każdym urządzeniu.</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--ink-dim)">Masz zaproszenie. Wybierz nazwę konta — po niej aplikacja rozpozna Twoje dane na każdym urządzeniu.</div>
     <label class="md-lab">Nazwa konta</label>
     <input type="text" class="md-in" id="joinName" placeholder="np. tomek" autocomplete="off" spellcheck="false" autocapitalize="off">
     <div class="md-hint">2–24 znaki: małe litery, cyfry, „-” lub „_”. Polskie znaki zamienimy (ł → l).</div>
@@ -531,6 +600,17 @@
 </div>
 
 <!-- pierwszy start nowego konta: obowiązkowy profil -->
+<div id="consentDialog" role="dialog" aria-modal="true" aria-labelledby="csTitle">
+  <div class="md-card">
+    <div class="md-title" id="csTitle">Zanim zaczniesz</div>
+    <div class="cs-txt">SixMo prowadzi Twój plan na podstawie danych o zdrowiu: wagi, obwodów, posiłków, samopoczucia i — jeśli włączysz tę funkcję — cyklu. Potrzebujemy Twojej zgody.</div>
+    <label class="cs-opt"><input type="checkbox" id="csTerms"><span>Akceptuję <a id="csTermsLink" href="../legal/regulamin.html" target="_blank" rel="noopener">Regulamin</a> i <a id="csPrivacyLink" href="../legal/polityka-prywatnosci.html" target="_blank" rel="noopener">Politykę prywatności</a>.</span></label>
+    <label class="cs-opt"><input type="checkbox" id="csHealth"><span>Zgadzam się na przetwarzanie moich danych o zdrowiu przez aplikację i Trenera AI w celu prowadzenia mojego planu. Zgodę mogę wycofać w Więcej → Regulamin i polityka prywatności.</span></label>
+    <button class="btn" id="csOk" type="button" disabled>Akceptuję i przechodzę dalej</button>
+    <div class="cs-note">Obie zgody są potrzebne, bo każda funkcja aplikacji korzysta z tych danych. Trener AI to program komputerowy, nie lekarz.</div>
+  </div>
+</div>
+
 <div id="profileDialog">
   <div class="md-card">
     <div class="md-title">Twój profil</div>
@@ -584,7 +664,7 @@
     <label class="md-lab">Co było do jedzenia?</label>
     <div class="md-row">
       <input type="text" id="mdTxt" class="md-in" placeholder="np. duży kebab z sosem czosnkowym">
-      <button class="mic" id="mdMic" type="button" aria-label="Powiedz, co zjadłeś" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="mic" id="mdMic" type="button" aria-label="Podyktuj posiłek" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button class="mic" id="mdPhoto" type="button" aria-label="Zrób zdjęcie posiłku — AI oszacuje kalorie"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
       <button class="mic" id="mdScan" type="button" aria-label="Zeskanuj kod kreskowy z opakowania"><svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13.5 8v8M17 8v8"/></svg></button>
     </div>
@@ -704,8 +784,8 @@
 <!-- ============ NAV ============ -->
 <div class="nav">
   <div class="wrap">
-    <button class="on" data-v="train"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 6.5v11M17.5 6.5v11M4 9v6M20 9v6"/></svg>Trening<span class="nav-dot" id="dotTrain"></span></button>
-    <button data-v="diet"><svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M9 3v6M17 21V3c-2 1-3 4-3 8h3"/></svg>Dieta<span class="nav-dot" id="dotDiet"></span></button>
+    <button class="on" data-v="diet"><svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M9 3v6M17 21V3c-2 1-3 4-3 8h3"/></svg>Dieta<span class="nav-dot" id="dotDiet"></span></button>
+    <button data-v="train"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 6.5v11M17.5 6.5v11M4 9v6M20 9v6"/></svg>Trening<span class="nav-dot" id="dotTrain"></span></button>
     <button data-v="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg>Postęp</button>
     <button data-v="shop"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M6 6L5 3H3"/></svg>Zakupy</button>
     <button data-v="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Więcej</button>
@@ -713,6 +793,5 @@
 </div>
 
 
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </body>
 </html>

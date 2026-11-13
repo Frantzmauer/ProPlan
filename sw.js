@@ -24,7 +24,7 @@ self.addEventListener('fetch', e=>{
   if(r.method!=='GET') return;
   const u=new URL(r.url);
   if(r.mode==='navigate'){ e.respondWith(networkFirst(r)); return; }
-  if(u.origin===location.origin || u.host==='fonts.googleapis.com' || u.host==='fonts.gstatic.com') e.respondWith(staleWhileRevalidate(r));
+  if(u.origin===location.origin) e.respondWith(staleWhileRevalidate(r));
 });
 
 // adres strony bez ?v=… i „index.html” — /ProPlan/ i /ProPlan/index.html to ta sama kopia
