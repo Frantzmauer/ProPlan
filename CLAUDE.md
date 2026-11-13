@@ -15,7 +15,6 @@ odpowiadaj po polsku. Aktualny stan i kolejne kroki: `docs/STAN.md`.
   aplikacji, szerokość telefonu 375 px, przykładowe dane. Gotowe prototypy: `docs/prototypes/`.
 - **Przepływ funkcji:** nowa funkcja → **beta + USERS**; po testach właściciela → **stabilna + Early Access**
   (budowane z przetestowanego commita). Do stabilnej nie trafia nic nieprzetestowanego.
-- **Nowe funkcje są wstrzymane**, dopóki trwa przygotowanie pod Capacitor — tylko poprawki (zobacz `docs/STAN.md`).
 - Teksty w aplikacji po polsku, **neutralne płciowo** („Limit wykorzystany”, nie „Wykorzystałeś”).
   Komentarze w kodzie po polsku, opisy commitów po angielsku.
 - Po każdej zmianie: testy (niżej), sprawdzenie w przeglądarce na 375 px, wdrożenie, krótka informacja dla właściciela.
